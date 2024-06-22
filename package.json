@@ -1,0 +1,12 @@
+{
+  "name": "massive-netcode",
+  "version": "0.1.0",
+  "displayName": "Massive ECS Netcode",
+  "unity": "2021.2",
+  "description": "Network tools for massive-ecs.",
+  "dependencies":
+  {
+    "massive-ecs": "https://github.com/nilpunch/massive-ecs#6.1.4-alpha"
+  },
+  "author": "https://github.com/nilpunch"
+}
