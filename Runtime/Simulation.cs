@@ -7,14 +7,14 @@ namespace Massive.Netcode
 		private readonly IMassive _massive;
 		private readonly ISystem _system;
 		private readonly ICommandTimeline _commandTimeline;
-		private readonly CommandsLog _commandsLog;
+		private readonly FrameChangeLog _frameChangeLog;
 
-		public Simulation(IMassive massive, ISystem system, ICommandTimeline commandTimeline, CommandsLog commandsLog)
+		public Simulation(IMassive massive, ISystem system, ICommandTimeline commandTimeline, FrameChangeLog frameChangeLog)
 		{
 			_massive = massive;
 			_system = system;
 			_commandTimeline = commandTimeline;
-			_commandsLog = commandsLog;
+			_frameChangeLog = frameChangeLog;
 		}
 
 		private int CurrentFrame { get; set; }
@@ -22,9 +22,11 @@ namespace Massive.Netcode
 		public void FastForwardToFrame(int targetFrame)
 		{
 			if (targetFrame < 0)
+			{
 				throw new ArgumentOutOfRangeException(nameof(targetFrame), "Target frame should not be negative!");
+			}
 
-			int earliestFrame = Math.Min(targetFrame, _commandsLog.EarliestConfirmedFrame);
+			int earliestFrame = Math.Min(targetFrame, _frameChangeLog.EarliestChangedFrame);
 			int framesToRollback = Math.Max(CurrentFrame - earliestFrame, 0);
 
 			_massive.Rollback(framesToRollback);
@@ -39,7 +41,7 @@ namespace Massive.Netcode
 				CurrentFrame += 1;
 			}
 
-			_commandsLog.ConfirmObservation(targetFrame);
+			_frameChangeLog.ConfirmObservationUpTo(targetFrame);
 		}
 	}
 }

@@ -15,23 +15,37 @@ namespace Massive.Netcode
 
 		public int CycleCapacity => _data.Length;
 
-		public CyclicList(int size, int startFrom = 0)
+		public CyclicList(int size, int startIndex = 0)
 		{
 			_data = new T[size];
-			TailIndex = startFrom;
+			TailIndex = startIndex;
 		}
 
 		public ref T this[int index]
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => ref _data[index - HeadIndex];
+			get
+			{
+				if (index < HeadIndex || index > TailIndex)
+				{
+					throw new ArgumentOutOfRangeException(nameof(index), index, $"List works in range [{HeadIndex}, {TailIndex}).");
+				}
+
+				return ref _data[index - HeadIndex];
+			}
 		}
 
-		public void Add(T data)
+		public void Append(T data)
 		{
 			_data[TailIndex % CycleCapacity] = data;
 			TailIndex += 1;
 			CycledCount = Math.Min(CycledCount + 1, CycleCapacity);
+		}
+
+		public void Reset(int startIndex)
+		{
+			CycledCount = 0;
+			TailIndex = startIndex;
 		}
 	}
 }

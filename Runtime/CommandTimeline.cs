@@ -10,18 +10,30 @@ namespace Massive.Netcode
 
 		private int _lastFrameWithCommand;
 
-		public CommandTimeline(int startFrom, int bufferSize, TCommand initial, Func<TCommand, int, TCommand> prediction)
+		public CommandTimeline(int startFrame, int bufferSize, TCommand firstCommand, Func<TCommand, int, TCommand> prediction = null)
 		{
-			_prediction = prediction;
-			_commands = new CyclicList<TCommand>(bufferSize, startFrom);
-			_isPredicted = new CyclicList<bool>(bufferSize, startFrom);
+			_prediction = prediction ?? RepeatPrediction;
+			_commands = new CyclicList<TCommand>(bufferSize, startFrame);
+			_isPredicted = new CyclicList<bool>(bufferSize, startFrame);
 
-			_commands.Add(initial);
-			_isPredicted.Add(false);
-			_lastFrameWithCommand = _commands.HeadIndex;
+			_commands.Append(firstCommand);
+			_isPredicted.Append(false);
+			_lastFrameWithCommand = startFrame;
 		}
 
 		public event Action<int> CommandChanged;
+
+		public static TCommand RepeatPrediction(TCommand command, int framesPassed) => command;
+
+		public void Reset(int startFrame, TCommand firstCommand)
+		{
+			_commands.Reset(startFrame);
+			_isPredicted.Reset(startFrame);
+
+			_commands.Append(firstCommand);
+			_isPredicted.Append(false);
+			_lastFrameWithCommand = startFrame;
+		}
 
 		public TCommand GetCommand(int frame)
 		{
@@ -32,18 +44,13 @@ namespace Massive.Netcode
 		{
 			while (_commands.TailIndex - 1 < frame)
 			{
-				_commands.Add(_prediction(_commands[_lastFrameWithCommand], _commands.TailIndex - _lastFrameWithCommand));
-				_isPredicted.Add(false);
+				_commands.Append(_prediction(_commands[_lastFrameWithCommand], _commands.TailIndex - _lastFrameWithCommand));
+				_isPredicted.Append(false);
 			}
 		}
 
 		public void InsertCommand(int frame, TCommand command)
 		{
-			if (frame < _commands.HeadIndex || frame >= _commands.TailIndex)
-			{
-				throw new Exception();
-			}
-
 			_commands[frame] = command;
 			_isPredicted[frame] = false;
 			_lastFrameWithCommand = Math.Max(_lastFrameWithCommand, frame);
