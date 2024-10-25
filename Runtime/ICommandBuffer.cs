@@ -1,6 +1,6 @@
 ﻿namespace Massive.Netcode
 {
-	public interface ICommandTimeline
+	public interface ICommandBuffer
 	{
 		void PopulateCommandsUpTo(int frame);
 	}

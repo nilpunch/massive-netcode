@@ -6,14 +6,14 @@ namespace Massive.Netcode
 	{
 		private readonly IMassive _massive;
 		private readonly ISystem _system;
-		private readonly ICommandTimeline _commandTimeline;
+		private readonly ICommandBuffer _commandBuffer;
 		private readonly FrameChangeLog _frameChangeLog;
 
-		public Simulation(IMassive massive, ISystem system, ICommandTimeline commandTimeline, FrameChangeLog frameChangeLog)
+		public Simulation(IMassive massive, ISystem system, ICommandBuffer commandBuffer, FrameChangeLog frameChangeLog)
 		{
 			_massive = massive;
 			_system = system;
-			_commandTimeline = commandTimeline;
+			_commandBuffer = commandBuffer;
 			_frameChangeLog = frameChangeLog;
 		}
 
@@ -32,7 +32,7 @@ namespace Massive.Netcode
 			_massive.Rollback(framesToRollback);
 			CurrentFrame -= framesToRollback;
 
-			_commandTimeline.PopulateCommandsUpTo(targetFrame);
+			_commandBuffer.PopulateCommandsUpTo(targetFrame);
 
 			while (CurrentFrame < targetFrame)
 			{

@@ -1,24 +1,25 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Massive.Netcode
 {
-	public class CommandTimeline<TCommand> : ICommandTimeline
+	public class CommandBuffer<TCommand> : ICommandBuffer
 	{
-		private readonly Func<TCommand, int, TCommand> _prediction;
+		private readonly CommandPrediction<TCommand> _commandPrediction;
 		private readonly CyclicList<bool> _isPredicted;
 		private readonly CyclicList<TCommand> _commands;
 
-		private int _lastFrameWithCommand;
+		private int _lastFrameWithAnyCommand;
 
-		public CommandTimeline(int startFrame, int bufferSize, TCommand firstCommand, Func<TCommand, int, TCommand> prediction = null)
+		public CommandBuffer(int startFrame, int bufferSize, TCommand firstCommand, CommandPrediction<TCommand> commandPrediction = null)
 		{
-			_prediction = prediction ?? RepeatPrediction;
+			_commandPrediction = commandPrediction ?? RepeatPrediction;
 			_commands = new CyclicList<TCommand>(bufferSize, startFrame);
 			_isPredicted = new CyclicList<bool>(bufferSize, startFrame);
 
 			_commands.Append(firstCommand);
 			_isPredicted.Append(false);
-			_lastFrameWithCommand = startFrame;
+			_lastFrameWithAnyCommand = startFrame;
 		}
 
 		public event Action<int> CommandChanged;
@@ -32,7 +33,7 @@ namespace Massive.Netcode
 
 			_commands.Append(firstCommand);
 			_isPredicted.Append(false);
-			_lastFrameWithCommand = startFrame;
+			_lastFrameWithAnyCommand = startFrame;
 		}
 
 		public TCommand GetCommand(int frame)
@@ -44,7 +45,7 @@ namespace Massive.Netcode
 		{
 			while (_commands.TailIndex - 1 < frame)
 			{
-				_commands.Append(_prediction(_commands[_lastFrameWithCommand], _commands.TailIndex - _lastFrameWithCommand));
+				_commands.Append(_commandPrediction(_commands[_lastFrameWithAnyCommand], _commands.TailIndex - _lastFrameWithAnyCommand));
 				_isPredicted.Append(false);
 			}
 		}
@@ -53,10 +54,27 @@ namespace Massive.Netcode
 		{
 			_commands[frame] = command;
 			_isPredicted[frame] = false;
-			_lastFrameWithCommand = Math.Max(_lastFrameWithCommand, frame);
+			_lastFrameWithAnyCommand = Math.Max(_lastFrameWithAnyCommand, frame);
 			ReevaluateFrom(frame);
 
 			CommandChanged?.Invoke(frame);
+		}
+
+		public void InsertManyCommands((int frame, TCommand command)[] commands)
+		{
+			var reevaluateFrame = int.MaxValue; 
+			
+			foreach (var (frame, command) in commands)
+			{
+				_commands[frame] = command;
+				_isPredicted[frame] = false;
+				_lastFrameWithAnyCommand = Math.Max(_lastFrameWithAnyCommand, frame);
+				reevaluateFrame = Math.Min(reevaluateFrame, frame);
+			}
+
+			ReevaluateFrom(reevaluateFrame);
+
+			CommandChanged?.Invoke(reevaluateFrame);
 		}
 
 		private void ReevaluateFrom(int frame)
@@ -68,7 +86,7 @@ namespace Massive.Netcode
 				{
 					if (lastConfirmedFrame != -1)
 					{
-						_commands[frame] = _prediction(_commands[lastConfirmedFrame], frame - lastConfirmedFrame);
+						_commands[frame] = _commandPrediction(_commands[lastConfirmedFrame], frame - lastConfirmedFrame);
 					}
 				}
 				else
