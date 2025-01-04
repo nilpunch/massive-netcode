@@ -2,13 +2,13 @@
 
 namespace Massive.Netcode.Samples
 {
-	public struct ClientConnection : IResetInput { public bool JustConnected; }
-
-	public struct Player { public Entity Client; }
+	public struct ConnectionInput : IResetInput { public bool JustConnected; }
 
 	public struct PlayerInput { public bool IsShooting; }
 
-	public struct Session { public bool IsFinished; }
+	public struct SessionInput { public bool IsFinished; }
+
+	public struct Player { public Entity Client; }
 
 	public class ClientInputSample
 	{
@@ -21,34 +21,51 @@ namespace Massive.Netcode.Samples
 			_clients = new ClientRegistry();
 		}
 
+		public void ConnectClient(int playerSpawnTick)
+		{
+			var client = _clients.CreateClient();
+			_clients.SetInput(client, playerSpawnTick, new ConnectionInput() { JustConnected = true });
+		}
+
+		public void ApplyPlayerInput(Entity client, int tick, PlayerInput playerInput)
+		{
+			_clients.SetInput(client, tick, playerInput);
+		}
+
+		public void FinishSession(int finishAtTick)
+		{
+			_clients.SetGlobalInput(finishAtTick, new SessionInput() { IsFinished = true });
+		}
+
 		public async void Run()
 		{
 			int tick = 0;
 
 			while (true)
 			{
-				if (_clients.GetGlobalInput<Session>(tick).IsFinished)
+				if (_clients.GetGlobalInput<SessionInput>(tick).IsFinished)
 				{
 					break;
 				}
 
-				UpdatePlayerCreation(tick);
+				UpdatePlayerSpawn(tick);
 				UpdateShootingLogic(tick);
 
 				await Task.Yield();
+
+				tick += 1;
 			}
 		}
 
-		private void UpdatePlayerCreation(int tick)
+		private void UpdatePlayerSpawn(int tick)
 		{
-			var connections = _clients.DataSet<InputBuffer<ClientConnection>>();
+			var connections = _clients.DataSet<InputBuffer<ConnectionInput>>();
 
-			foreach (var client in _clients.View().Include<InputBuffer<ClientConnection>>())
+			foreach (var client in _clients.View().Include<InputBuffer<ConnectionInput>>())
 			{
 				if (connections.Get(client).GetInput(tick).JustConnected)
 				{
-					var player = _simulation.CreateEntity();
-					_simulation.Assign(player, new Player() { Client = _clients.GetEntity(client) });
+					_simulation.CreateEntity(new Player() { Client = _clients.GetEntity(client) });
 				}
 			}
 		}
