@@ -1,11 +1,11 @@
 ﻿namespace Massive.Netcode
 {
-	public class SimulationTime
+	public class Time
 	{
-		public int FPS;
+		public int FPS = 60;
 		public int Tick;
 
-		public float Time => Tick * DeltaTime;
+		public float ElapsedTime => Tick * DeltaTime;
 		public float DeltaTime => 1f / FPS;
 	}
 }

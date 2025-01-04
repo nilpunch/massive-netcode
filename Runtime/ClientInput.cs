@@ -1,71 +1,77 @@
 ﻿namespace Massive.Netcode
 {
-	public class ClientRegistry : Registry, IInputPrediction
+	public class ClientInput : IInputPrediction
 	{
 		private readonly int _inputBufferSize;
 		private readonly int _startTick;
 
-		public Entity Master { get; }
+		public SetRegistry SetRegistry { get; }
 
-		public ClientRegistry(int inputBufferSize = 120, int startTick = 0, RegistryConfig registryConfig = null)
-			: base(registryConfig ?? new RegistryConfig())
+		public int Master { get; }
+
+		public ClientInput(int inputBufferSize = 120, int startTick = 0, RegistryConfig registryConfig = null)
 		{
 			_inputBufferSize = inputBufferSize;
 			_startTick = startTick;
 
-			Master = this.CreateEntity();
+			SetRegistry = new SetRegistry(new NormalSetFactory(registryConfig));
+
+			Master = 0;
 		}
 
 		public T GetGlobalInput<T>(int tick)
 		{
-			return GetInputBuffer<T>(Master.Id).GetInput(tick);
+			return GetInputBuffer<T>(Master).GetInput(tick);
 		}
 
 		public void SetGlobalInput<T>(int tick, T input)
 		{
-			GetInputBuffer<T>(Master.Id).InsertInput(tick, input);
+			GetInputBuffer<T>(Master).InsertInput(tick, input);
 		}
 
-		public T GetInput<T>(Entity client, int tick)
+		public T GetInput<T>(int client, int tick)
 		{
-			return GetInputBuffer<T>(client.Id).GetInput(tick);
+			return GetInputBuffer<T>(client).GetInput(tick);
 		}
 
-		public void SetInput<T>(Entity client, int tick, T input)
+		public void SetInput<T>(int client, int tick, T input)
 		{
-			GetInputBuffer<T>(client.Id).InsertInput(tick, input);
+			GetInputBuffer<T>(client).InsertInput(tick, input);
 		}
 
-		public Entity CreateClient()
+		public void ForgetClient(int client)
 		{
-			return this.CreateEntity();
-		}
-
-		public void DestroyClient(Entity client)
-		{
-			if (!this.IsAlive(client) || client == Master)
+			if (client == Master)
 			{
 				return;
 			}
 
-			this.Destroy(client);
+			foreach (var set in SetRegistry.All)
+			{
+				set.Unassign(client);
+			}
 		}
 
-		private InputBuffer<T> GetInputBuffer<T>(int clientId)
+		public DataSet<InputBuffer<T>> GetAllInputs<T>()
 		{
-			var buffers = this.DataSet<InputBuffer<T>>();
+			return (DataSet<InputBuffer<T>>)SetRegistry.Get<InputBuffer<T>>();
+		}
 
-			if (!buffers.IsAssigned(clientId))
+		public InputBuffer<T> GetInputBuffer<T>(int client)
+		{
+			var buffers = GetAllInputs<T>();
+
+			if (!buffers.IsAssigned(client))
 			{
-				buffers.Assign(clientId);
-				ref var inputBuffer = ref buffers.Get(clientId);
+				buffers.Assign(client);
+				ref var inputBuffer = ref buffers.Get(client);
 				inputBuffer ??= CreateInputBuffer<T>();
 				inputBuffer.Reset(_startTick);
 				return inputBuffer;
 			}
 			else
 			{
-				return buffers.Get(clientId);
+				return buffers.Get(client);
 			}
 		}
 
@@ -86,7 +92,7 @@
 			}
 		}
 
-		public InputBuffer<T> CreateInputBuffer<T>()
+		private InputBuffer<T> CreateInputBuffer<T>()
 		{
 			if (CustomPredictionUtils.IsImplementedFor(typeof(T)))
 			{

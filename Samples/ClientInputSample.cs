@@ -2,85 +2,86 @@
 
 namespace Massive.Netcode.Samples
 {
-	public struct ConnectionInput : IResetInput { public bool JustConnected; }
+	public struct SpawnInput : IResetInput { public bool Spawn; }
 
 	public struct PlayerInput { public bool IsShooting; }
 
 	public struct SessionInput { public bool IsFinished; }
 
-	public struct Player { public Entity Client; }
+	public struct Player { public int ClientId; }
 
 	public class ClientInputSample
 	{
-		private readonly Registry _simulation;
-		private readonly ClientRegistry _clients;
+		private readonly Registry _registry;
+		private readonly SimulationInput _input;
+		private readonly ClientInput _clientInput;
+		private readonly Time _time;
 
 		public ClientInputSample()
 		{
-			_simulation = new Registry();
-			_clients = new ClientRegistry();
+			_registry = new Registry();
+			_clientInput = new ClientInput();
+			_time = new Time();
+			_input = new SimulationInput(_clientInput, _time);
 		}
 
-		public void ConnectClient(int playerSpawnTick)
+		public void ConnectClient(int client, int spawnTick)
 		{
-			var client = _clients.CreateClient();
-			_clients.SetInput(client, playerSpawnTick, new ConnectionInput() { JustConnected = true });
+			_clientInput.SetInput(client, spawnTick, new SpawnInput() { Spawn = true });
 		}
 
-		public void ApplyPlayerInput(Entity client, int tick, PlayerInput playerInput)
+		public void ApplyPlayerInput(int client, int tick, PlayerInput playerInput)
 		{
-			_clients.SetInput(client, tick, playerInput);
+			_clientInput.SetInput(client, tick, playerInput);
 		}
 
 		public void FinishSession(int finishAtTick)
 		{
-			_clients.SetGlobalInput(finishAtTick, new SessionInput() { IsFinished = true });
+			_clientInput.SetGlobalInput(finishAtTick, new SessionInput() { IsFinished = true });
 		}
 
 		public async void Run()
 		{
-			int tick = 0;
-
 			while (true)
 			{
-				if (_clients.GetGlobalInput<SessionInput>(tick).IsFinished)
+				if (_input.GetGlobalInput<SessionInput>().IsFinished)
 				{
 					break;
 				}
 
-				UpdatePlayerSpawn(tick);
-				UpdateShootingLogic(tick);
+				UpdatePlayerSpawn();
+				UpdateShootingLogic();
 
 				await Task.Yield();
 
-				tick += 1;
+				_time.Tick += 1;
 			}
 		}
 
-		private void UpdatePlayerSpawn(int tick)
+		private void UpdatePlayerSpawn()
 		{
-			var connections = _clients.DataSet<InputBuffer<ConnectionInput>>();
+			var spawns = _clientInput.GetAllInputs<SpawnInput>();
 
-			foreach (var client in _clients.View().Include<InputBuffer<ConnectionInput>>())
+			foreach (var client in spawns)
 			{
-				if (connections.Get(client).GetInput(tick).JustConnected)
+				if (spawns.Get(client).GetInput(_time.Tick).Spawn)
 				{
-					_simulation.CreateEntity(new Player() { Client = _clients.GetEntity(client) });
+					_registry.CreateEntity(new Player() { ClientId = client });
 				}
 			}
 		}
 
-		private void UpdateShootingLogic(int tick)
+		private void UpdateShootingLogic()
 		{
-			foreach (var player in _simulation.View().Include<Player>())
+			_registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = _clients.GetInput<PlayerInput>(_simulation.Get<Player>(player).Client, tick);
-				
+				var playerInput = _input.GetInput<PlayerInput>(player.ClientId);
+	
 				if (playerInput.IsShooting)
 				{
 					// Perform shooting
 				}
-			}
+			});
 		}
 	}
 }
