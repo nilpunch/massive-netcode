@@ -17,6 +17,8 @@ namespace Massive.Netcode.Samples
 		public SimulationSample()
 		{
 			_simulation = new Simulation();
+			_simulation.Group.Add(new SpawnPlayersSystem(_simulation));
+			_simulation.Group.Add(new ShootingSystem(_simulation));
 		}
 
 		public void ConnectClient(int client, int spawnTick)
@@ -51,22 +53,41 @@ namespace Massive.Netcode.Samples
 				tick += 1;
 			}
 		}
+	}
 
-		private void UpdatePlayerSpawn()
+	public class SpawnPlayersSystem : ISimulation
+	{
+		private readonly Simulation _simulation;
+
+		public SpawnPlayersSystem(Simulation simulation)
+		{
+			_simulation = simulation;
+		}
+
+		public void Update(int tick)
 		{
 			var spawnInputs = _simulation.Inputs.GetAllInputs<PlayerSpawnInput>();
-			var currentTick = _simulation.Time.Tick;
 
 			foreach (var client in spawnInputs)
 			{
-				if (spawnInputs.Get(client).GetInput(currentTick).NeedToSpawnPlayer)
+				if (spawnInputs.Get(client).GetInput(tick).NeedToSpawnPlayer)
 				{
 					_simulation.Registry.CreateEntity(new Player() { ClientId = client });
 				}
 			}
 		}
+	}
 
-		private void UpdateShootingLogic()
+	public class ShootingSystem : ISimulation
+	{
+		private readonly Simulation _simulation;
+
+		public ShootingSystem(Simulation simulation)
+		{
+			_simulation = simulation;
+		}
+
+		public void Update(int tick)
 		{
 			_simulation.Registry.View().ForEach((ref Player player) =>
 			{
