@@ -4,7 +4,7 @@
 	{
 		public int EarliestChangedTick { get; private set; }
 
-		public void NotifyChangeAt(int tick)
+		public void NotifyChange(int tick)
 		{
 			if (EarliestChangedTick > tick)
 			{
@@ -12,7 +12,7 @@
 			}
 		}
 
-		public void ConfirmUpTo(int tick)
+		public void ConfirmObservationUpTo(int tick)
 		{
 			if (EarliestChangedTick < tick)
 			{

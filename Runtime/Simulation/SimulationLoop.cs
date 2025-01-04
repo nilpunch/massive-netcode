@@ -2,34 +2,24 @@
 
 namespace Massive.Netcode
 {
-	public class ClientSimulation
-	{
-		
-		
-		public void NewPlayer()
-		{
-			
-		}
-	}
-	
-	public class Simulation
+	public class SimulationLoop
 	{
 		private readonly IMassive _massive;
-		private readonly ISystem _system;
+		private readonly ISimulation _simulation;
 		private readonly IInputPrediction _inputPrediction;
 		private readonly TickChangeLog _tickChangeLog;
 		private readonly int _saveEachNthTick;
 
-		public Simulation(IMassive massive, ISystem system, IInputPrediction inputPrediction, TickChangeLog tickChangeLog, int saveEachNthTick = 5)
+		public SimulationLoop(IMassive massive, ISimulation simulation, IInputPrediction inputPrediction, TickChangeLog tickChangeLog, int saveEachNthTick = 5)
 		{
 			_massive = massive;
-			_system = system;
+			_simulation = simulation;
 			_inputPrediction = inputPrediction;
 			_tickChangeLog = tickChangeLog;
 			_saveEachNthTick = saveEachNthTick;
 		}
 
-		private int CurrentTick { get; set; }
+		public int CurrentTick { get; private set; }
 
 		public void FastForwardToTick(int targetTick)
 		{
@@ -57,7 +47,7 @@ namespace Massive.Netcode
 
 			while (CurrentTick < targetTick)
 			{
-				_system.StepForward();
+				_simulation.Update(CurrentTick);
 				CurrentTick += 1;
 
 				if (CurrentTick % _saveEachNthTick == 0)
@@ -66,7 +56,7 @@ namespace Massive.Netcode
 				}
 			}
 
-			_tickChangeLog.ConfirmUpTo(targetTick);
+			_tickChangeLog.ConfirmObservationUpTo(targetTick);
 		}
 	}
 }

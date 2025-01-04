@@ -1,30 +1,33 @@
-﻿namespace Massive.Netcode
+﻿using System;
+
+namespace Massive.Netcode
 {
-	public class ClientInput : IInputPrediction
+	public class InputRegistry : IInputPrediction
 	{
 		private readonly int _inputBufferSize;
 		private readonly int _startTick;
-
-		public SetRegistry SetRegistry { get; }
+		private readonly SetRegistry _setRegistry;
 
 		public int Master { get; }
 
-		public ClientInput(int inputBufferSize = 120, int startTick = 0, RegistryConfig registryConfig = null)
+		public InputRegistry(int inputBufferSize = 120, int startTick = 0, RegistryConfig registryConfig = null)
 		{
 			_inputBufferSize = inputBufferSize;
 			_startTick = startTick;
 
-			SetRegistry = new SetRegistry(new NormalSetFactory(registryConfig));
+			_setRegistry = new SetRegistry(new NormalSetFactory(registryConfig));
 
 			Master = 0;
 		}
 
-		public T GetGlobalInput<T>(int tick)
+		public event Action<int> InputChanged;
+
+		public T GetMasterInput<T>(int tick)
 		{
 			return GetInputBuffer<T>(Master).GetInput(tick);
 		}
 
-		public void SetGlobalInput<T>(int tick, T input)
+		public void SetMasterInput<T>(int tick, T input)
 		{
 			GetInputBuffer<T>(Master).InsertInput(tick, input);
 		}
@@ -46,7 +49,7 @@
 				return;
 			}
 
-			foreach (var set in SetRegistry.All)
+			foreach (var set in _setRegistry.All)
 			{
 				set.Unassign(client);
 			}
@@ -54,7 +57,7 @@
 
 		public DataSet<InputBuffer<T>> GetAllInputs<T>()
 		{
-			return (DataSet<InputBuffer<T>>)SetRegistry.Get<InputBuffer<T>>();
+			return (DataSet<InputBuffer<T>>)_setRegistry.Get<InputBuffer<T>>();
 		}
 
 		public InputBuffer<T> GetInputBuffer<T>(int client)
@@ -79,7 +82,7 @@
 		{
 			var inputPrediciton = typeof(IInputPrediction);
 			
-			foreach (var set in SetRegistry.All)
+			foreach (var set in _setRegistry.All)
 			{
 				if (set is IDataSet dataSet && dataSet.Data.ElementType.IsAssignableFrom(inputPrediciton))
 				{
@@ -94,17 +97,24 @@
 
 		private InputBuffer<T> CreateInputBuffer<T>()
 		{
+			InputBuffer<T> inputBuffer;
+
 			if (CustomPredictionUtils.IsImplementedFor(typeof(T)))
 			{
-				return CustomPredictionUtils.CreateCustomInputBuffer<T>(_startTick, _inputBufferSize);
+				inputBuffer = CustomPredictionUtils.CreateCustomInputBuffer<T>(_startTick, _inputBufferSize);
 			}
-
-			if (IResetInput.IsImplementedFor(typeof(T)))
+			else if (IResetInput.IsImplementedFor(typeof(T)))
 			{
-				return new PredictionInputBuffer<T>(_startTick, _inputBufferSize, PredictionInputBuffer<T>.ResetPrediction);
+				inputBuffer = new PredictionInputBuffer<T>(_startTick, _inputBufferSize, PredictionInputBuffer<T>.ResetPrediction);
+			}
+			else
+			{
+				inputBuffer = new PredictionInputBuffer<T>(_startTick, _inputBufferSize, PredictionInputBuffer<T>.RepeatPrediction);
 			}
 
-			return new PredictionInputBuffer<T>(_startTick, _inputBufferSize, PredictionInputBuffer<T>.RepeatPrediction);
+			inputBuffer.InputChanged += InputChanged;
+
+			return inputBuffer;
 		}
 	}
 }

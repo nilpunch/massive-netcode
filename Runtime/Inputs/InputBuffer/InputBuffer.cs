@@ -2,7 +2,7 @@
 
 namespace Massive.Netcode
 {
-	public abstract class InputBuffer<TInput> : IInputBuffer, IInputPrediction
+	public abstract class InputBuffer<TInput> : IInputPrediction
 	{
 		private readonly CyclicList<bool> _isPredicted;
 		private readonly CyclicList<TInput> _inputs;
