@@ -2,46 +2,71 @@
 
 namespace Massive.Netcode
 {
+	public class ClientSimulation
+	{
+		
+		
+		public void NewPlayer()
+		{
+			
+		}
+	}
+	
 	public class Simulation
 	{
 		private readonly IMassive _massive;
 		private readonly ISystem _system;
-		private readonly ICommandBuffer _commandBuffer;
-		private readonly FrameChangeLog _frameChangeLog;
+		private readonly IInputPrediction _inputPrediction;
+		private readonly TickChangeLog _tickChangeLog;
+		private readonly int _saveEachNthTick;
 
-		public Simulation(IMassive massive, ISystem system, ICommandBuffer commandBuffer, FrameChangeLog frameChangeLog)
+		public Simulation(IMassive massive, ISystem system, IInputPrediction inputPrediction, TickChangeLog tickChangeLog, int saveEachNthTick = 5)
 		{
 			_massive = massive;
 			_system = system;
-			_commandBuffer = commandBuffer;
-			_frameChangeLog = frameChangeLog;
+			_inputPrediction = inputPrediction;
+			_tickChangeLog = tickChangeLog;
+			_saveEachNthTick = saveEachNthTick;
 		}
 
-		private int CurrentFrame { get; set; }
+		private int CurrentTick { get; set; }
 
-		public void FastForwardToFrame(int targetFrame)
+		public void FastForwardToTick(int targetTick)
 		{
-			if (targetFrame < 0)
+			if (targetTick < 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(targetFrame), "Target frame should not be negative!");
+				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target frame should not be negative!");
 			}
 
-			int earliestFrame = Math.Min(targetFrame, _frameChangeLog.EarliestChangedFrame);
-			int framesToRollback = Math.Max(CurrentFrame - earliestFrame, 0);
+			int earliestTick = Math.Min(targetTick, _tickChangeLog.EarliestChangedTick);
+			int ticksToRollback = Math.Max(CurrentTick - earliestTick, 0);
+
+			int currentFrame = CurrentTick / _saveEachNthTick;
+			int targetFrame = (CurrentTick - ticksToRollback) / _saveEachNthTick;
+			int framesToRollback = currentFrame - targetFrame;
+
+			if (framesToRollback > _massive.CanRollbackFrames)
+			{
+				throw new InvalidOperationException("Can't rollback this far!");
+			}
 
 			_massive.Rollback(framesToRollback);
-			CurrentFrame -= framesToRollback;
+			CurrentTick = (currentFrame - framesToRollback) * _saveEachNthTick;
 
-			_commandBuffer.PopulateCommandsUpTo(targetFrame);
+			_inputPrediction.PopulateInputsUpTo(targetTick);
 
-			while (CurrentFrame < targetFrame)
+			while (CurrentTick < targetTick)
 			{
 				_system.StepForward();
-				_massive.SaveFrame();
-				CurrentFrame += 1;
+				CurrentTick += 1;
+
+				if (CurrentTick % _saveEachNthTick == 0)
+				{
+					_massive.SaveFrame();
+				}
 			}
 
-			_frameChangeLog.ConfirmObservationUpTo(targetFrame);
+			_tickChangeLog.ConfirmUpTo(targetTick);
 		}
 	}
 }
