@@ -2,11 +2,6 @@
 {
 	public interface IInputBuffer
 	{
-		void ResetInputs(int startTick);
-	}
-
-	public interface IInputPrediction
-	{
-		void PopulateInputsUpTo(int tick);
+		void Reset(int startTick);
 	}
 }

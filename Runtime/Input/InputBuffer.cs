@@ -2,17 +2,15 @@
 
 namespace Massive.Netcode
 {
-	public class InputBuffer<TInput> : IInputBuffer, IInputPrediction
+	public abstract class InputBuffer<TInput> : IInputBuffer, IInputPrediction
 	{
-		private readonly InputPrediction<TInput> _inputPrediction;
 		private readonly CyclicList<bool> _isPredicted;
 		private readonly CyclicList<TInput> _inputs;
 
 		private int _lastTickWithAnyInput;
 
-		public InputBuffer(int startTick, int bufferSize, InputPrediction<TInput> inputPrediction = null)
+		protected InputBuffer(int startTick, int bufferSize)
 		{
-			_inputPrediction = inputPrediction ?? RepeatPrediction;
 			_inputs = new CyclicList<TInput>(bufferSize, startTick);
 			_isPredicted = new CyclicList<bool>(bufferSize, startTick);
 
@@ -23,9 +21,7 @@ namespace Massive.Netcode
 
 		public event Action<int> InputChanged;
 
-		public static TInput RepeatPrediction(TInput input, int ticksPassed) => input;
-
-		public void ResetInputs(int startTick)
+		public void Reset(int startTick)
 		{
 			_inputs.Reset(startTick);
 			_isPredicted.Reset(startTick);
@@ -44,7 +40,7 @@ namespace Massive.Netcode
 		{
 			while (_inputs.TailIndex - 1 < tick)
 			{
-				_inputs.Append(_inputPrediction(_inputs[_lastTickWithAnyInput], _inputs.TailIndex - _lastTickWithAnyInput));
+				_inputs.Append(Predict(_inputs[_lastTickWithAnyInput], _inputs.TailIndex - _lastTickWithAnyInput));
 				_isPredicted.Append(false);
 			}
 		}
@@ -76,6 +72,8 @@ namespace Massive.Netcode
 			InputChanged?.Invoke(reevaluateFrame);
 		}
 
+		protected abstract TInput Predict(TInput input, int ticksPassed);
+
 		private void ReevaluateFrom(int tick)
 		{
 			int lastConfirmedTick = -1;
@@ -85,7 +83,7 @@ namespace Massive.Netcode
 				{
 					if (lastConfirmedTick != -1)
 					{
-						_inputs[tick] = _inputPrediction(_inputs[lastConfirmedTick], tick - lastConfirmedTick);
+						_inputs[tick] = Predict(_inputs[lastConfirmedTick], tick - lastConfirmedTick);
 					}
 				}
 				else
