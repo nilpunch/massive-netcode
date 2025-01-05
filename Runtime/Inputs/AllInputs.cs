@@ -1,6 +1,6 @@
 ﻿namespace Massive.Netcode
 {
-	public struct AllInputs<T>
+	public readonly struct AllInputs<T>
 	{
 		public readonly DataSet<InputBuffer<T>> Set;
 		public readonly int Tick;
@@ -14,6 +14,11 @@
 		public T GetInput(int client)
 		{
 			return Set.Get(client).GetInput(Tick);
+		}
+
+		public PackedEnumerator GetEnumerator()
+		{
+			return Set.GetEnumerator();
 		}
 	}
 }

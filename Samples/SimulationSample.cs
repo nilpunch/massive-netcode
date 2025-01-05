@@ -67,7 +67,7 @@ namespace Massive.Netcode.Samples
 		{
 			var spawnInputs = Simulation.Inputs.GetAll<PlayerSpawnInput>();
 
-			foreach (var client in spawnInputs.Set)
+			foreach (var client in spawnInputs)
 			{
 				if (spawnInputs.GetInput(client).NeedToSpawnPlayer)
 				{
