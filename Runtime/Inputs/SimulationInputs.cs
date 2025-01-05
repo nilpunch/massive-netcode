@@ -1,15 +1,23 @@
 ﻿namespace Massive.Netcode
 {
-	public class SimulationInputs
+	public class SimulationInputs : ClientInputs
 	{
-		public InputRegistry InputRegistry { get; }
+		public SimulationTime Time { get; }
 
-		public SimulationTime SimulationTime { get; }
-
-		public SimulationInputs(InputRegistry inputRegistry, SimulationTime simulationTime)
+		public SimulationInputs(SimulationTime time, int inputBufferSize = 120, int startTick = 0, RegistryConfig registryConfig = null)
+			: base(inputBufferSize, startTick, registryConfig)
 		{
-			InputRegistry = inputRegistry;
-			SimulationTime = simulationTime;
+			Time = time;
+		}
+
+		public T GetMasterInput<T>()
+		{
+			return GetMasterInputAt<T>(Time.Tick);
+		}
+
+		public T GetInput<T>(int client)
+		{
+			return GetInputAt<T>(client, Time.Tick);
 		}
 	}
 }

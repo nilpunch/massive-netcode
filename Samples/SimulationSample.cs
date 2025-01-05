@@ -23,17 +23,17 @@ namespace Massive.Netcode.Samples
 
 		public void ConnectClient(int client, int spawnTick)
 		{
-			_simulation.InputRegistry.SetInput(client, spawnTick, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
+			_simulation.Inputs.SetInput(client, spawnTick, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
 		}
 
 		public void ApplyPlayerInput(int client, int tick, PlayerInput playerInput)
 		{
-			_simulation.InputRegistry.SetInput(client, tick, playerInput);
+			_simulation.Inputs.SetInput(client, tick, playerInput);
 		}
 
 		public void FinishSession(int finishAtTick)
 		{
-			_simulation.InputRegistry.SetMasterInput(finishAtTick, new SessionInput() { IsFinished = true });
+			_simulation.Inputs.SetMasterInput(finishAtTick, new SessionInput() { IsFinished = true });
 		}
 
 		public async void Run()

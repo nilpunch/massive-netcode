@@ -2,7 +2,7 @@
 
 namespace Massive.Netcode
 {
-	public class InputRegistry : IInputPrediction
+	public class ClientInputs : IInputPrediction
 	{
 		private readonly int _inputBufferSize;
 		private readonly int _startTick;
@@ -10,7 +10,7 @@ namespace Massive.Netcode
 
 		public int Master { get; }
 
-		public InputRegistry(int inputBufferSize = 120, int startTick = 0, RegistryConfig registryConfig = null)
+		public ClientInputs(int inputBufferSize = 120, int startTick = 0, RegistryConfig registryConfig = null)
 		{
 			_inputBufferSize = inputBufferSize;
 			_startTick = startTick;
@@ -22,7 +22,7 @@ namespace Massive.Netcode
 
 		public event Action<int> InputChanged;
 
-		public T GetMasterInput<T>(int tick)
+		public T GetMasterInputAt<T>(int tick)
 		{
 			return GetInputBuffer<T>(Master).GetInput(tick);
 		}
@@ -32,7 +32,7 @@ namespace Massive.Netcode
 			GetInputBuffer<T>(Master).InsertInput(tick, input);
 		}
 
-		public T GetInput<T>(int client, int tick)
+		public T GetInputAt<T>(int client, int tick)
 		{
 			return GetInputBuffer<T>(client).GetInput(tick);
 		}
@@ -80,11 +80,9 @@ namespace Massive.Netcode
 
 		public void PopulateInputsUpTo(int tick)
 		{
-			var inputPrediciton = typeof(IInputPrediction);
-			
 			foreach (var set in _setRegistry.All)
 			{
-				if (set is IDataSet dataSet && dataSet.Data.ElementType.IsAssignableFrom(inputPrediciton))
+				if (set is IDataSet dataSet)
 				{
 					foreach (var client in set)
 					{
