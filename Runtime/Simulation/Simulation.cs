@@ -19,13 +19,12 @@
 			Registry = new MassiveRegistry(massiveRegistryConfig ?? new MassiveRegistryConfig());
 			Time = new SimulationTime() { FPS = simulationFramerate };
 			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthFrame, 0, new RegistryConfig(pageSize: 1024));
-			Systems = new SimulationGroup();
-			TickChangeLog = new TickChangeLog();
 
+			Systems = new SimulationGroup();
 			Systems.Add(Time);
 
+			TickChangeLog = new TickChangeLog();
 			Inputs.InputChanged += TickChangeLog.NotifyChange;
-
 			Loop = new SimulationLoop(Registry, Systems, Inputs, TickChangeLog, saveEachNthFrame);
 
 			Registry.AssignService(Time);

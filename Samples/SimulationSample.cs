@@ -2,7 +2,10 @@
 
 namespace Massive.Netcode.Samples
 {
-	public struct PlayerSpawnInput : IResetInput { public bool NeedToSpawnPlayer; }
+	public struct PlayerSpawnInput : IResetInput
+	{
+		public bool NeedToSpawnPlayer;
+	}
 
 	public struct PlayerInput { public bool IsShooting; }
 
@@ -21,28 +24,29 @@ namespace Massive.Netcode.Samples
 			_simulation.Systems.Add(new ShootingSystem(_simulation));
 		}
 
-		public void ConnectClient(int client, int spawnTick)
+		// RPC or any other source
+		public void ConnectClient(int client, int connectionTick)
 		{
-			_simulation.Inputs.SetInput(client, spawnTick, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
+			_simulation.Inputs.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
 		}
 
 		public void ApplyPlayerInput(int client, int tick, PlayerInput playerInput)
 		{
-			_simulation.Inputs.SetInput(client, tick, playerInput);
+			_simulation.Inputs.SetAt(tick, client, playerInput);
 		}
 
-		public void FinishSession(int finishAtTick)
+		public void FinishSession(int finishTick)
 		{
-			_simulation.Inputs.SetMasterInput(finishAtTick, new SessionInput() { IsFinished = true });
+			_simulation.Inputs.SetGlobalAt(finishTick, new SessionInput() { IsFinished = true });
 		}
 
 		public async void Run()
 		{
-			int tick = 0;
-			
+			int tick = 0; // Must be synchronized with server
+
 			while (true)
 			{
-				if (_simulation.Inputs.GetMasterInput<SessionInput>().IsFinished)
+				if (_simulation.Inputs.GetGlobal<SessionInput>().IsFinished)
 				{
 					break;
 				}
@@ -55,44 +59,34 @@ namespace Massive.Netcode.Samples
 		}
 	}
 
-	public class SpawnPlayersSystem : ISimulation
+	public class SpawnPlayersSystem : SystemBase
 	{
-		private readonly Simulation _simulation;
+		public SpawnPlayersSystem(Simulation simulation) : base(simulation) { }
 
-		public SpawnPlayersSystem(Simulation simulation)
+		public override void Update(int tick)
 		{
-			_simulation = simulation;
-		}
+			var spawnInputs = Simulation.Inputs.GetAll<PlayerSpawnInput>();
 
-		public void Update(int tick)
-		{
-			var spawnInputs = _simulation.Inputs.GetAllInputs<PlayerSpawnInput>();
-
-			foreach (var client in spawnInputs)
+			foreach (var client in spawnInputs.Set)
 			{
-				if (spawnInputs.Get(client).GetInput(tick).NeedToSpawnPlayer)
+				if (spawnInputs.GetInput(client).NeedToSpawnPlayer)
 				{
-					_simulation.Registry.CreateEntity(new Player() { ClientId = client });
+					Simulation.Registry.CreateEntity(new Player() { ClientId = client });
 				}
 			}
 		}
 	}
 
-	public class ShootingSystem : ISimulation
+	public class ShootingSystem : SystemBase
 	{
-		private readonly Simulation _simulation;
+		public ShootingSystem(Simulation simulation) : base(simulation) { }
 
-		public ShootingSystem(Simulation simulation)
+		public override void Update(int tick)
 		{
-			_simulation = simulation;
-		}
-
-		public void Update(int tick)
-		{
-			_simulation.Registry.View().ForEach((ref Player player) =>
+			Simulation.Registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = _simulation.Inputs.GetInput<PlayerInput>(player.ClientId);
-	
+				var playerInput = Simulation.Inputs.Get<PlayerInput>(player.ClientId);
+
 				if (playerInput.IsShooting)
 				{
 					// Perform shooting

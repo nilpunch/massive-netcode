@@ -10,14 +10,19 @@
 			Time = time;
 		}
 
-		public T GetMasterInput<T>()
+		public T GetGlobal<T>()
 		{
-			return GetMasterInputAt<T>(Time.Tick);
+			return GetGlobalAt<T>(Time.Tick);
 		}
 
-		public T GetInput<T>(int client)
+		public T Get<T>(int client)
 		{
-			return GetInputAt<T>(client, Time.Tick);
+			return GetAt<T>(Time.Tick, client);
+		}
+
+		public AllInputs<T> GetAll<T>()
+		{
+			return GetAllAt<T>(Time.Tick);
 		}
 	}
 }

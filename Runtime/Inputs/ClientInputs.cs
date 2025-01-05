@@ -22,22 +22,22 @@ namespace Massive.Netcode
 
 		public event Action<int> InputChanged;
 
-		public T GetMasterInputAt<T>(int tick)
+		public T GetGlobalAt<T>(int tick)
 		{
 			return GetInputBuffer<T>(Master).GetInput(tick);
 		}
 
-		public void SetMasterInput<T>(int tick, T input)
+		public void SetGlobalAt<T>(int tick, T input)
 		{
 			GetInputBuffer<T>(Master).InsertInput(tick, input);
 		}
 
-		public T GetInputAt<T>(int client, int tick)
+		public T GetAt<T>(int tick, int client)
 		{
 			return GetInputBuffer<T>(client).GetInput(tick);
 		}
 
-		public void SetInput<T>(int client, int tick, T input)
+		public void SetAt<T>(int tick, int client, T input)
 		{
 			GetInputBuffer<T>(client).InsertInput(tick, input);
 		}
@@ -55,9 +55,9 @@ namespace Massive.Netcode
 			}
 		}
 
-		public DataSet<InputBuffer<T>> GetAllInputs<T>()
+		public AllInputs<T> GetAllAt<T>(int tick)
 		{
-			return (DataSet<InputBuffer<T>>)_setRegistry.Get<InputBuffer<T>>();
+			return new AllInputs<T>(GetAllInputs<T>(), tick);
 		}
 
 		public InputBuffer<T> GetInputBuffer<T>(int client)
@@ -91,6 +91,11 @@ namespace Massive.Netcode
 					}
 				}
 			}
+		}
+
+		private DataSet<InputBuffer<T>> GetAllInputs<T>()
+		{
+			return (DataSet<InputBuffer<T>>)_setRegistry.Get<InputBuffer<T>>();
 		}
 
 		private InputBuffer<T> CreateInputBuffer<T>()
