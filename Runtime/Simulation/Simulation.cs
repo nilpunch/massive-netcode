@@ -17,7 +17,7 @@
 		public Simulation(int simulationFramerate = 60, int saveEachNthFrame = 5, MassiveRegistryConfig massiveRegistryConfig = null)
 		{
 			Registry = new MassiveRegistry(massiveRegistryConfig ?? new MassiveRegistryConfig());
-			Time = new SimulationTime() { FPS = simulationFramerate };
+			Time = new SimulationTime(simulationFramerate);
 			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthFrame, 0, new RegistryConfig(pageSize: 1024));
 
 			Systems = new SimulationGroup();
