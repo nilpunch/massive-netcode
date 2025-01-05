@@ -10,7 +10,7 @@
 
 		public SimulationTime Time { get; }
 
-		public SimulationLoop Loop { get; }
+		public ResimulationLoop Loop { get; }
 
 		private TickChangeLog TickChangeLog { get; }
 
@@ -25,7 +25,7 @@
 
 			TickChangeLog = new TickChangeLog();
 			Inputs.InputChanged += TickChangeLog.NotifyChange;
-			Loop = new SimulationLoop(Registry, Systems, Inputs, TickChangeLog, saveEachNthFrame);
+			Loop = new ResimulationLoop(Registry, Systems, Inputs, TickChangeLog, saveEachNthFrame);
 
 			Registry.AssignService(Time);
 			Registry.AssignService(Inputs);

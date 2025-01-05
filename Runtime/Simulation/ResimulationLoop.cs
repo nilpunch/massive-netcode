@@ -2,7 +2,7 @@
 
 namespace Massive.Netcode
 {
-	public class SimulationLoop
+	public class ResimulationLoop
 	{
 		private readonly IMassive _massive;
 		private readonly ISimulation _simulation;
@@ -10,7 +10,7 @@ namespace Massive.Netcode
 		private readonly TickChangeLog _tickChangeLog;
 		private readonly int _saveEachNthTick;
 
-		public SimulationLoop(IMassive massive, ISimulation simulation, IInputPrediction inputPrediction, TickChangeLog tickChangeLog, int saveEachNthTick = 5)
+		public ResimulationLoop(IMassive massive, ISimulation simulation, IInputPrediction inputPrediction, TickChangeLog tickChangeLog, int saveEachNthTick = 5)
 		{
 			_massive = massive;
 			_simulation = simulation;
