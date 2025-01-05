@@ -4,7 +4,7 @@
 	{
 		public MassiveRegistry Registry { get; }
 
-		public SimulationGroup Group { get; }
+		public SimulationGroup Systems { get; }
 
 		public SimulationInputs Inputs { get; }
 
@@ -19,14 +19,14 @@
 			Registry = new MassiveRegistry(massiveRegistryConfig ?? new MassiveRegistryConfig());
 			Time = new SimulationTime() { FPS = simulationFramerate };
 			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthFrame, 0, new RegistryConfig(pageSize: 1024));
-			Group = new SimulationGroup();
+			Systems = new SimulationGroup();
 			TickChangeLog = new TickChangeLog();
 
-			Group.Add(Time);
+			Systems.Add(Time);
 
 			Inputs.InputChanged += TickChangeLog.NotifyChange;
 
-			Loop = new SimulationLoop(Registry, Group, Inputs, TickChangeLog, saveEachNthFrame);
+			Loop = new SimulationLoop(Registry, Systems, Inputs, TickChangeLog, saveEachNthFrame);
 
 			Registry.AssignService(Time);
 			Registry.AssignService(Inputs);

@@ -17,8 +17,8 @@ namespace Massive.Netcode.Samples
 		public SimulationSample()
 		{
 			_simulation = new Simulation();
-			_simulation.Group.Add(new SpawnPlayersSystem(_simulation));
-			_simulation.Group.Add(new ShootingSystem(_simulation));
+			_simulation.Systems.Add(new SpawnPlayersSystem(_simulation));
+			_simulation.Systems.Add(new ShootingSystem(_simulation));
 		}
 
 		public void ConnectClient(int client, int spawnTick)
