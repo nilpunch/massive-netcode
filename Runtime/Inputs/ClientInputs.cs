@@ -109,7 +109,7 @@ namespace Massive.Netcode
 
 			if (FadeOutInput.IsImplementedFor(typeof(T)))
 			{
-				inputBuffer = FadeOutInput.CreateCustomInputBuffer<T>(_startTick, _inputBufferSize);
+				inputBuffer = FadeOutInput.CreateInputBuffer<T>(_startTick, _inputBufferSize);
 			}
 			else if (IRepeatInput.IsImplementedFor(typeof(T)))
 			{

@@ -1,0 +1,5 @@
+<linker>
+    <assembly fullname="Massive.Netcode">
+        <type fullname="Massive.Netcode.IFadeOutInput*" preserve="all" />
+    </assembly>
+</linker>
