@@ -20,17 +20,15 @@ namespace Massive.Netcode.Samples
 		public float MagnitudeX;
 		public float MagnitudeY;
 
-		public PlayerMovingInput(float magnitudeX, float magnitudeY)
-		{
-			MagnitudeX = magnitudeX;
-			MagnitudeY = magnitudeY;
-		}
-
 		public PlayerMovingInput FadeOut(int ticksPassed, in FadeOutConfig config)
 		{
 			float fadeOutPercent = Math.Clamp((ticksPassed - config.StartDecayTick) / (float)config.DecayDurationTicks, 0f, 1f);
 			float modifier = 1f - fadeOutPercent;
-			return new PlayerMovingInput(MagnitudeX * modifier, MagnitudeY * modifier);
+			return new PlayerMovingInput()
+			{
+				MagnitudeX = MagnitudeX * modifier,
+				MagnitudeY = MagnitudeY * modifier
+			};
 		}
 	}
 
