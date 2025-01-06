@@ -39,7 +39,7 @@ namespace Massive.Netcode
 					throw new ArgumentOutOfRangeException(nameof(index), index, $"List works in range [{HeadIndex}, {TailIndex}).");
 				}
 
-				return ref _data[index - HeadIndex];
+				return ref _data[index % CycleCapacity];
 			}
 		}
 

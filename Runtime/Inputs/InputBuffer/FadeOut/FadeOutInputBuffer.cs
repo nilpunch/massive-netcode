@@ -4,9 +4,13 @@
 	{
 		private readonly FadeOutConfig _fadeOutConfig;
 
-		public FadeOutInputBuffer(int startTick, int bufferSize, FadeOutConfig? fadeOutConfig = default) : base(startTick, bufferSize)
+		public FadeOutInputBuffer(int startTick, int bufferSize) : this(startTick, bufferSize, new FadeOutConfig(30, 60))
 		{
-			_fadeOutConfig = fadeOutConfig ?? new FadeOutConfig(30, 60);
+		}
+
+		public FadeOutInputBuffer(int startTick, int bufferSize, FadeOutConfig fadeOutConfig) : base(startTick, bufferSize)
+		{
+			_fadeOutConfig = fadeOutConfig;
 		}
 
 		protected override TInput Predict(TInput input, int ticksPassed)

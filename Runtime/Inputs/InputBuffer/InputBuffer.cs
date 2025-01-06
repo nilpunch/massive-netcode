@@ -40,7 +40,7 @@ namespace Massive.Netcode
 
 		public void PopulateInputsUpTo(int tick)
 		{
-			while (_inputs.TailIndex < tick + 1)
+			while (_inputs.TailIndex <= tick)
 			{
 				_inputs.Append(Input.Predicted(Predict(_inputs[_lastTickWithoutPrediction].Value, _inputs.TailIndex - _lastTickWithoutPrediction)));
 			}
@@ -49,7 +49,16 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetActualInput(int tick, TInput input)
 		{
-			_inputs[tick] = Input.Actual(input);
+			if (_inputs.TailIndex <= tick)
+			{
+				PopulateInputsUpTo(tick - 1);
+				_inputs.Append(Input.Actual(input));
+			}
+			else
+			{
+				_inputs[tick] = Input.Actual(input);
+			}
+
 			_lastTickWithoutPrediction = Math.Max(_lastTickWithoutPrediction, tick);
 			ReevaluateFrom(tick);
 
