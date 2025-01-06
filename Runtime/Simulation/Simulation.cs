@@ -14,19 +14,24 @@
 
 		public ChangeTracker ChangeTracker { get; }
 
-		public Simulation(int simulationFramerate = 60, int saveEachNthTick = 5, MassiveRegistryConfig massiveRegistryConfig = null)
+		public Simulation() : this(new SimulationConfig())
 		{
-			Registry = new MassiveRegistry(massiveRegistryConfig ?? new MassiveRegistryConfig());
+		}
 
-			Time = new SimulationTime(simulationFramerate);
-			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthTick);
+		public Simulation(SimulationConfig simulationConfig)
+		{
+			Registry = new MassiveRegistry(simulationConfig.MassiveRegistryConfig);
+
+			Time = new SimulationTime(simulationConfig.Framerate);
+			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * simulationConfig.SaveEachNthTick
+				+ simulationConfig.AdditionalInputBufferSize);
 
 			Systems = new SimulationGroup();
 			Systems.Add(Time);
 
 			ChangeTracker = new ChangeTracker();
 			Inputs.InputChanged += ChangeTracker.NotifyChange;
-			Loop = new ResimulationLoop(Registry, Systems, Inputs, ChangeTracker, saveEachNthTick);
+			Loop = new ResimulationLoop(Registry, Systems, Inputs, ChangeTracker, simulationConfig.SaveEachNthTick);
 
 			Registry.AssignService(Time);
 			Registry.AssignService(Inputs);
