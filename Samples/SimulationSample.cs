@@ -24,7 +24,7 @@ namespace Massive.Netcode.Samples
 			_simulation.Systems.Add(new ShootingSystem(_simulation));
 		}
 
-		// RPC or any other source, in any order, at any moment.
+		// Modify inputs via RPC or any other source, in any order, at any time.
 		public void ConnectClient(int client, int connectionTick)
 		{
 			_simulation.Inputs.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
