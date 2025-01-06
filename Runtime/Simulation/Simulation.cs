@@ -17,8 +17,10 @@
 		public Simulation(int simulationFramerate = 60, int saveEachNthFrame = 5, MassiveRegistryConfig massiveRegistryConfig = null)
 		{
 			Registry = new MassiveRegistry(massiveRegistryConfig ?? new MassiveRegistryConfig());
+			Registry.SaveFrame();
+
 			Time = new SimulationTime(simulationFramerate);
-			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthFrame, 0, new RegistryConfig(pageSize: 1024));
+			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthFrame);
 
 			Systems = new SimulationGroup();
 			Systems.Add(Time);

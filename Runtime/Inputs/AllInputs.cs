@@ -1,4 +1,6 @@
-﻿namespace Massive.Netcode
+﻿using System.Runtime.CompilerServices;
+
+namespace Massive.Netcode
 {
 	public readonly struct AllInputs<T>
 	{
@@ -11,11 +13,13 @@
 			Tick = tick;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T GetInput(int client)
 		{
 			return Set.Get(client).GetInput(Tick);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public PackedEnumerator GetEnumerator()
 		{
 			return Set.GetEnumerator();

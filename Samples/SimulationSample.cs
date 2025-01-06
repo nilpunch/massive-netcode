@@ -2,12 +2,9 @@
 
 namespace Massive.Netcode.Samples
 {
-	public struct PlayerSpawnInput : IResetInput
-	{
-		public bool NeedToSpawnPlayer;
-	}
+	public struct PlayerSpawnInput { public bool NeedToSpawnPlayer; }
 
-	public struct PlayerInput { public bool IsShooting; }
+	public struct PlayerInput : IRepeatInput { public bool IsShooting; }
 
 	public struct SessionInput { public bool IsFinished; }
 

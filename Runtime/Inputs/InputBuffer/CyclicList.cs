@@ -11,9 +11,17 @@ namespace Massive.Netcode
 
 		public int TailIndex { get; private set; }
 
-		public int HeadIndex => TailIndex - CycledCount;
+		public int HeadIndex
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => TailIndex - CycledCount;
+		}
 
-		public int CycleCapacity => _data.Length;
+		public int CycleCapacity
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => _data.Length;
+		}
 
 		public CyclicList(int size, int startIndex = 0)
 		{
@@ -26,7 +34,7 @@ namespace Massive.Netcode
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get
 			{
-				if (index < HeadIndex || index > TailIndex)
+				if (index < HeadIndex || index >= TailIndex)
 				{
 					throw new ArgumentOutOfRangeException(nameof(index), index, $"List works in range [{HeadIndex}, {TailIndex}).");
 				}
@@ -35,6 +43,7 @@ namespace Massive.Netcode
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Append(T data)
 		{
 			_data[TailIndex % CycleCapacity] = data;
