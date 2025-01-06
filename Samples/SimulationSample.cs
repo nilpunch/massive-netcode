@@ -1,14 +1,38 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Massive.Netcode.Samples
 {
+	public struct Player { public int ClientId; }
+	
+	// By default, inputs are reset during prediction.
 	public struct PlayerSpawnInput { public bool NeedToSpawnPlayer; }
 
-	public struct PlayerInput : IRepeatInput { public bool IsShooting; }
-
 	public struct SessionInput { public bool IsFinished; }
+	
+	// Repeats the last input during prediction.
+	public struct PlayerShootingInput : IRepeatInput { public bool IsShooting; }
 
-	public struct Player { public int ClientId; }
+	// Smooth input prediction.
+	// Note: Floats are used here for simplicity. Replace them with deterministic types in real usage.
+	public struct PlayerMovingInput : IFadeOutInput<PlayerMovingInput>
+	{
+		public float MagnitudeX;
+		public float MagnitudeY;
+
+		public PlayerMovingInput(float magnitudeX, float magnitudeY)
+		{
+			MagnitudeX = magnitudeX;
+			MagnitudeY = magnitudeY;
+		}
+
+		public PlayerMovingInput FadeOut(int ticksPassed, in FadeOutConfig config)
+		{
+			float fadeOutPercent = Math.Clamp((ticksPassed - config.StartDecayTick) / (float)config.DecayDurationTicks, 0f, 1f);
+			float modifier = 1f - fadeOutPercent;
+			return new PlayerMovingInput(MagnitudeX * modifier, MagnitudeY * modifier);
+		}
+	}
 
 	public class SimulationSample
 	{
@@ -21,13 +45,13 @@ namespace Massive.Netcode.Samples
 			_simulation.Systems.Add(new ShootingSystem(_simulation));
 		}
 
-		// RPC or any other source
+		// RPC or any other source.
 		public void ConnectClient(int client, int connectionTick)
 		{
 			_simulation.Inputs.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
 		}
 
-		public void ApplyPlayerInput(int client, int tick, PlayerInput playerInput)
+		public void ApplyPlayerInput(int client, int tick, PlayerShootingInput playerInput)
 		{
 			_simulation.Inputs.SetAt(tick, client, playerInput);
 		}
@@ -39,7 +63,8 @@ namespace Massive.Netcode.Samples
 
 		public async void Run()
 		{
-			int tick = 0; // Must be synchronized with server
+			// Must be synchronized with server.
+			int tick = 0;
 
 			while (true)
 			{
@@ -82,11 +107,11 @@ namespace Massive.Netcode.Samples
 		{
 			Simulation.Registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = Simulation.Inputs.Get<PlayerInput>(player.ClientId);
+				var playerInput = Simulation.Inputs.Get<PlayerShootingInput>(player.ClientId);
 
 				if (playerInput.IsShooting)
 				{
-					// Perform shooting
+					// Perform shooting.
 				}
 			});
 		}
