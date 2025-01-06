@@ -12,7 +12,7 @@
 			}
 		}
 
-		public void ConfirmObservationUpTo(int tick)
+		public void ConfirmChangesUpTo(int tick)
 		{
 			if (EarliestChangedTick < tick)
 			{

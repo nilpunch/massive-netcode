@@ -2,7 +2,7 @@
 {
 	public interface IFadeOutInput<T> where T : IFadeOutInput<T>
 	{
-		T FadeOut(int ticksPassed);
+		T FadeOut(int ticksPassed, in FadeOutConfig fadeOutConfig);
 
 		private static void ReflectionSupportForAOT()
 		{

@@ -1,4 +1,4 @@
-﻿namespace Massive.Netcode
+﻿namespace Massive.Netcode.Samples
 {
 	public abstract class SystemBase : ISimulation
 	{

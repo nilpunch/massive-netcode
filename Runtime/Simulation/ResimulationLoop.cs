@@ -56,7 +56,7 @@ namespace Massive.Netcode
 				}
 			}
 
-			_tickChangeLog.ConfirmObservationUpTo(targetTick);
+			_tickChangeLog.ConfirmChangesUpTo(targetTick);
 		}
 	}
 }
