@@ -24,7 +24,7 @@ namespace Massive.Netcode.Samples
 			_simulation.Systems.Add(new ShootingSystem(_simulation));
 		}
 
-		// RPC or any other source, in any order
+		// RPC or any other source, in any order, at any moment.
 		public void ConnectClient(int client, int connectionTick)
 		{
 			_simulation.Inputs.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
@@ -42,7 +42,7 @@ namespace Massive.Netcode.Samples
 
 		public async void Run()
 		{
-			// Must be synchronized with server.
+			// The target tick must be synchronized with server.
 			int targetTick = 0;
 
 			while (true)
@@ -52,6 +52,7 @@ namespace Massive.Netcode.Samples
 					break;
 				}
 
+				// Automatic rollbacks and resimulation based on input changes.
 				_simulation.Loop.FastForwardToTick(targetTick);
 
 				targetTick += 1;
