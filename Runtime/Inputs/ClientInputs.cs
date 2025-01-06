@@ -9,7 +9,7 @@ namespace Massive.Netcode
 		private readonly int _startTick;
 		private readonly SetRegistry _setRegistry;
 
-		public int Master { get; }
+		public int Global { get; }
 
 		public ClientInputs(int inputBufferSize = 120, int startTick = 0)
 		{
@@ -18,7 +18,7 @@ namespace Massive.Netcode
 
 			_setRegistry = new SetRegistry(new NormalSetFactory(pageSize: 1024));
 
-			Master = 0;
+			Global = 0;
 		}
 
 		public event Action<int> InputChanged;
@@ -26,13 +26,13 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T GetGlobalAt<T>(int tick)
 		{
-			return GetInputBuffer<T>(Master).GetInput(tick);
+			return GetInputBuffer<T>(Global).GetInput(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetGlobalAt<T>(int tick, T input)
 		{
-			GetInputBuffer<T>(Master).SetActualInput(tick, input);
+			GetInputBuffer<T>(Global).SetActualInput(tick, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -49,7 +49,7 @@ namespace Massive.Netcode
 
 		public void ForgetClient(int client)
 		{
-			if (client == Master)
+			if (client == Global)
 			{
 				return;
 			}

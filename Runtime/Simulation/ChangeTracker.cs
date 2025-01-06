@@ -1,6 +1,6 @@
 ﻿namespace Massive.Netcode
 {
-	public class TickChangeLog
+	public class ChangeTracker
 	{
 		public int EarliestChangedTick { get; private set; }
 

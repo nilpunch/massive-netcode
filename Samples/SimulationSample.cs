@@ -1,36 +1,16 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Massive.Netcode.Samples
 {
 	public struct Player { public int ClientId; }
-	
+
 	// By default, inputs are reset during prediction.
 	public struct PlayerSpawnInput { public bool NeedToSpawnPlayer; }
 
-	public struct SessionInput { public bool IsFinished; }
-	
 	// Repeats the last input during prediction.
 	public struct PlayerShootingInput : IRepeatInput { public bool IsShooting; }
 
-	// Smooth input prediction.
-	// Note: Floats are used here for simplicity. Replace them with deterministic types in real usage.
-	public struct PlayerMovingInput : IFadeOutInput<PlayerMovingInput>
-	{
-		public float MagnitudeX;
-		public float MagnitudeY;
-
-		public PlayerMovingInput FadeOut(int ticksPassed, in FadeOutConfig config)
-		{
-			float fadeOutPercent = Math.Clamp((ticksPassed - config.StartDecayTick) / (float)config.DecayDurationTicks, 0f, 1f);
-			float modifier = 1f - fadeOutPercent;
-			return new PlayerMovingInput()
-			{
-				MagnitudeX = MagnitudeX * modifier,
-				MagnitudeY = MagnitudeY * modifier
-			};
-		}
-	}
+	public struct SessionInput : IRepeatInput { public bool IsFinished; }
 
 	public class SimulationSample
 	{
@@ -39,11 +19,12 @@ namespace Massive.Netcode.Samples
 		public SimulationSample()
 		{
 			_simulation = new Simulation();
+
 			_simulation.Systems.Add(new SpawnPlayersSystem(_simulation));
 			_simulation.Systems.Add(new ShootingSystem(_simulation));
 		}
 
-		// RPC or any other source.
+		// RPC or any other source, in any order
 		public void ConnectClient(int client, int connectionTick)
 		{
 			_simulation.Inputs.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
@@ -62,7 +43,7 @@ namespace Massive.Netcode.Samples
 		public async void Run()
 		{
 			// Must be synchronized with server.
-			int tick = 0;
+			int targetTick = 0;
 
 			while (true)
 			{
@@ -71,10 +52,11 @@ namespace Massive.Netcode.Samples
 					break;
 				}
 
-				_simulation.Loop.FastForwardToTick(tick);
+				_simulation.Loop.FastForwardToTick(targetTick);
+
+				targetTick += 1;
 
 				await Task.Yield();
-				tick += 1;
 			}
 		}
 	}

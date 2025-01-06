@@ -12,22 +12,21 @@
 
 		public ResimulationLoop Loop { get; }
 
-		private TickChangeLog TickChangeLog { get; }
+		public ChangeTracker ChangeTracker { get; }
 
-		public Simulation(int simulationFramerate = 60, int saveEachNthFrame = 5, MassiveRegistryConfig massiveRegistryConfig = null)
+		public Simulation(int simulationFramerate = 60, int saveEachNthTick = 5, MassiveRegistryConfig massiveRegistryConfig = null)
 		{
 			Registry = new MassiveRegistry(massiveRegistryConfig ?? new MassiveRegistryConfig());
-			Registry.SaveFrame();
 
 			Time = new SimulationTime(simulationFramerate);
-			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthFrame);
+			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * saveEachNthTick);
 
 			Systems = new SimulationGroup();
 			Systems.Add(Time);
 
-			TickChangeLog = new TickChangeLog();
-			Inputs.InputChanged += TickChangeLog.NotifyChange;
-			Loop = new ResimulationLoop(Registry, Systems, Inputs, TickChangeLog, saveEachNthFrame);
+			ChangeTracker = new ChangeTracker();
+			Inputs.InputChanged += ChangeTracker.NotifyChange;
+			Loop = new ResimulationLoop(Registry, Systems, Inputs, ChangeTracker, saveEachNthTick);
 
 			Registry.AssignService(Time);
 			Registry.AssignService(Inputs);
