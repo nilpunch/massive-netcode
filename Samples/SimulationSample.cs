@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Numerics;
+using System.Threading.Tasks;
 
 namespace Massive.Netcode.Samples
 {
@@ -11,6 +13,22 @@ namespace Massive.Netcode.Samples
 	public struct PlayerShootingInput : IRepeatInput { public bool IsShooting; }
 
 	public struct SessionInput : IRepeatInput { public bool IsFinished; }
+
+	// Smooth input prediction for analog inputs.
+	// Note: Floats are used here for simplicity. Replace them with deterministic types in real usage.
+	public struct PlayerMovingInput : IFadeOutInput<PlayerMovingInput>
+	{
+		public Vector2 Direction;
+
+		public PlayerMovingInput FadeOut(int ticksPassed, in FadeOutConfig config)
+		{
+			float fadeOutPercent = Math.Clamp((ticksPassed - config.StartDecayTick) / (float)config.DecayDurationTicks, 0f, 1f);
+			return new PlayerMovingInput()
+			{
+				Direction = Direction * (1f - fadeOutPercent),
+			};
+		}
+	}
 
 	public class SimulationSample
 	{
