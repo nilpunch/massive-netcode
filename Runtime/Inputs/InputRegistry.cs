@@ -28,7 +28,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T GetGlobalAt<T>(int tick)
 		{
-			return GetInputBuffer<T>(Global).GetInput(tick);
+			return GetInputBuffer<T>(Global).GetPredicted(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,7 +40,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T GetAt<T>(int tick, int client)
 		{
-			return GetInputBuffer<T>(client).GetInput(tick);
+			return GetInputBuffer<T>(client).GetPredicted(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

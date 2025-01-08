@@ -6,9 +6,12 @@
 		{
 		}
 
-		protected override TInput Predict(TInput input, int ticksPassed)
+		public override TInput GetPredicted(int tick)
 		{
-			return default;
+			var input = GetInput(tick);
+			return input.TicksPassed == 0
+				? input.LastActualInput
+				: default;
 		}
 	}
 }

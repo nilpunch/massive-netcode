@@ -7,14 +7,11 @@ namespace Massive.Netcode
 	{
 		private readonly CyclicList<Input> _inputs;
 
-		private int _lastTickWithoutPrediction;
-
 		protected InputBuffer(int startTick, int bufferSize)
 		{
 			_inputs = new CyclicList<Input>(bufferSize, startTick);
 
-			_inputs.Append(Input.Actual(default));
-			_lastTickWithoutPrediction = startTick;
+			_inputs.Append(new Input());
 		}
 
 		public event Action<int> InputChanged;
@@ -22,38 +19,32 @@ namespace Massive.Netcode
 		public void Reset(int startTick)
 		{
 			_inputs.Reset(startTick);
-			_inputs.Append(Input.Actual(default));
-			_lastTickWithoutPrediction = startTick;
+			_inputs.Append(new Input());
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public TInput GetInput(int tick)
+		public Input GetInput(int tick)
 		{
-			return _inputs[tick].Value;
+			return _inputs[tick];
 		}
+
+		public abstract TInput GetPredicted(int tick);
 
 		public void PopulateInputsUpTo(int tick)
 		{
 			while (_inputs.TailIndex <= tick)
 			{
-				_inputs.Append(Input.Predicted(Predict(_inputs[_lastTickWithoutPrediction].Value, _inputs.TailIndex - _lastTickWithoutPrediction)));
+				_inputs.Append(_inputs[_inputs.TailIndex - 1].PassTick());
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetActualInput(int tick, TInput input)
 		{
-			if (_inputs.TailIndex <= tick)
-			{
-				PopulateInputsUpTo(tick - 1);
-				_inputs.Append(Input.Actual(input));
-			}
-			else
-			{
-				_inputs[tick] = Input.Actual(input);
-			}
+			PopulateInputsUpTo(tick);
 
-			_lastTickWithoutPrediction = Math.Max(_lastTickWithoutPrediction, tick);
+			_inputs[tick] = new Input(input, 0);
+
 			ReevaluateFrom(tick);
 
 			InputChanged?.Invoke(tick);
@@ -61,62 +52,47 @@ namespace Massive.Netcode
 
 		public void SetManyActualInputs((int tick, TInput input)[] inputs)
 		{
-			var reevaluateFrame = int.MaxValue; 
-			
-			foreach (var (frame, input) in inputs)
+			var earlyestChangedTick = int.MaxValue; 
+
+			foreach (var (tick, input) in inputs)
 			{
-				_inputs[frame] = Input.Actual(input);
-				_lastTickWithoutPrediction = Math.Max(_lastTickWithoutPrediction, frame);
-				reevaluateFrame = Math.Min(reevaluateFrame, frame);
+				PopulateInputsUpTo(tick);
+				
+				_inputs[tick] = new Input(input, 0);
+				earlyestChangedTick = Math.Min(earlyestChangedTick, tick);
 			}
 
-			ReevaluateFrom(reevaluateFrame);
+			ReevaluateFrom(earlyestChangedTick);
 
-			InputChanged?.Invoke(reevaluateFrame);
+			InputChanged?.Invoke(earlyestChangedTick);
 		}
 
-		protected abstract TInput Predict(TInput input, int ticksPassed);
-
-		private void ReevaluateFrom(int tick)
+		public void ReevaluateFrom(int tick)
 		{
-			int lastConfirmedTick = -1;
-			for (int i = tick; i < _inputs.TailIndex; i++)
+			for (int i = tick + 1; i < _inputs.TailIndex; i++)
 			{
-				if (_inputs[tick].IsPredicted)
+				if (_inputs[i].TicksPassed != 0)
 				{
-					if (lastConfirmedTick != -1)
-					{
-						_inputs[tick].Value = Predict(_inputs[lastConfirmedTick].Value, tick - lastConfirmedTick);
-					}
-				}
-				else
-				{
-					lastConfirmedTick = tick;
+					_inputs[i] = _inputs[i - 1].PassTick();
 				}
 			}
 		}
 
-		private struct Input
+		public struct Input
 		{
-			public TInput Value;
-			public bool IsPredicted;
+			public TInput LastActualInput;
+			public int TicksPassed;
 
-			private Input(TInput value, bool isPredicted)
+			public Input(TInput lastActualInput, int ticksPassed)
 			{
-				Value = value;
-				IsPredicted = isPredicted;
+				LastActualInput = lastActualInput;
+				TicksPassed = ticksPassed;
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public static Input Actual(TInput input)
+			public Input PassTick()
 			{
-				return new Input(input, false);
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public static Input Predicted(TInput input)
-			{
-				return new Input(input, true);
+				return new Input(LastActualInput, TicksPassed + 1);
 			}
 		}
 	}

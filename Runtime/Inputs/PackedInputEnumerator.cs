@@ -28,7 +28,7 @@ namespace Massive.Netcode
 			get
 			{
 				var client = _inputSet.Packed[_index];
-				return (client, _inputSet.Data[_index].GetInput(_tick));
+				return (client, _inputSet.Data[_index].GetPredicted(_tick));
 			}
 		}
 
