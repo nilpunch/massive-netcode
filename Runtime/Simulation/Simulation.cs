@@ -4,9 +4,9 @@
 	{
 		public MassiveRegistry Registry { get; }
 
-		public SimulationGroup Systems { get; }
+		public SimulationSystemGroup Systems { get; }
 
-		public SimulationInputs Inputs { get; }
+		public SimulationInput Input { get; }
 
 		public SimulationTime Time { get; }
 
@@ -23,18 +23,18 @@
 			Registry = new MassiveRegistry(simulationConfig.MassiveRegistryConfig);
 
 			Time = new SimulationTime(simulationConfig.Framerate);
-			Inputs = new SimulationInputs(Time, Registry.Config.FramesCapacity * simulationConfig.SaveEachNthTick
+			Input = new SimulationInput(Time, Registry.Config.FramesCapacity * simulationConfig.SaveEachNthTick
 				+ simulationConfig.AdditionalInputBufferSize);
 
-			Systems = new SimulationGroup();
+			Systems = new SimulationSystemGroup();
 			Systems.Add(Time);
 
 			ChangeTracker = new ChangeTracker();
-			Inputs.InputChanged += ChangeTracker.NotifyChange;
-			Loop = new ResimulationLoop(Registry, Systems, Inputs, ChangeTracker, simulationConfig.SaveEachNthTick);
+			Input.InputChanged += ChangeTracker.NotifyChange;
+			Loop = new ResimulationLoop(Registry, Systems, Input, ChangeTracker, simulationConfig.SaveEachNthTick);
 
 			Registry.AssignService(Time);
-			Registry.AssignService(Inputs);
+			Registry.AssignService(Input);
 		}
 	}
 }

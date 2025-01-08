@@ -1,24 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public class ClientInputs : IInputPrediction
+	public class InputRegistry : IInputPrediction
 	{
 		private readonly int _inputBufferSize;
 		private readonly int _startTick;
 		private readonly SetRegistry _setRegistry;
+		private readonly FadeOutConfig _defaultFadeOutConfig;
+		private readonly Dictionary<Type, FadeOutConfig> _customFadeOutConfigs = new Dictionary<Type, FadeOutConfig>();
 
-		public int Global { get; }
+		public int Global { get; } = 0;
 
-		public ClientInputs(int inputBufferSize = 120, int startTick = 0)
+		public InputRegistry(int inputBufferSize = 120, int startTick = 0, FadeOutConfig? defaultFadeOutConfig = default)
 		{
 			_inputBufferSize = inputBufferSize;
 			_startTick = startTick;
+			_defaultFadeOutConfig = defaultFadeOutConfig ?? new FadeOutConfig(30, 60);
 
 			_setRegistry = new SetRegistry(new NormalSetFactory(pageSize: 1024));
-
-			Global = 0;
 		}
 
 		public event Action<int> InputChanged;
@@ -47,24 +49,13 @@ namespace Massive.Netcode
 			GetInputBuffer<T>(client).SetActualInput(tick, input);
 		}
 
-		public void ForgetClient(int client)
-		{
-			if (client == Global)
-			{
-				return;
-			}
-
-			foreach (var set in _setRegistry.All)
-			{
-				set.Unassign(client);
-			}
-		}
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllInputs<T> GetAllAt<T>(int tick)
 		{
 			return new AllInputs<T>(GetAllInputs<T>(), tick);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public InputBuffer<T> GetInputBuffer<T>(int client)
 		{
 			var buffers = GetAllInputs<T>();
@@ -98,6 +89,36 @@ namespace Massive.Netcode
 			}
 		}
 
+		public void ForgetClient(int client)
+		{
+			if (client == Global)
+			{
+				return;
+			}
+
+			foreach (var set in _setRegistry.All)
+			{
+				set.Unassign(client);
+			}
+		}
+
+		public void ChangeFadeOutConfig<T>(FadeOutConfig fadeOutConfig)
+		{
+			if (!FadeOutInput.IsImplementedFor(typeof(T)))
+			{
+				throw new Exception($"Type {typeof(T).GetGenericName()} does not implement IFadeOutInput.");
+			}
+
+			var allInputs = GetAllInputs<T>();
+			foreach (var inputBuffer in allInputs.Data.AsSpan(allInputs.Count))
+			{
+				((IFadeOutInputBuffer)inputBuffer).FadeOutConfig = fadeOutConfig;
+			}
+
+			_customFadeOutConfigs[typeof(T)] = fadeOutConfig;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private DataSet<InputBuffer<T>> GetAllInputs<T>()
 		{
 			return (DataSet<InputBuffer<T>>)_setRegistry.Get<InputBuffer<T>>();
@@ -109,7 +130,7 @@ namespace Massive.Netcode
 
 			if (FadeOutInput.IsImplementedFor(typeof(T)))
 			{
-				inputBuffer = FadeOutInput.CreateInputBuffer<T>(_startTick, _inputBufferSize);
+				inputBuffer = FadeOutInput.CreateInputBuffer<T>(_startTick, _inputBufferSize, _customFadeOutConfigs.GetValueOrDefault(typeof(T), _defaultFadeOutConfig));
 			}
 			else if (IRepeatInput.IsImplementedFor(typeof(T)))
 			{

@@ -1,15 +1,15 @@
 ﻿namespace Massive.Netcode
 {
-	public class SimulationGroup : ISimulation
+	public class SimulationSystemGroup : ISimulationSystem
 	{
-		private readonly FastList<ISimulation> _systems = new FastList<ISimulation>();
+		private readonly FastList<ISimulationSystem> _systems = new FastList<ISimulationSystem>();
 
-		public void Add(ISimulation system)
+		public void Add(ISimulationSystem system)
 		{
 			_systems.Add(system);
 		}
 
-		public void Remove(ISimulation system)
+		public void Remove(ISimulationSystem system)
 		{
 			_systems.Remove(system);
 		}

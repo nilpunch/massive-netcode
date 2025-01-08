@@ -1,6 +1,6 @@
 ﻿namespace Massive.Netcode
 {
-	public interface ISimulation
+	public interface ISimulationSystem
 	{
 		void Update(int tick);
 	}

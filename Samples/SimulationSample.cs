@@ -44,17 +44,17 @@ namespace Massive.Netcode.Samples
 		// Modify inputs via RPC or any other source, in any order, at any time.
 		public void ConnectClient(int client, int connectionTick)
 		{
-			_simulation.Inputs.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
+			_simulation.Input.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
 		}
 
 		public void ApplyPlayerInput(int client, int tick, PlayerShootingInput playerInput)
 		{
-			_simulation.Inputs.SetAt(tick, client, playerInput);
+			_simulation.Input.SetAt(tick, client, playerInput);
 		}
 
 		public void FinishSession(int finishTick)
 		{
-			_simulation.Inputs.SetGlobalAt(finishTick, new SessionInput() { IsFinished = true });
+			_simulation.Input.SetGlobalAt(finishTick, new SessionInput() { IsFinished = true });
 		}
 
 		public async void Run()
@@ -64,7 +64,7 @@ namespace Massive.Netcode.Samples
 
 			while (true)
 			{
-				if (_simulation.Inputs.GetGlobal<SessionInput>().IsFinished)
+				if (_simulation.Input.GetGlobal<SessionInput>().IsFinished)
 				{
 					break;
 				}
@@ -85,7 +85,7 @@ namespace Massive.Netcode.Samples
 
 		public override void Update(int tick)
 		{
-			var spawnInputs = Simulation.Inputs.GetAll<PlayerSpawnInput>();
+			var spawnInputs = Simulation.Input.GetAll<PlayerSpawnInput>();
 
 			foreach (var client in spawnInputs)
 			{
@@ -105,7 +105,7 @@ namespace Massive.Netcode.Samples
 		{
 			Simulation.Registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = Simulation.Inputs.Get<PlayerShootingInput>(player.ClientId);
+				var playerInput = Simulation.Input.Get<PlayerShootingInput>(player.ClientId);
 
 				if (playerInput.IsShooting)
 				{

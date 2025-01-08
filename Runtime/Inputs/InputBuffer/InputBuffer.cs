@@ -3,12 +3,6 @@ using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public struct PredictionConfig
-	{
-		public int StartDecay;
-		public int DecayDuration;
-	}
-
 	public abstract class InputBuffer<TInput> : IInputPrediction
 	{
 		private readonly CyclicList<Input> _inputs;

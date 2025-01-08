@@ -2,11 +2,11 @@
 
 namespace Massive.Netcode
 {
-	public class SimulationInputs : ClientInputs
+	public class SimulationInput : InputRegistry
 	{
 		public SimulationTime Time { get; }
 
-		public SimulationInputs(SimulationTime time, int inputBufferSize = 120, int startTick = 0)
+		public SimulationInput(SimulationTime time, int inputBufferSize = 120, int startTick = 0)
 			: base(inputBufferSize, startTick)
 		{
 			Time = time;

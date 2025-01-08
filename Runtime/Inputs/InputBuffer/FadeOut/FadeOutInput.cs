@@ -11,9 +11,9 @@ namespace Massive.Netcode
 				.Any(@interface => @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IFadeOutInput<>));
 		}
 
-		public static InputBuffer<T> CreateInputBuffer<T>(int startTick, int bufferSize)
+		public static InputBuffer<T> CreateInputBuffer<T>(int startTick, int bufferSize, FadeOutConfig fadeOutConfig)
 		{
-			return (InputBuffer<T>)ReflectionUtils.CreateGeneric(typeof(FadeOutInputBuffer<>), typeof(T), startTick, bufferSize);
+			return (InputBuffer<T>)ReflectionUtils.CreateGeneric(typeof(FadeOutInputBuffer<>), typeof(T), startTick, bufferSize, fadeOutConfig);
 		}
 	}
 }

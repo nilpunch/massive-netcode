@@ -1,6 +1,6 @@
 ﻿namespace Massive.Netcode.Samples
 {
-	public abstract class SystemBase : ISimulation
+	public abstract class SystemBase : ISimulationSystem
 	{
 		public Simulation Simulation { get; }
 
