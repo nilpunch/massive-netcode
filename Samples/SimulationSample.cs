@@ -6,7 +6,7 @@ namespace Massive.Netcode.Samples
 {
 	public struct Player { public int ClientId; }
 
-	// Default inputs are reset during prediction.
+	// Default inputs are reset during prediction, behaving like one-time events.
 	public struct PlayerSpawnInput { public bool NeedToSpawnPlayer; }
 
 	// Repeat inputs apply the latest actual input during prediction.
@@ -85,11 +85,9 @@ namespace Massive.Netcode.Samples
 
 		public override void Update(int tick)
 		{
-			var spawnInputs = Simulation.Input.GetAll<PlayerSpawnInput>();
-
-			foreach (var client in spawnInputs)
+			foreach (var (client, spawnInput) in Simulation.Input.GetAll<PlayerSpawnInput>())
 			{
-				if (spawnInputs.GetInput(client).NeedToSpawnPlayer)
+				if (spawnInput.NeedToSpawnPlayer)
 				{
 					Simulation.Registry.CreateEntity(new Player() { ClientId = client });
 				}
