@@ -1,5 +1,6 @@
 ﻿namespace Massive.Netcode
 {
+	[System.Serializable]
 	public struct FadeOutConfig
 	{
 		public int StartDecayTick;

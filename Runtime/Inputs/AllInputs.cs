@@ -14,9 +14,9 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public T GetInput(int client)
+		public Input<T> Get(int client)
 		{
-			return Set.Get(client).GetPredicted(Tick);
+			return Set.Get(client).GetInput(Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

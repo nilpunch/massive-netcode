@@ -13,13 +13,13 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public T GetGlobal<T>()
+		public Input<T> GetGlobal<T>()
 		{
 			return GetGlobalAt<T>(Time.Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public T Get<T>(int client)
+		public Input<T> Get<T>(int client)
 		{
 			return GetAt<T>(Time.Tick, client);
 		}

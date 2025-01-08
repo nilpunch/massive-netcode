@@ -22,13 +22,13 @@ namespace Massive.Netcode
 			_index = _inputSet.Count;
 		}
 
-		public (int client, T input) Current
+		public (int client, Input<T> input) Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get
 			{
 				var client = _inputSet.Packed[_index];
-				return (client, _inputSet.Data[_index].GetPredicted(_tick));
+				return (client, _inputSet.Data[_index].GetInput(_tick));
 			}
 		}
 

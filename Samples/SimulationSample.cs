@@ -6,12 +6,10 @@ namespace Massive.Netcode.Samples
 {
 	public struct Player { public int ClientId; }
 
-	// Default inputs are reset during prediction, behaving like one-time events.
-	public struct PlayerSpawnInput { public bool NeedToSpawnPlayer; }
+	public struct PlayerSpawnEvent { }
 
-	// Repeat inputs apply the latest actual input during prediction.
-	public struct PlayerShootingInput : IRepeatInput { public bool IsShooting; }
-	public struct SessionInput : IRepeatInput { public bool IsFinished; }
+	public struct PlayerShootingInput { public bool IsShooting; }
+	public struct SessionInput { public bool IsFinished; }
 
 	// Smooth input prediction for analog inputs.
 	// Note: Floats are used here for simplicity. Replace them with deterministic types in real usage.
@@ -44,7 +42,7 @@ namespace Massive.Netcode.Samples
 		// Modify inputs via RPC or any other source, in any order, at any time.
 		public void ConnectClient(int client, int connectionTick)
 		{
-			_simulation.Input.SetAt(connectionTick, client, new PlayerSpawnInput() { NeedToSpawnPlayer = true });
+			_simulation.Input.SetAt(connectionTick, client, new PlayerSpawnEvent());
 		}
 
 		public void ApplyPlayerInput(int client, int tick, PlayerShootingInput playerInput)
@@ -64,7 +62,7 @@ namespace Massive.Netcode.Samples
 
 			while (true)
 			{
-				if (_simulation.Input.GetGlobal<SessionInput>().IsFinished)
+				if (_simulation.Input.GetGlobal<SessionInput>().RepeatLastActual().IsFinished)
 				{
 					break;
 				}
@@ -85,9 +83,9 @@ namespace Massive.Netcode.Samples
 
 		public override void Update(int tick)
 		{
-			foreach (var (client, spawnInput) in Simulation.Input.GetAll<PlayerSpawnInput>())
+			foreach (var (client, spawnEvent) in Simulation.Input.GetAll<PlayerSpawnEvent>())
 			{
-				if (spawnInput.NeedToSpawnPlayer)
+				if (spawnEvent.IsActual())
 				{
 					Simulation.Registry.CreateEntity(new Player() { ClientId = client });
 				}
@@ -103,7 +101,7 @@ namespace Massive.Netcode.Samples
 		{
 			Simulation.Registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = Simulation.Input.Get<PlayerShootingInput>(player.ClientId);
+				var playerInput = Simulation.Input.Get<PlayerShootingInput>(player.ClientId).RepeatLastActual();
 
 				if (playerInput.IsShooting)
 				{

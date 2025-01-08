@@ -3,15 +3,33 @@ using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public abstract class InputBuffer<TInput> : IInputPrediction
+	public readonly struct Input<TInput>
 	{
-		private readonly CyclicList<Input> _inputs;
+		public readonly TInput LastActualInput;
+		public readonly int TicksPassed;
 
-		protected InputBuffer(int startTick, int bufferSize)
+		public Input(TInput lastActualInput, int ticksPassed)
 		{
-			_inputs = new CyclicList<Input>(bufferSize, startTick);
+			LastActualInput = lastActualInput;
+			TicksPassed = ticksPassed;
+		}
 
-			_inputs.Append(new Input());
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Input<TInput> PassTick()
+		{
+			return new Input<TInput>(LastActualInput, TicksPassed + 1);
+		}
+	}
+
+	public class InputBuffer<TInput> : IInputPrediction
+	{
+		private readonly CyclicList<Input<TInput>> _inputs;
+
+		public InputBuffer(int startTick, int bufferSize)
+		{
+			_inputs = new CyclicList<Input<TInput>>(bufferSize, startTick);
+
+			_inputs.Append(new Input<TInput>());
 		}
 
 		public event Action<int> InputChanged;
@@ -19,16 +37,14 @@ namespace Massive.Netcode
 		public void Reset(int startTick)
 		{
 			_inputs.Reset(startTick);
-			_inputs.Append(new Input());
+			_inputs.Append(new Input<TInput>());
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input GetInput(int tick)
+		public Input<TInput> GetInput(int tick)
 		{
 			return _inputs[tick];
 		}
-
-		public abstract TInput GetPredicted(int tick);
 
 		public void PopulateInputsUpTo(int tick)
 		{
@@ -43,7 +59,7 @@ namespace Massive.Netcode
 		{
 			PopulateInputsUpTo(tick);
 
-			_inputs[tick] = new Input(input, 0);
+			_inputs[tick] = new Input<TInput>(input, 0);
 
 			ReevaluateFrom(tick);
 
@@ -58,7 +74,7 @@ namespace Massive.Netcode
 			{
 				PopulateInputsUpTo(tick);
 
-				_inputs[tick] = new Input(input, 0);
+				_inputs[tick] = new Input<TInput>(input, 0);
 				earlyestChangedTick = Math.Min(earlyestChangedTick, tick);
 			}
 
@@ -75,24 +91,6 @@ namespace Massive.Netcode
 				{
 					_inputs[i] = _inputs[i - 1].PassTick();
 				}
-			}
-		}
-
-		public struct Input
-		{
-			public TInput LastActualInput;
-			public int TicksPassed;
-
-			public Input(TInput lastActualInput, int ticksPassed)
-			{
-				LastActualInput = lastActualInput;
-				TicksPassed = ticksPassed;
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Input PassTick()
-			{
-				return new Input(LastActualInput, TicksPassed + 1);
 			}
 		}
 	}
