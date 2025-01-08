@@ -52,12 +52,12 @@ namespace Massive.Netcode
 
 		public void SetManyActualInputs((int tick, TInput input)[] inputs)
 		{
-			var earlyestChangedTick = int.MaxValue; 
+			var earlyestChangedTick = int.MaxValue;
 
 			foreach (var (tick, input) in inputs)
 			{
 				PopulateInputsUpTo(tick);
-				
+
 				_inputs[tick] = new Input(input, 0);
 				earlyestChangedTick = Math.Min(earlyestChangedTick, tick);
 			}
