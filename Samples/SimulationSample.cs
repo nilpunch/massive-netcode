@@ -9,7 +9,7 @@ namespace Massive.Netcode.Samples
 	// Default inputs are reset during prediction.
 	public struct PlayerSpawnInput { public bool NeedToSpawnPlayer; }
 
-	// Repeat inputs apply the last input during prediction.
+	// Repeat inputs apply the latest actual input during prediction.
 	public struct PlayerShootingInput : IRepeatInput { public bool IsShooting; }
 	public struct SessionInput : IRepeatInput { public bool IsFinished; }
 
