@@ -8,15 +8,18 @@
 
 		public readonly int AdditionalInputBufferSize = 1;
 
-		public readonly MassiveRegistryConfig MassiveRegistryConfig = new MassiveRegistryConfig();
+		public readonly int StartTick = 0;
+
+		public readonly MassiveRegistryConfig RegistryConfig = new MassiveRegistryConfig();
 
 		public SimulationConfig(int? framerate = default, int? saveEachNthTick = default,
-			int? additionalInputBufferSize = default, MassiveRegistryConfig massiveRegistryConfig = default)
+			int? additionalInputBufferSize = default, int? startTick = default, MassiveRegistryConfig registryConfig = default)
 		{
 			Framerate = framerate ?? Framerate;
 			SaveEachNthTick = saveEachNthTick ?? SaveEachNthTick;
 			AdditionalInputBufferSize = additionalInputBufferSize ?? AdditionalInputBufferSize;
-			MassiveRegistryConfig = massiveRegistryConfig ?? MassiveRegistryConfig;
+			StartTick = startTick ?? StartTick;
+			RegistryConfig = registryConfig ?? RegistryConfig;
 		}
 	}
 }

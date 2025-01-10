@@ -20,11 +20,11 @@
 
 		public Simulation(SimulationConfig simulationConfig)
 		{
-			Registry = new MassiveRegistry(simulationConfig.MassiveRegistryConfig);
+			Registry = new MassiveRegistry(simulationConfig.RegistryConfig);
 
 			Time = new SimulationTime(simulationConfig.Framerate);
 			Input = new SimulationInput(Time, Registry.Config.FramesCapacity * simulationConfig.SaveEachNthTick
-				+ simulationConfig.AdditionalInputBufferSize);
+				+ simulationConfig.AdditionalInputBufferSize, simulationConfig.StartTick);
 
 			Systems = new SimulationSystemGroup();
 			Systems.Add(Time);
