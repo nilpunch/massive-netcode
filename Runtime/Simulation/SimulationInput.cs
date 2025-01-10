@@ -4,7 +4,7 @@ namespace Massive.Netcode
 {
 	public class SimulationInput : InputRegistry
 	{
-		public SimulationTime Time { get; }
+		private SimulationTime Time { get; }
 
 		public SimulationInput(SimulationTime time, int inputBufferSize = 120, int startTick = 0)
 			: base(inputBufferSize, startTick)

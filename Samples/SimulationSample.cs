@@ -6,7 +6,7 @@ namespace Massive.Netcode.Samples
 {
 	public struct Player { public int ClientId; }
 
-	public struct PlayerSpawnEvent { }
+	public struct PlayerSpawnEvent { public bool IsTriggered; }
 
 	public struct PlayerShootingInput { public bool IsShooting; }
 	public struct SessionInput { public bool IsFinished; }
@@ -35,8 +35,8 @@ namespace Massive.Netcode.Samples
 		{
 			_simulation = new Simulation();
 
-			_simulation.Systems.Add(new SpawnPlayersSystem(_simulation));
-			_simulation.Systems.Add(new ShootingSystem(_simulation));
+			_simulation.Systems.Add(new SpawnPlayersSystem(_simulation.Registry));
+			_simulation.Systems.Add(new ShootingSystem(_simulation.Registry));
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
@@ -62,7 +62,7 @@ namespace Massive.Netcode.Samples
 
 			while (true)
 			{
-				if (_simulation.Input.GetGlobal<SessionInput>().RepeatLastActual().IsFinished)
+				if (_simulation.Input.GetGlobal<SessionInput>().LastActual().IsFinished)
 				{
 					break;
 				}
@@ -77,31 +77,45 @@ namespace Massive.Netcode.Samples
 		}
 	}
 
-	public class SpawnPlayersSystem : SystemBase
+	public class SpawnPlayersSystem : ISimulationSystem
 	{
-		public SpawnPlayersSystem(Simulation simulation) : base(simulation) { }
+		private readonly Registry _registry;
+		private readonly SimulationInput _input;
 
-		public override void Update(int tick)
+		public SpawnPlayersSystem(Registry registry)
 		{
-			foreach (var (client, spawnEvent) in Simulation.Input.GetAll<PlayerSpawnEvent>())
+			_registry = registry;
+			_input = registry.Service<SimulationInput>();
+		}
+
+		public void Update(int tick)
+		{
+			foreach (var (client, playerSpawnEvent) in _input.GetAll<PlayerSpawnEvent>())
 			{
-				if (spawnEvent.IsActual())
+				if (playerSpawnEvent.Actual().IsTriggered)
 				{
-					Simulation.Registry.CreateEntity(new Player() { ClientId = client });
+					_registry.CreateEntity(new Player() { ClientId = client });
 				}
 			}
 		}
 	}
 
-	public class ShootingSystem : SystemBase
+	public class ShootingSystem : ISimulationSystem
 	{
-		public ShootingSystem(Simulation simulation) : base(simulation) { }
+		private readonly Registry _registry;
+		private readonly SimulationInput _input;
 
-		public override void Update(int tick)
+		public ShootingSystem(Registry registry)
 		{
-			Simulation.Registry.View().ForEach((ref Player player) =>
+			_registry = registry;
+			_input = registry.Service<SimulationInput>();
+		}
+
+		public void Update(int tick)
+		{
+			_registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = Simulation.Input.Get<PlayerShootingInput>(player.ClientId).RepeatLastActual();
+				var playerInput = _input.Get<PlayerShootingInput>(player.ClientId).LastActual();
 
 				if (playerInput.IsShooting)
 				{

@@ -48,13 +48,13 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllInputs<T> GetAllAt<T>(int tick)
 		{
-			return new AllInputs<T>(GetAllInputs<T>(), tick);
+			return new AllInputs<T>(GetAllInputBuffers<T>(), tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public InputBuffer<T> GetInputBuffer<T>(int client)
 		{
-			var buffers = GetAllInputs<T>();
+			var buffers = GetAllInputBuffers<T>();
 
 			if (!buffers.IsAssigned(client))
 			{
@@ -99,7 +99,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private DataSet<InputBuffer<T>> GetAllInputs<T>()
+		private DataSet<InputBuffer<T>> GetAllInputBuffers<T>()
 		{
 			return (DataSet<InputBuffer<T>>)_setRegistry.Get<InputBuffer<T>>();
 		}

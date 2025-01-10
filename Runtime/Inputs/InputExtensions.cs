@@ -5,7 +5,7 @@ namespace Massive.Netcode
 	public static class InputExtensions
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static TInput RepeatLastActual<TInput>(this Input<TInput> input)
+		public static TInput LastActual<TInput>(this Input<TInput> input)
 		{
 			return input.LastActualInput;
 		}
@@ -17,9 +17,9 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static TInput ActualOrDefault<TInput>(this Input<TInput> input, TInput @default = default)
+		public static TInput Actual<TInput>(this Input<TInput> input, TInput fallback = default)
 		{
-			return input.TicksPassed == 0 ? input.LastActualInput : @default;
+			return input.TicksPassed == 0 ? input.LastActualInput : fallback;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
