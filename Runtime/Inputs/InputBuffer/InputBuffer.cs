@@ -11,7 +11,7 @@ namespace Massive.Netcode
 		{
 			_inputs = new CyclicList<Input<TInput>>(bufferSize, startTick);
 
-			_inputs.Append(new Input<TInput>());
+			_inputs.Append(Input<TInput>.Inactual);
 		}
 
 		public event Action<int> InputChanged;
@@ -19,7 +19,7 @@ namespace Massive.Netcode
 		public void Reset(int startTick)
 		{
 			_inputs.Reset(startTick);
-			_inputs.Append(new Input<TInput>());
+			_inputs.Append(Input<TInput>.Inactual);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

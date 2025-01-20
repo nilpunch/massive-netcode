@@ -6,26 +6,10 @@ namespace Massive.Netcode.Samples
 {
 	public struct Player { public int ClientId; }
 
-	public struct PlayerSpawnEvent { public bool IsTriggered; }
+	public struct PlayerSpawnEvent { }
 
 	public struct PlayerShootingInput { public bool IsShooting; }
 	public struct SessionInput { public bool IsFinished; }
-
-	// Smooth input prediction for analog inputs.
-	// Note: Floats are used here for simplicity. Replace them with deterministic types in real usage.
-	public struct PlayerMovingInput : IFadeOutInput<PlayerMovingInput>
-	{
-		public Vector2 Direction;
-
-		public PlayerMovingInput FadeOut(int ticksPassed, in FadeOutConfig config)
-		{
-			float fadeOutPercent = Math.Clamp((ticksPassed - config.StartDecayTick) / (float)config.DecayDurationTicks, 0f, 1f);
-			return new PlayerMovingInput()
-			{
-				Direction = Direction * (1f - fadeOutPercent),
-			};
-		}
-	}
 
 	public class SimulationSample
 	{
@@ -90,12 +74,9 @@ namespace Massive.Netcode.Samples
 
 		public void Update(int tick)
 		{
-			foreach (var (client, playerSpawnEvent) in _input.GetAll<PlayerSpawnEvent>())
+			foreach (var (client, _) in _input.GetAllActual<PlayerSpawnEvent>())
 			{
-				if (playerSpawnEvent.Actual().IsTriggered)
-				{
-					_registry.CreateEntity(new Player() { ClientId = client });
-				}
+				_registry.CreateEntity(new Player() { ClientId = client });
 			}
 		}
 	}

@@ -20,9 +20,9 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public PackedInputEnumerator<T> GetEnumerator()
+		public AllInputsEnumerator<T> GetEnumerator()
 		{
-			return new PackedInputEnumerator<T>(Set, Tick);
+			return new AllInputsEnumerator<T>(Set, Tick);
 		}
 	}
 }

@@ -13,10 +13,17 @@ namespace Massive.Netcode
 			TicksPassed = ticksPassed;
 		}
 
+		public static Input<TInput> Inactual
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => new Input<TInput>(default, int.MaxValue);
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Input<TInput> PassTick()
 		{
-			return new Input<TInput>(LastActualInput, TicksPassed + 1);
+			var clampedNextTick = MathUtils.SaturationAdd(TicksPassed, 1);
+			return new Input<TInput>(LastActualInput, clampedNextTick);
 		}
 	}
 }

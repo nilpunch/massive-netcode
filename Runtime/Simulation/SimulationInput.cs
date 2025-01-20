@@ -29,5 +29,11 @@ namespace Massive.Netcode
 		{
 			return GetAllAt<T>(Time.Tick);
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public AllActualInputs<T> GetAllActual<T>()
+		{
+			return GetAllActualAt<T>(Time.Tick);
+		}
 	}
 }

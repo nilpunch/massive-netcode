@@ -52,6 +52,12 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public AllActualInputs<T> GetAllActualAt<T>(int tick)
+		{
+			return new AllActualInputs<T>(GetAllInputBuffers<T>(), tick);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public InputBuffer<T> GetInputBuffer<T>(int client)
 		{
 			var buffers = GetAllInputBuffers<T>();
