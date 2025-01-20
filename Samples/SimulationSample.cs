@@ -13,30 +13,30 @@ namespace Massive.Netcode.Samples
 
 	public class SimulationSample
 	{
-		private readonly Simulation _simulation;
+		private readonly Session _session;
 
 		public SimulationSample()
 		{
-			_simulation = new Simulation();
+			_session = new Session();
 
-			_simulation.Systems.Add(new SpawnPlayersSystem(_simulation.Registry, _simulation.Input));
-			_simulation.Systems.Add(new ShootingSystem(_simulation.Registry, _simulation.Input));
+			_session.Simulations.Add(new SpawnPlayers(_session.Registry, _session.Inputs));
+			_session.Simulations.Add(new Shooting(_session.Registry, _session.Inputs));
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
 		public void ConnectClient(int client, int connectionTick)
 		{
-			_simulation.Input.SetAt(connectionTick, client, new PlayerSpawnEvent());
+			_session.Inputs.SetAt(connectionTick, client, new PlayerSpawnEvent());
 		}
 
 		public void ApplyPlayerInput(int client, int tick, PlayerShootingInput playerInput)
 		{
-			_simulation.Input.SetAt(tick, client, playerInput);
+			_session.Inputs.SetAt(tick, client, playerInput);
 		}
 
 		public void FinishSession(int finishTick)
 		{
-			_simulation.Input.SetGlobalAt(finishTick, new SessionInput() { IsFinished = true });
+			_session.Inputs.SetGlobalAt(finishTick, new SessionInput() { IsFinished = true });
 		}
 
 		public async void Run()
@@ -46,13 +46,13 @@ namespace Massive.Netcode.Samples
 
 			while (true)
 			{
-				if (_simulation.Input.GetGlobal<SessionInput>().LastActual().IsFinished)
+				if (_session.Inputs.GetGlobal<SessionInput>().LastActual().IsFinished)
 				{
 					break;
 				}
 
 				// Automatic rollbacks and resimulation based on input changes.
-				_simulation.Loop.FastForwardToTick(targetTick);
+				_session.Loop.FastForwardToTick(targetTick);
 
 				targetTick += 1;
 
@@ -61,42 +61,42 @@ namespace Massive.Netcode.Samples
 		}
 	}
 
-	public class SpawnPlayersSystem : ISimulationSystem
+	public class SpawnPlayers : ISimulation
 	{
 		private readonly Registry _registry;
-		private readonly SimulationInput _input;
+		private readonly Inputs _inputs;
 
-		public SpawnPlayersSystem(Registry registry, SimulationInput input)
+		public SpawnPlayers(Registry registry, Inputs inputs)
 		{
 			_registry = registry;
-			_input = input;
+			_inputs = inputs;
 		}
 
 		public void Update(int tick)
 		{
-			foreach (var (client, _) in _input.GetAllActual<PlayerSpawnEvent>())
+			foreach (var (client, _) in _inputs.GetAllActual<PlayerSpawnEvent>())
 			{
 				_registry.CreateEntity(new Player() { ClientId = client });
 			}
 		}
 	}
 
-	public class ShootingSystem : ISimulationSystem
+	public class Shooting : ISimulation
 	{
 		private readonly Registry _registry;
-		private readonly SimulationInput _input;
+		private readonly Inputs _inputs;
 
-		public ShootingSystem(Registry registry, SimulationInput input)
+		public Shooting(Registry registry, Inputs inputs)
 		{
 			_registry = registry;
-			_input = input;
+			_inputs = inputs;
 		}
 
 		public void Update(int tick)
 		{
 			_registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = _input.Get<PlayerShootingInput>(player.ClientId).LastActual();
+				var playerInput = _inputs.Get<PlayerShootingInput>(player.ClientId).LastActual();
 
 				if (playerInput.IsShooting)
 				{

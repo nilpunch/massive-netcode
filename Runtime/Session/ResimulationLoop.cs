@@ -5,15 +5,15 @@ namespace Massive.Netcode
 	public class ResimulationLoop
 	{
 		private readonly IMassive _massive;
-		private readonly ISimulationSystem _simulationSystem;
+		private readonly ISimulation _simulation;
 		private readonly IInputPrediction _inputPrediction;
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _saveEachNthTick;
 
-		public ResimulationLoop(IMassive massive, ISimulationSystem simulationSystem, IInputPrediction inputPrediction, ChangeTracker changeTracker, int saveEachNthTick = 5)
+		public ResimulationLoop(IMassive massive, ISimulation simulation, IInputPrediction inputPrediction, ChangeTracker changeTracker, int saveEachNthTick = 5)
 		{
 			_massive = massive;
-			_simulationSystem = simulationSystem;
+			_simulation = simulation;
 			_inputPrediction = inputPrediction;
 			_changeTracker = changeTracker;
 			_saveEachNthTick = saveEachNthTick;
@@ -47,7 +47,7 @@ namespace Massive.Netcode
 
 			while (CurrentTick < targetTick)
 			{
-				_simulationSystem.Update(CurrentTick);
+				_simulation.Update(CurrentTick);
 				CurrentTick += 1;
 
 				if (CurrentTick % _saveEachNthTick == 0)

@@ -1,6 +1,6 @@
 ﻿namespace Massive.Netcode
 {
-	public class SimulationConfig
+	public class SessionConfig
 	{
 		public readonly int Framerate = 60;
 
@@ -12,7 +12,7 @@
 
 		public readonly MassiveRegistryConfig RegistryConfig = new MassiveRegistryConfig();
 
-		public SimulationConfig(int? framerate = default, int? saveEachNthTick = default,
+		public SessionConfig(int? framerate = default, int? saveEachNthTick = default,
 			int? additionalInputBufferSize = default, int? startTick = default, MassiveRegistryConfig registryConfig = default)
 		{
 			Framerate = framerate ?? Framerate;

@@ -1,12 +1,12 @@
 ﻿namespace Massive.Netcode
 {
-	public class SimulationTime : ISimulationSystem
+	public class Time : ISimulation
 	{
 		public int FPS { get; }
 
 		public int Tick { get; private set; }
 
-		public SimulationTime(int fps)
+		public Time(int fps)
 		{
 			FPS = fps;
 		}
