@@ -35,8 +35,8 @@ namespace Massive.Netcode.Samples
 		{
 			_simulation = new Simulation();
 
-			_simulation.Systems.Add(new SpawnPlayersSystem(_simulation.Registry));
-			_simulation.Systems.Add(new ShootingSystem(_simulation.Registry));
+			_simulation.Systems.Add(new SpawnPlayersSystem(_simulation.Registry, _simulation.Input));
+			_simulation.Systems.Add(new ShootingSystem(_simulation.Registry, _simulation.Input));
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
@@ -82,10 +82,10 @@ namespace Massive.Netcode.Samples
 		private readonly Registry _registry;
 		private readonly SimulationInput _input;
 
-		public SpawnPlayersSystem(Registry registry)
+		public SpawnPlayersSystem(Registry registry, SimulationInput input)
 		{
 			_registry = registry;
-			_input = registry.Service<SimulationInput>();
+			_input = input;
 		}
 
 		public void Update(int tick)
@@ -105,10 +105,10 @@ namespace Massive.Netcode.Samples
 		private readonly Registry _registry;
 		private readonly SimulationInput _input;
 
-		public ShootingSystem(Registry registry)
+		public ShootingSystem(Registry registry, SimulationInput input)
 		{
 			_registry = registry;
-			_input = registry.Service<SimulationInput>();
+			_input = input;
 		}
 
 		public void Update(int tick)

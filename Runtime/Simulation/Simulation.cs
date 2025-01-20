@@ -4,6 +4,8 @@
 	{
 		public MassiveRegistry Registry { get; }
 
+		public ServiceLocator Services { get; }
+
 		public SimulationSystemGroup Systems { get; }
 
 		public SimulationInput Input { get; }
@@ -33,8 +35,10 @@
 			Input.InputChanged += ChangeTracker.NotifyChange;
 			Loop = new ResimulationLoop(Registry, Systems, Input, ChangeTracker, simulationConfig.SaveEachNthTick);
 
-			Registry.AssignService(Time);
-			Registry.AssignService(Input);
+			Services = new ServiceLocator();
+			Services.Assign<Registry>(Registry);
+			Services.Assign(Time);
+			Services.Assign(Input);
 		}
 	}
 }
