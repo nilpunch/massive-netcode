@@ -91,19 +91,6 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ForgetClient(int client)
-		{
-			if (client == Global)
-			{
-				return;
-			}
-
-			foreach (var set in _setRegistry.All)
-			{
-				set.Unassign(client);
-			}
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private DataSet<InputBuffer<T>> GetAllInputBuffers<T>()
 		{
