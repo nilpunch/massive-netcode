@@ -74,7 +74,7 @@ namespace Massive.Netcode.Samples
 
 		public void Update(int tick)
 		{
-			foreach (var (client, _) in _inputs.GetAllActual<PlayerSpawnEvent>())
+			foreach (var (client, spawnEvent) in _inputs.GetAllActual<PlayerSpawnEvent>())
 			{
 				_registry.CreateEntity(new Player() { ClientId = client });
 			}
