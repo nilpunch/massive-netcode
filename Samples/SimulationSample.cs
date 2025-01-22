@@ -24,14 +24,14 @@ namespace Massive.Netcode.Samples
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
-		public void ConnectClient(int client, int connectionTick)
+		public void ConnectClient(int clientId, int connectionTick)
 		{
-			_session.Inputs.SetAt(connectionTick, client, new PlayerSpawnEvent());
+			_session.Inputs.SetAt(connectionTick, clientId, new PlayerSpawnEvent());
 		}
 
-		public void ApplyPlayerInput(int client, int tick, PlayerShootingInput playerInput)
+		public void ApplyPlayerInput(int clientId, int tick, PlayerShootingInput playerInput)
 		{
-			_session.Inputs.SetAt(tick, client, playerInput);
+			_session.Inputs.SetAt(tick, clientId, playerInput);
 		}
 
 		public void FinishSession(int finishTick)
@@ -74,9 +74,9 @@ namespace Massive.Netcode.Samples
 
 		public void Update(int tick)
 		{
-			foreach (var (client, spawnEvent) in _inputs.GetAllActual<PlayerSpawnEvent>())
+			foreach (var (clientId, spawnEvent) in _inputs.GetAllActual<PlayerSpawnEvent>())
 			{
-				_registry.CreateEntity(new Player() { ClientId = client });
+				_registry.CreateEntity(new Player() { ClientId = clientId });
 			}
 		}
 	}
