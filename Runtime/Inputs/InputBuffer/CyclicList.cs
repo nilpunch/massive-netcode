@@ -75,33 +75,6 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public T RemoveFirst()
-		{
-			if (CycledCount == 0)
-			{
-				throw new InvalidOperationException("List is empty.");
-			}
-
-			var index = MathUtils.FastMod(HeadIndex, CycleCapacity);
-			CycledCount--;
-			return Data[index];
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public T RemoveLast()
-		{
-			if (CycledCount == 0)
-			{
-				throw new InvalidOperationException("List is empty.");
-			}
-
-			TailIndex--;
-			var index = MathUtils.FastMod(TailIndex, CycleCapacity);
-			CycledCount--;
-			return Data[index];
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void TrimExcess()
 		{
 			var adjustedCycledCount = MathUtils.NextPowerOf2(CycledCount);
@@ -119,7 +92,7 @@ namespace Massive.Netcode
 				Resize(MathUtils.NextPowerOf2(capcity + 1));
 			}
 		}
-		
+
 		private void Resize(int newCapacity)
 		{
 			var newData = new T[newCapacity];
