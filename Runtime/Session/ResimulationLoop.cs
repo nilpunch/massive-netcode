@@ -6,15 +6,15 @@ namespace Massive.Netcode
 	{
 		private readonly IMassive _massive;
 		private readonly ISimulation _simulation;
-		private readonly IInputPrediction _inputPrediction;
+		private readonly IInputBuffer _inputBuffer;
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _saveEachNthTick;
 
-		public ResimulationLoop(IMassive massive, ISimulation simulation, IInputPrediction inputPrediction, ChangeTracker changeTracker, int saveEachNthTick = 5)
+		public ResimulationLoop(IMassive massive, ISimulation simulation, IInputBuffer inputBuffer, ChangeTracker changeTracker, int saveEachNthTick = 5)
 		{
 			_massive = massive;
 			_simulation = simulation;
-			_inputPrediction = inputPrediction;
+			_inputBuffer = inputBuffer;
 			_changeTracker = changeTracker;
 			_saveEachNthTick = saveEachNthTick;
 		}
@@ -43,7 +43,7 @@ namespace Massive.Netcode
 			_massive.Rollback(framesToRollback);
 			CurrentTick = (currentFrame - framesToRollback) * _saveEachNthTick;
 
-			_inputPrediction.PopulateInputsUpTo(targetTick);
+			_inputBuffer.PopulateInputsUpTo(targetTick);
 
 			while (CurrentTick < targetTick)
 			{
@@ -55,6 +55,8 @@ namespace Massive.Netcode
 					_massive.SaveFrame();
 				}
 			}
+
+			_inputBuffer.ForgetInputsUpTo(targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick);
 
 			_changeTracker.ConfirmChangesUpTo(targetTick);
 		}

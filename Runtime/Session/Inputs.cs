@@ -6,8 +6,8 @@ namespace Massive.Netcode
 	{
 		private Time Time { get; }
 
-		public Inputs(Time time, int inputBufferSize = 120, int startTick = 0)
-			: base(inputBufferSize, startTick)
+		public Inputs(Time time, int startTick = 0)
+			: base(startTick)
 		{
 			Time = time;
 		}

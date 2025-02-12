@@ -3,17 +3,16 @@ using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public class InputRegistry : IInputPrediction
+	public class InputRegistry : IInputBuffer
 	{
-		private readonly int _inputBufferSize;
 		private readonly int _startTick;
 		private readonly SetRegistry _setRegistry;
+		private readonly FastList<IInputBuffer> _allInputs = new FastList<IInputBuffer>();
 
 		public int Global { get; } = 0;
 
-		public InputRegistry(int inputBufferSize = 120, int startTick = 0)
+		public InputRegistry(int startTick = 0)
 		{
-			_inputBufferSize = inputBufferSize;
 			_startTick = startTick;
 
 			_setRegistry = new SetRegistry(new NormalSetFactory(pageSize: 1024));
@@ -78,16 +77,17 @@ namespace Massive.Netcode
 
 		public void PopulateInputsUpTo(int tick)
 		{
-			foreach (var set in _setRegistry.All)
+			foreach (var input in _allInputs)
 			{
-				if (set is IDataSet dataSet)
-				{
-					foreach (var client in set)
-					{
-						var inputPrediction = (IInputPrediction)dataSet.GetRaw(client);
-						inputPrediction.PopulateInputsUpTo(tick);
-					}
-				}
+				input.PopulateInputsUpTo(tick);
+			}
+		}
+
+		public void ForgetInputsUpTo(int tick)
+		{
+			foreach (var input in _allInputs)
+			{
+				input.ForgetInputsUpTo(tick);
 			}
 		}
 
@@ -99,9 +99,10 @@ namespace Massive.Netcode
 
 		private InputBuffer<T> CreateInputBuffer<T>()
 		{
-			var inputBuffer = new InputBuffer<T>(_startTick, _inputBufferSize);
+			var inputBuffer = new InputBuffer<T>(_startTick);
 
 			inputBuffer.InputChanged += InputChanged;
+			_allInputs.Add(inputBuffer);
 
 			return inputBuffer;
 		}

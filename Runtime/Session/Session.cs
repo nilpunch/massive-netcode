@@ -25,8 +25,7 @@
 			Registry = new MassiveRegistry(sessionConfig.RegistryConfig);
 
 			Time = new Time(sessionConfig.Framerate);
-			Inputs = new Inputs(Time, Registry.Config.FramesCapacity * sessionConfig.SaveEachNthTick
-				+ sessionConfig.AdditionalInputBufferSize, sessionConfig.StartTick);
+			Inputs = new Inputs(Time, sessionConfig.StartTick);
 
 			Simulations = new SimulationGroup();
 			Simulations.Add(Time);

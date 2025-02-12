@@ -5,7 +5,9 @@ namespace Massive.Netcode
 {
 	public class CyclicList<T>
 	{
-		private readonly T[] _data;
+		public T[] Data { get; private set; } = Array.Empty<T>();
+
+		public int CycleCapacity { get; private set; }
 
 		public int CycledCount { get; private set; }
 
@@ -17,15 +19,8 @@ namespace Massive.Netcode
 			get => TailIndex - CycledCount;
 		}
 
-		public int CycleCapacity
+		public CyclicList(int startIndex = 0)
 		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => _data.Length;
-		}
-
-		public CyclicList(int size, int startIndex = 0)
-		{
-			_data = new T[size];
 			TailIndex = startIndex;
 		}
 
@@ -38,23 +33,102 @@ namespace Massive.Netcode
 				{
 					throw new ArgumentOutOfRangeException(nameof(index), index, $"List works in range [{HeadIndex}, {TailIndex}).");
 				}
-
-				return ref _data[index % CycleCapacity];
+				return ref Data[MathUtils.FastMod(index, CycleCapacity)];
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Append(T data)
 		{
-			_data[TailIndex % CycleCapacity] = data;
-			TailIndex += 1;
-			CycledCount = Math.Min(CycledCount + 1, CycleCapacity);
+			EnsureCapacity(CycledCount + 1);
+
+			Data[MathUtils.FastMod(TailIndex, CycleCapacity)] = data;
+			TailIndex++;
+			CycledCount++;
 		}
 
+		/// <summary>
+		/// Removes elements from the beginning (head) up to the specified absolute index.
+		/// The index must be in the range [HeadIndex, TailIndex].
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void RemoveUpTo(int index)
+		{
+			if (index < HeadIndex)
+			{
+				index = HeadIndex;
+			}
+			if (index > TailIndex)
+			{
+				index = TailIndex;
+			}
+
+			var removeCount = index - HeadIndex;
+			CycledCount -= removeCount;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Reset(int startIndex)
 		{
 			CycledCount = 0;
 			TailIndex = startIndex;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public T RemoveFirst()
+		{
+			if (CycledCount == 0)
+			{
+				throw new InvalidOperationException("List is empty.");
+			}
+
+			var index = MathUtils.FastMod(HeadIndex, CycleCapacity);
+			CycledCount--;
+			return Data[index];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public T RemoveLast()
+		{
+			if (CycledCount == 0)
+			{
+				throw new InvalidOperationException("List is empty.");
+			}
+
+			TailIndex--;
+			var index = MathUtils.FastMod(TailIndex, CycleCapacity);
+			CycledCount--;
+			return Data[index];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void TrimExcess()
+		{
+			var adjustedCycledCount = MathUtils.NextPowerOf2(CycledCount);
+			if (adjustedCycledCount < CycleCapacity)
+			{
+				Resize(adjustedCycledCount);
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void EnsureCapacity(int capcity)
+		{
+			if (CycleCapacity < capcity)
+			{
+				Resize(MathUtils.NextPowerOf2(capcity + 1));
+			}
+		}
+		
+		private void Resize(int newCapacity)
+		{
+			var newData = new T[newCapacity];
+			for (var i = HeadIndex; i < TailIndex; i++)
+			{
+				newData[MathUtils.FastMod(i, newCapacity)] = Data[MathUtils.FastMod(i, CycleCapacity)];
+			}
+			Data = newData;
+			CycleCapacity = newCapacity;
 		}
 	}
 }

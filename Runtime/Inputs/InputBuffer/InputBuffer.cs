@@ -3,19 +3,20 @@ using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public class InputBuffer<TInput> : IInputPrediction
+	public class InputBuffer<TInput> : IInputBuffer
 	{
 		private readonly CyclicList<Input<TInput>> _inputs;
 
-		public InputBuffer(int startTick, int bufferSize)
+		public InputBuffer(int startTick)
 		{
-			_inputs = new CyclicList<Input<TInput>>(bufferSize, startTick);
+			_inputs = new CyclicList<Input<TInput>>(startTick);
 
 			_inputs.Append(Input<TInput>.Inactual);
 		}
 
 		public event Action<int> InputChanged;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Reset(int startTick)
 		{
 			_inputs.Reset(startTick);
@@ -28,12 +29,19 @@ namespace Massive.Netcode
 			return _inputs[tick];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void PopulateInputsUpTo(int tick)
 		{
-			while (_inputs.TailIndex <= tick)
+			for (int i = _inputs.TailIndex; i <= tick; ++i)
 			{
-				_inputs.Append(_inputs[_inputs.TailIndex - 1].PassTick());
+				_inputs.Append(_inputs[i - 1].PassTick());
 			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ForgetInputsUpTo(int tick)
+		{
+			_inputs.RemoveUpTo(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
