@@ -77,11 +77,11 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ReevaluateInputs(int tick)
+		public void ReevaluateInputs()
 		{
 			for (var i = 0; i < _allInputBuffers.Count; i++)
 			{
-				_allInputBuffers[i].ReevaluateInputs(tick);
+				_allInputBuffers[i].ReevaluateInputs();
 			}
 		}
 
