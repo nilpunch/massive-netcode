@@ -20,7 +20,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<TInput> PassTick()
+		public Input<TInput> Aged()
 		{
 			var clampedNextTick = MathUtils.SaturationAdd(TicksPassed, 1);
 			return new Input<TInput>(LastActualInput, clampedNextTick);

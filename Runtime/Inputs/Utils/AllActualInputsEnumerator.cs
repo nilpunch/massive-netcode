@@ -9,38 +9,26 @@ namespace Massive.Netcode
 	[Il2CppSetOption(Option.DivideByZeroChecks, false)]
 	public struct ActualInputEnumerator<T>
 	{
-		private readonly DataSet<InputBuffer<T>> _inputSet;
-		private readonly int _tick;
+		private readonly AllInputs<T> _allInputs;
 		private int _index;
 
-		public ActualInputEnumerator(DataSet<InputBuffer<T>> inputSet, int tick)
+		public ActualInputEnumerator(AllInputs<T> allInputs)
 		{
-			_inputSet = inputSet;
-			_tick = tick;
-			_index = _inputSet.Count;
+			_allInputs = allInputs;
+			_index = _allInputs.MaxClients;
 		}
 
 		public (int client, Input<T> input) Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get
-			{
-				var client = _inputSet.Packed[_index];
-				return (client, _inputSet.Data[_index].GetInput(_tick));
-			}
+			get => (_index, _allInputs.Inputs[_index]);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool MoveNext()
 		{
-			if (--_index > _inputSet.Count)
+			while (--_index >= 0 && !_allInputs.Inputs[_index].IsActual())
 			{
-				_index = _inputSet.Count - 1;
-			}
-
-			while (_index >= 0 && _inputSet.Packed[_index] < 0 && !_inputSet.Data[_index].GetInput(_tick).IsActual())
-			{
-				--_index;
 			}
 
 			return _index >= 0;

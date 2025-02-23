@@ -6,8 +6,8 @@ namespace Massive.Netcode
 	{
 		private Time Time { get; }
 
-		public Inputs(Time time, int startTick = 0)
-			: base(startTick)
+		public Inputs(Time time, ChangeTracker changeTracker, int startTick = 0)
+			: base(changeTracker, startTick)
 		{
 			Time = time;
 		}
@@ -25,15 +25,21 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllInputs<T> GetAll<T>()
+		public AllInputs<T> GetAllInputs<T>()
 		{
-			return GetAllAt<T>(Time.Tick);
+			return GetAllInputsAt<T>(Time.Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllActualInputs<T> GetAllActual<T>()
 		{
 			return GetAllActualAt<T>(Time.Tick);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public AllEvents<T> GetEvents<T>()
+		{
+			return GetEventsAt<T>(Time.Tick);
 		}
 	}
 }

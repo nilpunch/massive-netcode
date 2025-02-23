@@ -1,0 +1,90 @@
+﻿using System;
+using System.Runtime.CompilerServices;
+using Unity.IL2CPP.CompilerServices;
+
+namespace Massive.Netcode
+{
+	[Il2CppSetOption(Option.NullChecks, false)]
+	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+	[Il2CppSetOption(Option.DivideByZeroChecks, false)]
+	public struct AllEvents<T>
+	{
+		public int Count { get; private set; }
+
+		public Event<T>[] Events { get; private set; }
+
+		public int EventsCapacity { get; private set; }
+		
+		public static AllEvents<T> Empty => new AllEvents<T>
+		{
+			Events = Array.Empty<Event<T>>(),
+		};
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void EnsureInit()
+		{
+			Events ??= Array.Empty<Event<T>>();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Assign(Event<T> @event)
+		{
+			if (@event.Client < 0)
+			{
+				throw new InvalidOperationException("Can't have negative channel.");
+			}
+
+			EnsureEventAt(Count);
+
+			var insertionIndex = Array.BinarySearch(Events, 0, Count, @event, Event<T>.ClientComparer.Instance);
+			if (insertionIndex >= 0)
+			{
+				Events[insertionIndex] = @event;
+				return;
+			}
+
+			insertionIndex = ~insertionIndex;
+			if (insertionIndex < Count)
+			{
+				Array.Copy(Events, insertionIndex, Events, insertionIndex + 1, Count - insertionIndex);
+			}
+
+			Events[insertionIndex] = @event;
+			Count += 1;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Clear()
+		{
+			Count = 0;
+		}
+
+		/// <summary>
+		/// Ensures the packed array has sufficient capacity for the specified index.
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void EnsureEventAt(int index)
+		{
+			if (index >= EventsCapacity)
+			{
+				ResizeEvents(MathUtils.NextPowerOf2(index + 1));
+			}
+		}
+
+		/// <summary>
+		/// Resizes the packed array to the specified capacity.
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ResizeEvents(int capacity)
+		{
+			Events = Events.Resize(capacity);
+			EventsCapacity = capacity;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public AllEventsEnumerator<T> GetEnumerator()
+		{
+			return new AllEventsEnumerator<T>(this);
+		}
+	}
+}

@@ -3,108 +3,116 @@ using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public class InputRegistry : IInputBuffer
+	public class InputRegistry : IInput
 	{
+		private readonly ChangeTracker _changeTracker;
 		private readonly int _startTick;
-		private readonly SetRegistry _setRegistry;
-		private readonly FastList<IInputBuffer> _allInputs = new FastList<IInputBuffer>();
+		private readonly GenericLookup<object> _eventSets = new GenericLookup<object>();
+		private readonly GenericLookup<object> _inputSets = new GenericLookup<object>();
+		private readonly FastList<IInput> _allInputBuffers = new FastList<IInput>();
 
 		public int Global { get; } = 0;
 
-		public InputRegistry(int startTick = 0)
+		public InputRegistry(ChangeTracker changeTracker, int startTick = 0)
 		{
+			_changeTracker = changeTracker;
 			_startTick = startTick;
-
-			_setRegistry = new SetRegistry(new NormalSetFactory(pageSize: 1024));
 		}
-
-		public event Action<int> InputChanged;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Input<T> GetGlobalAt<T>(int tick)
 		{
-			return GetInputBuffer<T>(Global).GetInput(tick);
+			return GetInputSet<T>().GetInputs(tick).Get(Global);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetGlobalAt<T>(int tick, T input)
 		{
-			GetInputBuffer<T>(Global).SetActualInput(tick, input);
+			GetInputSet<T>().SetInput(tick, Global, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Input<T> GetAt<T>(int tick, int client)
 		{
-			return GetInputBuffer<T>(client).GetInput(tick);
+			return GetInputSet<T>().GetInputs(tick).Get(client);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetAt<T>(int tick, int client, T input)
 		{
-			GetInputBuffer<T>(client).SetActualInput(tick, input);
+			GetInputSet<T>().SetInput(tick, client, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllInputs<T> GetAllAt<T>(int tick)
+		public AllInputs<T> GetAllInputsAt<T>(int tick)
 		{
-			return new AllInputs<T>(GetAllInputBuffers<T>(), tick);
+			return GetInputSet<T>().GetInputs(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllActualInputs<T> GetAllActualAt<T>(int tick)
 		{
-			return new AllActualInputs<T>(GetAllInputBuffers<T>(), tick);
+			return new AllActualInputs<T>(GetInputSet<T>().GetInputs(tick));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public InputBuffer<T> GetInputBuffer<T>(int client)
+		public AllEvents<T> GetEventsAt<T>(int tick)
 		{
-			var buffers = GetAllInputBuffers<T>();
-
-			if (!buffers.IsAssigned(client))
-			{
-				buffers.Assign(client);
-				ref var inputBuffer = ref buffers.Get(client);
-				inputBuffer ??= CreateInputBuffer<T>();
-				inputBuffer.Reset(_startTick);
-				return inputBuffer;
-			}
-			else
-			{
-				return buffers.Get(client);
-			}
+			return GetEventSet<T>().GetEvents(tick);
 		}
 
 		public void PopulateInputsUpTo(int tick)
 		{
-			foreach (var input in _allInputs)
+			for (var i = 0; i < _allInputBuffers.Count; i++)
 			{
-				input.PopulateInputsUpTo(tick);
+				_allInputBuffers[i].PopulateInputsUpTo(tick);
 			}
 		}
 
-		public void ForgetInputsUpTo(int tick)
+		public void DiscardInputsUpTo(int tick)
 		{
-			foreach (var input in _allInputs)
+			for (var i = 0; i < _allInputBuffers.Count; i++)
 			{
-				input.ForgetInputsUpTo(tick);
+				_allInputBuffers[i].DiscardInputsUpTo(tick);
+			}
+		}
+
+		public void ReevaluateInputs(int tick)
+		{
+			for (var i = 0; i < _allInputBuffers.Count; i++)
+			{
+				_allInputBuffers[i].ReevaluateInputs(tick);
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private DataSet<InputBuffer<T>> GetAllInputBuffers<T>()
+		public EventSet<T> GetEventSet<T>()
 		{
-			return (DataSet<InputBuffer<T>>)_setRegistry.Get<InputBuffer<T>>();
+			var eventSet = (EventSet<T>)_eventSets.Find<T>();
+
+			if (eventSet == null)
+			{
+				eventSet = new EventSet<T>(_changeTracker, _startTick);
+				_eventSets.Assign<T>(eventSet);
+				_allInputBuffers.Add(eventSet);
+			}
+
+			return eventSet;
 		}
 
-		private InputBuffer<T> CreateInputBuffer<T>()
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public InputSet<T> GetInputSet<T>()
 		{
-			var inputBuffer = new InputBuffer<T>(_startTick);
+			var inputSet = (InputSet<T>)_inputSets.Find<T>();
 
-			inputBuffer.InputChanged += InputChanged;
-			_allInputs.Add(inputBuffer);
+			if (inputSet == null)
+			{
+				inputSet = new InputSet<T>(_changeTracker, _startTick);
+				_inputSets.Assign<T>(inputSet);
+				_allInputBuffers.Add(inputSet);
+			}
 
-			return inputBuffer;
+			return inputSet;
 		}
 	}
 }

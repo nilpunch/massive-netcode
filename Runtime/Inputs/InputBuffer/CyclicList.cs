@@ -40,11 +40,19 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Append(T data)
 		{
+			Append() = data;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public ref T Append()
+		{
 			EnsureCapacity(CycledCount + 1);
 
-			Data[MathUtils.FastMod(TailIndex, CycleCapacity)] = data;
+			ref var data = ref Data[MathUtils.FastMod(TailIndex, CycleCapacity)];
 			TailIndex++;
 			CycledCount++;
+
+			return ref data;
 		}
 
 		/// <summary>
@@ -95,6 +103,13 @@ namespace Massive.Netcode
 
 		private void Resize(int newCapacity)
 		{
+			if (newCapacity == 0)
+			{
+				Data = Array.Empty<T>();
+				CycleCapacity = newCapacity;
+				return;
+			}
+
 			var newData = new T[newCapacity];
 			for (var i = HeadIndex; i < TailIndex; i++)
 			{

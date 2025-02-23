@@ -4,19 +4,17 @@ namespace Massive.Netcode
 {
 	public readonly struct AllActualInputs<T>
 	{
-		public readonly DataSet<InputBuffer<T>> Set;
-		public readonly int Tick;
+		public readonly AllInputs<T> AllInputs;
 
-		public AllActualInputs(DataSet<InputBuffer<T>> set, int tick)
+		public AllActualInputs(AllInputs<T> allInputs)
 		{
-			Set = set;
-			Tick = tick;
+			AllInputs = allInputs;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ActualInputEnumerator<T> GetEnumerator()
 		{
-			return new ActualInputEnumerator<T>(Set, Tick);
+			return new ActualInputEnumerator<T>(AllInputs);
 		}
 	}
 }

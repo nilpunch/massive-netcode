@@ -23,15 +23,14 @@
 		public Session(SessionConfig sessionConfig)
 		{
 			Registry = new MassiveRegistry(sessionConfig.RegistryConfig);
+			ChangeTracker = new ChangeTracker();
 
 			Time = new Time(sessionConfig.Framerate);
-			Inputs = new Inputs(Time, sessionConfig.StartTick);
+			Inputs = new Inputs(Time, ChangeTracker, sessionConfig.StartTick);
 
 			Simulations = new SimulationGroup();
 			Simulations.Add(Time);
 
-			ChangeTracker = new ChangeTracker();
-			Inputs.InputChanged += ChangeTracker.NotifyChange;
 			Loop = new ResimulationLoop(Registry, Simulations, Inputs, ChangeTracker, sessionConfig.SaveEachNthTick);
 
 			Services = new ServiceLocator();

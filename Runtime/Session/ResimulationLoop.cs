@@ -6,15 +6,15 @@ namespace Massive.Netcode
 	{
 		private readonly IMassive _massive;
 		private readonly ISimulation _simulation;
-		private readonly IInputBuffer _inputBuffer;
+		private readonly IInput _input;
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _saveEachNthTick;
 
-		public ResimulationLoop(IMassive massive, ISimulation simulation, IInputBuffer inputBuffer, ChangeTracker changeTracker, int saveEachNthTick = 5)
+		public ResimulationLoop(IMassive massive, ISimulation simulation, IInput input, ChangeTracker changeTracker, int saveEachNthTick = 5)
 		{
 			_massive = massive;
 			_simulation = simulation;
-			_inputBuffer = inputBuffer;
+			_input = input;
 			_changeTracker = changeTracker;
 			_saveEachNthTick = saveEachNthTick;
 		}
@@ -28,12 +28,12 @@ namespace Massive.Netcode
 				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target frame should not be negative!");
 			}
 
-			int earliestTick = Math.Min(targetTick, _changeTracker.EarliestChangedTick);
-			int ticksToRollback = Math.Max(CurrentTick - earliestTick, 0);
+			var earliestTick = Math.Min(targetTick, _changeTracker.EarliestChangedTick);
+			var ticksToRollback = Math.Max(CurrentTick - earliestTick, 0);
 
-			int currentFrame = CurrentTick / _saveEachNthTick;
-			int targetFrame = (CurrentTick - ticksToRollback) / _saveEachNthTick;
-			int framesToRollback = currentFrame - targetFrame;
+			var currentFrame = CurrentTick / _saveEachNthTick;
+			var targetFrame = (CurrentTick - ticksToRollback) / _saveEachNthTick;
+			var framesToRollback = currentFrame - targetFrame;
 
 			if (framesToRollback > _massive.CanRollbackFrames)
 			{
@@ -43,7 +43,8 @@ namespace Massive.Netcode
 			_massive.Rollback(framesToRollback);
 			CurrentTick = (currentFrame - framesToRollback) * _saveEachNthTick;
 
-			_inputBuffer.PopulateInputsUpTo(targetTick);
+			_input.ReevaluateInputs();
+			_input.PopulateInputsUpTo(targetTick);
 
 			while (CurrentTick < targetTick)
 			{
@@ -56,7 +57,7 @@ namespace Massive.Netcode
 				}
 			}
 
-			_inputBuffer.ForgetInputsUpTo(targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick);
+			_input.DiscardInputsUpTo(targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick);
 
 			_changeTracker.ConfirmChangesUpTo(targetTick);
 		}
