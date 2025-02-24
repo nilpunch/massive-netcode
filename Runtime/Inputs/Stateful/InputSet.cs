@@ -41,7 +41,7 @@ namespace Massive.Netcode
 		{
 			PopulateUpTo(tick);
 
-			_inputs[tick].CopyFrom(allInputs);
+			_inputs[tick].Copy(allInputs);
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
@@ -61,6 +61,12 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void DiscardUpTo(int tick)
 		{
+			// Ensure there at least one input left in list, so we can populate from it.
+			if (tick > _inputs.TailIndex - 1)
+			{
+				tick = _inputs.TailIndex - 1;
+			}
+
 			_inputs.RemoveUpTo(tick);
 		}
 
@@ -71,6 +77,7 @@ namespace Massive.Netcode
 			{
 				_inputs[i].CopyAgedIfInactual(_inputs[i - 1]);
 			}
+
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);
 		}
 	}

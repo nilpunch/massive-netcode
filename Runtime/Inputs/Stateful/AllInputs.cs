@@ -85,7 +85,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void CopyFrom(AllInputs<T> other)
+		public void Copy(AllInputs<T> other)
 		{
 			Ensure(other.MaxChannels);
 			Array.Copy(other.Inputs, Inputs, other.MaxChannels);

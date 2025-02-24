@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public struct Event<T>
+	public readonly struct Event<T>
 	{
 		public readonly int Channel;
 		public readonly T Data;
