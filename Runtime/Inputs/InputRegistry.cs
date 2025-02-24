@@ -9,7 +9,7 @@ namespace Massive.Netcode
 		private readonly int _startTick;
 		private readonly GenericLookup<object> _eventSets = new GenericLookup<object>();
 		private readonly GenericLookup<object> _inputSets = new GenericLookup<object>();
-		private readonly FastList<IInput> _allInputBuffers = new FastList<IInput>();
+		private readonly FastList<IInput> _allInputs = new FastList<IInput>();
 
 		public int Global { get; } = 0;
 
@@ -32,15 +32,21 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> GetAt<T>(int tick, int client)
+		public void ApplyGlobalEventAt<T>(int tick, T data)
 		{
-			return GetInputSet<T>().GetInputs(tick).Get(client);
+			GetEventSet<T>().ApplyEvent(tick, Global, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetAt<T>(int tick, int client, T input)
+		public Input<T> GetAt<T>(int tick, int channel)
 		{
-			GetInputSet<T>().SetInput(tick, client, input);
+			return GetInputSet<T>().GetInputs(tick).Get(channel);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void SetAt<T>(int tick, int channel, T input)
+		{
+			GetInputSet<T>().SetInput(tick, channel, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,27 +67,33 @@ namespace Massive.Netcode
 			return GetEventSet<T>().GetEvents(tick);
 		}
 
-		public void PopulateInputsUpTo(int tick)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ApplyEventAt<T>(int tick, int channel, T data)
 		{
-			for (var i = 0; i < _allInputBuffers.Count; i++)
+			GetEventSet<T>().ApplyEvent(tick, channel, data);
+		}
+
+		public void PopulateUpTo(int tick)
+		{
+			for (var i = 0; i < _allInputs.Count; i++)
 			{
-				_allInputBuffers[i].PopulateInputsUpTo(tick);
+				_allInputs[i].PopulateUpTo(tick);
 			}
 		}
 
-		public void DiscardInputsUpTo(int tick)
+		public void DiscardUpTo(int tick)
 		{
-			for (var i = 0; i < _allInputBuffers.Count; i++)
+			for (var i = 0; i < _allInputs.Count; i++)
 			{
-				_allInputBuffers[i].DiscardInputsUpTo(tick);
+				_allInputs[i].DiscardUpTo(tick);
 			}
 		}
 
-		public void ReevaluateInputs()
+		public void Reevaluate()
 		{
-			for (var i = 0; i < _allInputBuffers.Count; i++)
+			for (var i = 0; i < _allInputs.Count; i++)
 			{
-				_allInputBuffers[i].ReevaluateInputs();
+				_allInputs[i].Reevaluate();
 			}
 		}
 
@@ -94,7 +106,7 @@ namespace Massive.Netcode
 			{
 				eventSet = new EventSet<T>(_changeTracker, _startTick);
 				_eventSets.Assign<T>(eventSet);
-				_allInputBuffers.Add(eventSet);
+				_allInputs.Add(eventSet);
 			}
 
 			return eventSet;
@@ -109,7 +121,7 @@ namespace Massive.Netcode
 			{
 				inputSet = new InputSet<T>(_changeTracker, _startTick);
 				_inputSets.Assign<T>(inputSet);
-				_allInputBuffers.Add(inputSet);
+				_allInputs.Add(inputSet);
 			}
 
 			return inputSet;

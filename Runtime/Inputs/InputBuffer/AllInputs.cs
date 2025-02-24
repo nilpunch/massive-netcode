@@ -9,7 +9,7 @@ namespace Massive.Netcode
 	[Il2CppSetOption(Option.DivideByZeroChecks, false)]
 	public struct AllInputs<T>
 	{
-		public int MaxClients { get; private set; }
+		public int MaxChannels { get; private set; }
 
 		public Input<T>[] Inputs { get; private set; }
 
@@ -20,56 +20,53 @@ namespace Massive.Netcode
 		{
 			Inputs ??= Array.Empty<Input<T>>();
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> Get(int client)
+		public Input<T> Get(int channel)
 		{
-			if (client < 0 || client >= MaxClients)
+			if (channel < 0 || channel >= MaxChannels)
 			{
 				return Input<T>.Inactual;
 			}
 
-			return Inputs[client];
+			return Inputs[channel];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActual(int client, T input)
+		public void SetActual(int channel, T input)
 		{
-			Ensure(client);
+			Ensure(channel);
 
-			Inputs[client] = new Input<T>(input, 0);
+			Inputs[channel] = new Input<T>(input, 0);
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Ensure(int client)
+		public void Ensure(int channel)
 		{
-			// If client already there, nothing to be done.
-			if (client < MaxClients)
+			// If channel already there, nothing to be done.
+			if (channel < MaxChannels)
 			{
 				return;
 			}
 
-			EnsureInputAt(client);
+			EnsureInputForChannel(channel);
 
-			MaxClients = client + 1;
+			MaxChannels = channel + 1;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Clear()
 		{
 			Array.Fill(Inputs, Input<T>.Inactual);
-			MaxClients = 0;
+			MaxChannels = 0;
 		}
 
-		/// <summary>
-		/// Ensures the packed array has sufficient capacity for the specified index.
-		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void EnsureInputAt(int index)
+		public void EnsureInputForChannel(int channel)
 		{
-			if (index >= InputsCapacity)
+			if (channel >= InputsCapacity)
 			{
-				ResizeInputs(MathUtils.NextPowerOf2(index + 1));
+				ResizeInputs(MathUtils.NextPowerOf2(channel + 1));
 			}
 		}
 
@@ -90,15 +87,15 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyFrom(AllInputs<T> other)
 		{
-			Ensure(other.MaxClients);
-			Array.Copy(other.Inputs, Inputs, other.MaxClients);
+			Ensure(other.MaxChannels);
+			Array.Copy(other.Inputs, Inputs, other.MaxChannels);
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyAged(AllInputs<T> other)
 		{
-			Ensure(other.MaxClients);
-			for (var i = 0; i < other.MaxClients; ++i)
+			Ensure(other.MaxChannels);
+			for (var i = 0; i < other.MaxChannels; ++i)
 			{
 				Inputs[i] = other.Inputs[i].Aged();
 			}
@@ -107,8 +104,8 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyAgedIfInactual(AllInputs<T> other)
 		{
-			Ensure(other.MaxClients);
-			for (var i = 0; i < other.MaxClients; ++i)
+			Ensure(other.MaxChannels);
+			for (var i = 0; i < other.MaxChannels; ++i)
 			{
 				var agedInput = other.Inputs[i].Aged();
 				if (!Inputs[i].IsActual())

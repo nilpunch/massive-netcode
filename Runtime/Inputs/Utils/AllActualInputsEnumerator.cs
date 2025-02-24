@@ -15,10 +15,10 @@ namespace Massive.Netcode
 		public ActualInputEnumerator(AllInputs<T> allInputs)
 		{
 			_allInputs = allInputs;
-			_index = _allInputs.MaxClients;
+			_index = _allInputs.MaxChannels;
 		}
 
-		public (int client, Input<T> input) Current
+		public (int channel, Input<T> input) Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get => (_index, _allInputs.Inputs[_index]);

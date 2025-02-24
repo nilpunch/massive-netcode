@@ -26,11 +26,11 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetInput(int tick, int client, T input)
+		public void SetInput(int tick, int channel, T input)
 		{
-			PopulateInputsUpTo(tick);
+			PopulateUpTo(tick);
 
-			_inputs[tick].SetActual(client, input);
+			_inputs[tick].SetActual(channel, input);
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
@@ -39,7 +39,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetInputs(int tick, AllInputs<T> allInputs)
 		{
-			PopulateInputsUpTo(tick);
+			PopulateUpTo(tick);
 
 			_inputs[tick].CopyFrom(allInputs);
 
@@ -48,7 +48,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void PopulateInputsUpTo(int tick)
+		public void PopulateUpTo(int tick)
 		{
 			for (var i = _inputs.TailIndex; i <= tick; ++i)
 			{
@@ -59,13 +59,13 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void DiscardInputsUpTo(int tick)
+		public void DiscardUpTo(int tick)
 		{
 			_inputs.RemoveUpTo(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ReevaluateInputs()
+		public void Reevaluate()
 		{
 			for (var i = _localChangeTracker.EarliestChangedTick + 1; i < _inputs.TailIndex; i++)
 			{

@@ -1,15 +1,13 @@
-﻿using System;
-using System.Numerics;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Massive.Netcode.Samples
 {
-	public struct Player { public int ClientId; }
+	public struct Player { public int InputChannel; }
 
 	public struct PlayerSpawnEvent { }
+	public struct SessionFinishedEvent { }
 
 	public struct PlayerShootingInput { public bool IsShooting; }
-	public struct SessionInput { public bool IsFinished; }
 
 	public class SimulationSample
 	{
@@ -24,19 +22,19 @@ namespace Massive.Netcode.Samples
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
-		public void ConnectClient(int clientId, int connectionTick)
+		public void ConnectClient(int inputChannel, int connectionTick)
 		{
-			_session.Inputs.SetAt(connectionTick, clientId, new PlayerSpawnEvent());
+			_session.Inputs.ApplyEventAt(connectionTick, inputChannel, new PlayerSpawnEvent());
 		}
 
-		public void ApplyPlayerInput(int clientId, int tick, PlayerShootingInput playerInput)
+		public void ApplyPlayerInput(int inputChannel, int tick, PlayerShootingInput playerInput)
 		{
-			_session.Inputs.SetAt(tick, clientId, playerInput);
+			_session.Inputs.SetAt(tick, inputChannel, playerInput);
 		}
 
 		public void FinishSession(int finishTick)
 		{
-			_session.Inputs.SetGlobalAt(finishTick, new SessionInput() { IsFinished = true });
+			_session.Inputs.ApplyGlobalEventAt(finishTick, new SessionFinishedEvent());
 		}
 
 		public async void Run()
@@ -46,7 +44,7 @@ namespace Massive.Netcode.Samples
 
 			while (true)
 			{
-				if (_session.Inputs.GetGlobal<SessionInput>().LastActual().IsFinished)
+				if (_session.Inputs.GetEvents<SessionFinishedEvent>().HasAny)
 				{
 					break;
 				}
@@ -74,9 +72,9 @@ namespace Massive.Netcode.Samples
 
 		public void Update(int tick)
 		{
-			foreach (var (clientId, spawnEvent) in _inputs.GetAllActual<PlayerSpawnEvent>())
+			foreach (var (channel, eventData) in _inputs.GetEvents<PlayerSpawnEvent>())
 			{
-				_registry.CreateEntity(new Player() { ClientId = clientId });
+				_registry.CreateEntity(new Player() { InputChannel = channel });
 			}
 		}
 	}
@@ -96,7 +94,7 @@ namespace Massive.Netcode.Samples
 		{
 			_registry.View().ForEach((ref Player player) =>
 			{
-				var playerInput = _inputs.Get<PlayerShootingInput>(player.ClientId).LastActual();
+				var playerInput = _inputs.Get<PlayerShootingInput>(player.InputChannel).LastActual();
 
 				if (playerInput.IsShooting)
 				{

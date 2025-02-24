@@ -14,7 +14,9 @@ namespace Massive.Netcode
 		public Event<T>[] Events { get; private set; }
 
 		public int EventsCapacity { get; private set; }
-		
+
+		public bool HasAny => Count != 0;
+
 		public static AllEvents<T> Empty => new AllEvents<T>
 		{
 			Events = Array.Empty<Event<T>>(),
@@ -27,16 +29,16 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Assign(Event<T> @event)
+		public void Apply(Event<T> @event)
 		{
-			if (@event.Client < 0)
+			if (@event.Channel < 0)
 			{
 				throw new InvalidOperationException("Can't have negative channel.");
 			}
 
 			EnsureEventAt(Count);
 
-			var insertionIndex = Array.BinarySearch(Events, 0, Count, @event, Event<T>.ClientComparer.Instance);
+			var insertionIndex = Array.BinarySearch(Events, 0, Count, @event, Event<T>.ChannelComparer.Instance);
 			if (insertionIndex >= 0)
 			{
 				Events[insertionIndex] = @event;

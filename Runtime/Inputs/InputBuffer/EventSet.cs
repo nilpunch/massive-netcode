@@ -29,15 +29,15 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AssignEvent(int tick, Event<T> @event)
+		public void ApplyEvent(int tick, int channel, T data)
 		{
-			_events[tick].Assign(@event);
+			_events[tick].Apply(new Event<T>(channel, data));
 
 			_globalChangeTracker.NotifyChange(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void PopulateInputsUpTo(int tick)
+		public void PopulateUpTo(int tick)
 		{
 			for (var i = _events.TailIndex; i <= tick; ++i)
 			{
@@ -48,12 +48,12 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void DiscardInputsUpTo(int tick)
+		public void DiscardUpTo(int tick)
 		{
 			_events.RemoveUpTo(tick);
 		}
 
-		public void ReevaluateInputs()
+		public void Reevaluate()
 		{
 			// Events are not predicted, nothing to reevaluate.
 		}

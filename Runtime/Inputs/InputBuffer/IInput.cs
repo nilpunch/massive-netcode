@@ -2,8 +2,8 @@
 {
 	public interface IInput
 	{
-		void PopulateInputsUpTo(int tick);
-		void DiscardInputsUpTo(int tick);
-		void ReevaluateInputs();
+		void PopulateUpTo(int tick);
+		void DiscardUpTo(int tick);
+		void Reevaluate();
 	}
 }

@@ -5,23 +5,29 @@ namespace Massive.Netcode
 {
 	public struct Event<T>
 	{
-		public T Data;
-		public readonly int Client;
+		public readonly int Channel;
+		public readonly T Data;
 
-		public Event(T data, int client)
+		public Event(int channel, T data)
 		{
+			Channel = channel;
 			Data = data;
-			Client = client;
 		}
 
-		public class ClientComparer : IComparer<Event<T>>
+		public void Deconstruct(out int channel, out T data)
 		{
-			public static ClientComparer Instance { get; } = new ClientComparer();
+			channel = Channel;
+			data = Data;
+		}
+
+		public class ChannelComparer : IComparer<Event<T>>
+		{
+			public static ChannelComparer Instance { get; } = new ChannelComparer();
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(Event<T> x, Event<T> y)
 			{
-				return x.Client.CompareTo(y.Client);
+				return x.Channel.CompareTo(y.Channel);
 			}
 		}
 	}

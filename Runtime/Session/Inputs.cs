@@ -19,9 +19,9 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> Get<T>(int client)
+		public Input<T> Get<T>(int channel)
 		{
-			return GetAt<T>(Time.Tick, client);
+			return GetAt<T>(Time.Tick, channel);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,6 +40,12 @@ namespace Massive.Netcode
 		public AllEvents<T> GetEvents<T>()
 		{
 			return GetEventsAt<T>(Time.Tick);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ApplyEvent<T>(int channel, T data)
+		{
+			ApplyEventAt(Time.Tick, channel, data);
 		}
 	}
 }

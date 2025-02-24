@@ -43,8 +43,8 @@ namespace Massive.Netcode
 			_massive.Rollback(framesToRollback);
 			CurrentTick = (currentFrame - framesToRollback) * _saveEachNthTick;
 
-			_input.ReevaluateInputs();
-			_input.PopulateInputsUpTo(targetTick);
+			_input.Reevaluate();
+			_input.PopulateUpTo(targetTick);
 
 			while (CurrentTick < targetTick)
 			{
@@ -57,7 +57,7 @@ namespace Massive.Netcode
 				}
 			}
 
-			_input.DiscardInputsUpTo(targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick);
+			_input.DiscardUpTo(targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick);
 
 			_changeTracker.ConfirmChangesUpTo(targetTick);
 		}
