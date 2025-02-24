@@ -35,13 +35,13 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetActual(int channel, T input)
 		{
-			Ensure(channel);
+			EnsureChannel(channel);
 
 			Inputs[channel] = new Input<T>(input, 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Ensure(int channel)
+		public void EnsureChannel(int channel)
 		{
 			// If channel already there, nothing to be done.
 			if (channel < MaxChannels)
@@ -87,14 +87,14 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Copy(AllInputs<T> other)
 		{
-			Ensure(other.MaxChannels);
+			EnsureChannel(other.MaxChannels - 1);
 			Array.Copy(other.Inputs, Inputs, other.MaxChannels);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyAged(AllInputs<T> other)
 		{
-			Ensure(other.MaxChannels);
+			EnsureChannel(other.MaxChannels - 1);
 			for (var i = 0; i < other.MaxChannels; ++i)
 			{
 				Inputs[i] = other.Inputs[i].Aged();
@@ -104,7 +104,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyAgedIfInactual(AllInputs<T> other)
 		{
-			Ensure(other.MaxChannels);
+			EnsureChannel(other.MaxChannels - 1);
 			for (var i = 0; i < other.MaxChannels; ++i)
 			{
 				var agedInput = other.Inputs[i].Aged();

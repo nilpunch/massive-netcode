@@ -123,6 +123,7 @@ namespace Massive.Netcode
 				inputSet = new InputSet<T>(_changeTracker, _startTick);
 				_inputsLookup.Assign<T>(inputSet);
 				_allInputs.Add(inputSet);
+				_inputSets.Add(inputSet);
 			}
 
 			return inputSet;
