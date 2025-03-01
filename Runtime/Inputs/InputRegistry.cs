@@ -3,14 +3,14 @@ using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
-	public class InputRegistry : IInput
+	public class InputRegistry : IInputSet
 	{
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _startTick;
 		private readonly GenericLookup<object> _eventsLookup = new GenericLookup<object>();
 		private readonly GenericLookup<object> _inputsLookup = new GenericLookup<object>();
-		private readonly FastList<IInput> _allInputs = new FastList<IInput>();
-		private readonly FastList<IInput> _inputSets = new FastList<IInput>();
+		private readonly FastList<IInputSet> _allInputSets = new FastList<IInputSet>();
+		private readonly FastList<IInputSet> _predictedInputSets = new FastList<IInputSet>();
 
 		public int Global { get; } = 0;
 
@@ -76,25 +76,25 @@ namespace Massive.Netcode
 
 		public void PopulateUpTo(int tick)
 		{
-			for (var i = 0; i < _allInputs.Count; i++)
+			for (var i = 0; i < _allInputSets.Count; i++)
 			{
-				_allInputs[i].PopulateUpTo(tick);
+				_allInputSets[i].PopulateUpTo(tick);
 			}
 		}
 
 		public void DiscardUpTo(int tick)
 		{
-			for (var i = 0; i < _allInputs.Count; i++)
+			for (var i = 0; i < _allInputSets.Count; i++)
 			{
-				_allInputs[i].DiscardUpTo(tick);
+				_allInputSets[i].DiscardUpTo(tick);
 			}
 		}
 
 		public void Reevaluate()
 		{
-			for (var i = 0; i < _inputSets.Count; i++)
+			for (var i = 0; i < _predictedInputSets.Count; i++)
 			{
-				_inputSets[i].Reevaluate();
+				_predictedInputSets[i].Reevaluate();
 			}
 		}
 
@@ -107,7 +107,7 @@ namespace Massive.Netcode
 			{
 				eventSet = new EventSet<T>(_changeTracker, _startTick);
 				_eventsLookup.Assign<T>(eventSet);
-				_allInputs.Add(eventSet);
+				_allInputSets.Add(eventSet);
 			}
 
 			return eventSet;
@@ -122,8 +122,8 @@ namespace Massive.Netcode
 			{
 				inputSet = new InputSet<T>(_changeTracker, _startTick);
 				_inputsLookup.Assign<T>(inputSet);
-				_allInputs.Add(inputSet);
-				_inputSets.Add(inputSet);
+				_allInputSets.Add(inputSet);
+				_predictedInputSets.Add(inputSet);
 			}
 
 			return inputSet;

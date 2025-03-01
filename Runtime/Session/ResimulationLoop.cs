@@ -6,11 +6,11 @@ namespace Massive.Netcode
 	{
 		private readonly IMassive _massive;
 		private readonly ISimulation _simulation;
-		private readonly IInput _input;
+		private readonly IInputSet _input;
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _saveEachNthTick;
 
-		public ResimulationLoop(IMassive massive, ISimulation simulation, IInput input, ChangeTracker changeTracker, int saveEachNthTick = 5)
+		public ResimulationLoop(IMassive massive, ISimulation simulation, IInputSet input, ChangeTracker changeTracker, int saveEachNthTick = 5)
 		{
 			_massive = massive;
 			_simulation = simulation;

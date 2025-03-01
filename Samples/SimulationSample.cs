@@ -72,7 +72,7 @@ namespace Massive.Netcode.Samples
 
 		public void Update(int tick)
 		{
-			foreach (var (channel, eventData) in _inputs.GetEvents<PlayerSpawnEvent>())
+			foreach (var (channel, spawnEnvent) in _inputs.GetEvents<PlayerSpawnEvent>())
 			{
 				_registry.CreateEntity(new Player() { InputChannel = channel });
 			}

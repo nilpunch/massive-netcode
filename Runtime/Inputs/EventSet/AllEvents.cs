@@ -39,7 +39,7 @@ namespace Massive.Netcode
 			EnsureEventAt(Count);
 
 			var insertionIndex = Array.BinarySearch(Events, 0, Count, @event, Event<T>.ChannelComparer.Instance);
-			if (insertionIndex >= 0)
+			if (insertionIndex >= 0) // Update the event.
 			{
 				Events[insertionIndex] = @event;
 				return;

@@ -108,7 +108,7 @@ namespace Massive.Netcode
 			for (var i = 0; i < other.MaxChannels; ++i)
 			{
 				var agedInput = other.Inputs[i].Aged();
-				if (!Inputs[i].IsActual())
+				if (Inputs[i].TicksPassed != 0)
 				{
 					Inputs[i] = agedInput;
 				}

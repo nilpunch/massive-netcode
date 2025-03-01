@@ -6,7 +6,7 @@ namespace Massive.Netcode
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 	[Il2CppSetOption(Option.DivideByZeroChecks, false)]
-	public sealed class InputSet<T> : IInput
+	public sealed class InputSet<T> : IInputSet
 	{
 		private readonly ChangeTracker _localChangeTracker = new ChangeTracker();
 		private readonly ChangeTracker _globalChangeTracker;
