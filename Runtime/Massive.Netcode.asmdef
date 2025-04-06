@@ -2,7 +2,8 @@
     "name": "Massive.Netcode",
     "rootNamespace": "",
     "references": [
-        "Massive"
+        "Massive",
+        "Massive.Serialization"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -12,5 +13,5 @@
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
-    "noEngineReferences": false
+    "noEngineReferences": true
 }

@@ -2,7 +2,7 @@
 {
 	public class Session
 	{
-		public MassiveRegistry Registry { get; }
+		public MassiveWorld World { get; }
 
 		public ServiceLocator Services { get; }
 
@@ -22,7 +22,7 @@
 
 		public Session(SessionConfig sessionConfig)
 		{
-			Registry = new MassiveRegistry(sessionConfig.RegistryConfig);
+			World = new MassiveWorld(sessionConfig.WorldConfig);
 			ChangeTracker = new ChangeTracker();
 
 			Time = new Time(sessionConfig.Framerate);
@@ -31,10 +31,10 @@
 			Simulations = new SimulationGroup();
 			Simulations.Add(Time);
 
-			Loop = new ResimulationLoop(Registry, Simulations, Inputs, ChangeTracker, sessionConfig.SaveEachNthTick);
+			Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, sessionConfig.SaveEachNthTick);
 
 			Services = new ServiceLocator();
-			Services.Assign<Registry>(Registry);
+			Services.Assign<World>(World);
 			Services.Assign(Time);
 			Services.Assign(Inputs);
 		}

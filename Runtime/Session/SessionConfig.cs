@@ -8,14 +8,14 @@
 
 		public readonly int StartTick = 0;
 
-		public readonly MassiveRegistryConfig RegistryConfig = new MassiveRegistryConfig();
+		public readonly MassiveWorldConfig WorldConfig = new MassiveWorldConfig();
 
-		public SessionConfig(int? framerate = default, int? saveEachNthTick = default, int? startTick = default, MassiveRegistryConfig registryConfig = default)
+		public SessionConfig(int? framerate = default, int? saveEachNthTick = default, int? startTick = default, MassiveWorldConfig worldConfig = default)
 		{
 			Framerate = framerate ?? Framerate;
 			SaveEachNthTick = saveEachNthTick ?? SaveEachNthTick;
 			StartTick = startTick ?? StartTick;
-			RegistryConfig = registryConfig ?? RegistryConfig;
+			WorldConfig = worldConfig ?? WorldConfig;
 		}
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
@@ -9,8 +8,8 @@ namespace Massive.Netcode
 		private readonly int _startTick;
 		private readonly GenericLookup<object> _eventsLookup = new GenericLookup<object>();
 		private readonly GenericLookup<object> _inputsLookup = new GenericLookup<object>();
-		private readonly FastList<IInputSet> _allInputSets = new FastList<IInputSet>();
-		private readonly FastList<IInputSet> _predictedInputSets = new FastList<IInputSet>();
+		private readonly FastList<IInputSet> _events = new FastList<IInputSet>();
+		private readonly FastList<IInputSet> _inputs = new FastList<IInputSet>();
 
 		public int Global { get; } = 0;
 
@@ -76,25 +75,33 @@ namespace Massive.Netcode
 
 		public void PopulateUpTo(int tick)
 		{
-			for (var i = 0; i < _allInputSets.Count; i++)
+			for (var i = 0; i < _inputs.Count; i++)
 			{
-				_allInputSets[i].PopulateUpTo(tick);
+				_inputs[i].PopulateUpTo(tick);
+			}
+			for (var i = 0; i < _events.Count; i++)
+			{
+				_events[i].PopulateUpTo(tick);
 			}
 		}
 
 		public void DiscardUpTo(int tick)
 		{
-			for (var i = 0; i < _allInputSets.Count; i++)
+			for (var i = 0; i < _inputs.Count; i++)
 			{
-				_allInputSets[i].DiscardUpTo(tick);
+				_inputs[i].DiscardUpTo(tick);
+			}
+			for (var i = 0; i < _events.Count; i++)
+			{
+				_events[i].DiscardUpTo(tick);
 			}
 		}
 
 		public void Reevaluate()
 		{
-			for (var i = 0; i < _predictedInputSets.Count; i++)
+			for (var i = 0; i < _inputs.Count; i++)
 			{
-				_predictedInputSets[i].Reevaluate();
+				_inputs[i].Reevaluate();
 			}
 		}
 
@@ -107,7 +114,7 @@ namespace Massive.Netcode
 			{
 				eventSet = new EventSet<T>(_changeTracker, _startTick);
 				_eventsLookup.Assign<T>(eventSet);
-				_allInputSets.Add(eventSet);
+				_events.Add(eventSet);
 			}
 
 			return eventSet;
@@ -122,8 +129,7 @@ namespace Massive.Netcode
 			{
 				inputSet = new InputSet<T>(_changeTracker, _startTick);
 				_inputsLookup.Assign<T>(inputSet);
-				_allInputSets.Add(inputSet);
-				_predictedInputSets.Add(inputSet);
+				_inputs.Add(inputSet);
 			}
 
 			return inputSet;

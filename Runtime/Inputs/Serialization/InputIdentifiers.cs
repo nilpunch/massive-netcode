@@ -14,27 +14,19 @@ namespace Massive.Netcode.Serialization
 		private readonly FastList<Type> _inputs = new FastList<Type>();
 		private readonly FastList<Type> _events = new FastList<Type>();
 
-		public void RegisterInput<T>() where T : IInput
+		public void RegisterAutomatically()
 		{
-			RegisterInput(typeof(T));
-		}
-
-		public void RegisterEvent<T>() where T : IEvent
-		{
-			RegisterEvent(typeof(T));
-		}
-
-		public void RegisterAllAutomatically()
-		{
-			var inputTypes = AppDomain.CurrentDomain.GetAssemblies()
+			var asemblies = AppDomain.CurrentDomain.GetAssemblies();
+			
+			var inputTypes = asemblies
 				.SelectMany(assembly => assembly.GetTypes())
-				.Where(t => typeof(IInput).IsAssignableFrom(t))
+				.Where(t => t.IsDefined(typeof(StateInputAttribute), false))
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
-			var eventTypes = AppDomain.CurrentDomain.GetAssemblies()
+			var eventTypes = asemblies
 				.SelectMany(assembly => assembly.GetTypes())
-				.Where(t => typeof(IEvent).IsAssignableFrom(t))
+				.Where(t => t.IsDefined(typeof(EventInputAttribute), false))
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
@@ -47,6 +39,16 @@ namespace Massive.Netcode.Serialization
 			{
 				RegisterEvent(eventType);
 			}
+		}
+
+		public void RegisterInput<T>()
+		{
+			RegisterInput(typeof(T));
+		}
+
+		public void RegisterEvent<T>()
+		{
+			RegisterEvent(typeof(T));
 		}
 
 		private void RegisterEvent(Type type)

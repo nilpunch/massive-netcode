@@ -17,8 +17,8 @@ namespace Massive.Netcode.Samples
 		{
 			_session = new Session();
 
-			_session.Simulations.Add(new SpawnPlayers(_session.Registry, _session.Inputs));
-			_session.Simulations.Add(new Shooting(_session.Registry, _session.Inputs));
+			_session.Simulations.Add(new SpawnPlayers(_session.World, _session.Inputs));
+			_session.Simulations.Add(new Shooting(_session.World, _session.Inputs));
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
@@ -61,12 +61,12 @@ namespace Massive.Netcode.Samples
 
 	public class SpawnPlayers : ISimulation
 	{
-		private readonly Registry _registry;
+		private readonly World _world;
 		private readonly Inputs _inputs;
 
-		public SpawnPlayers(Registry registry, Inputs inputs)
+		public SpawnPlayers(World world, Inputs inputs)
 		{
-			_registry = registry;
+			_world = world;
 			_inputs = inputs;
 		}
 
@@ -74,25 +74,25 @@ namespace Massive.Netcode.Samples
 		{
 			foreach (var (channel, spawnEnvent) in _inputs.GetEvents<PlayerSpawnEvent>())
 			{
-				_registry.CreateEntity(new Player() { InputChannel = channel });
+				_world.CreateEntity(new Player() { InputChannel = channel });
 			}
 		}
 	}
 
 	public class Shooting : ISimulation
 	{
-		private readonly Registry _registry;
+		private readonly World _world;
 		private readonly Inputs _inputs;
 
-		public Shooting(Registry registry, Inputs inputs)
+		public Shooting(World world, Inputs inputs)
 		{
-			_registry = registry;
+			_world = world;
 			_inputs = inputs;
 		}
 
 		public void Update(int tick)
 		{
-			_registry.View().ForEach((ref Player player) =>
+			_world.View().ForEach((ref Player player) =>
 			{
 				var playerInput = _inputs.Get<PlayerShootingInput>(player.InputChannel).LastActual();
 
