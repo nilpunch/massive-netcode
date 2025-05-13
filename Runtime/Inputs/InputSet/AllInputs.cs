@@ -6,7 +6,6 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	[Il2CppSetOption(Option.DivideByZeroChecks, false)]
 	public struct AllInputs<T>
 	{
 		public int MaxChannels { get; private set; }

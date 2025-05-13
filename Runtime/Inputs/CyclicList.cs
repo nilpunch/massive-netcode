@@ -6,7 +6,6 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	[Il2CppSetOption(Option.DivideByZeroChecks, false)]
 	public class CyclicList<T>
 	{
 		public T[] Data { get; private set; } = Array.Empty<T>();

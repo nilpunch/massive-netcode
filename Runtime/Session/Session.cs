@@ -4,8 +4,6 @@
 	{
 		public MassiveWorld World { get; }
 
-		public ServiceLocator Services { get; }
-
 		public SimulationGroup Simulations { get; }
 
 		public Inputs Inputs { get; }
@@ -32,11 +30,6 @@
 			Simulations.Add(Time);
 
 			Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, sessionConfig.SaveEachNthTick);
-
-			Services = new ServiceLocator();
-			Services.Assign<World>(World);
-			Services.Assign(Time);
-			Services.Assign(Inputs);
 		}
 	}
 }

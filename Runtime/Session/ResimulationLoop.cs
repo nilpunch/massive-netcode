@@ -61,5 +61,22 @@ namespace Massive.Netcode
 
 			_changeTracker.ConfirmChangesUpTo(targetTick);
 		}
+
+		public bool CanFastForwardToTick(int targetTick)
+		{
+			if (targetTick < 0)
+			{
+				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target frame should not be negative!");
+			}
+
+			var earliestTick = Math.Min(targetTick, _changeTracker.EarliestChangedTick);
+			var ticksToRollback = Math.Max(CurrentTick - earliestTick, 0);
+
+			var currentFrame = CurrentTick / _saveEachNthTick;
+			var targetFrame = (CurrentTick - ticksToRollback) / _saveEachNthTick;
+			var framesToRollback = currentFrame - targetFrame;
+
+			return framesToRollback <= _massive.CanRollbackFrames;
+		}
 	}
 }

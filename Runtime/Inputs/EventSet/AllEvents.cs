@@ -6,7 +6,6 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	[Il2CppSetOption(Option.DivideByZeroChecks, false)]
 	public struct AllEvents<T>
 	{
 		public int Count { get; private set; }
