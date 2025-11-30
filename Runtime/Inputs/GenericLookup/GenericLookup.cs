@@ -22,7 +22,7 @@ namespace Massive
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public TAbstract Find<TKey>()
 		{
-			var typeIndex = TypeId<TKey>.Info.Index;
+			var typeIndex = MiscTypeId<TKey>.Info.Index;
 
 			if (typeIndex >= _lookup.Length)
 			{
@@ -60,7 +60,7 @@ namespace Massive
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int IndexOf<TKey>()
 		{
-			return TypeId<TKey>.Info.Index;
+			return MiscTypeId<TKey>.Info.Index;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,14 +93,14 @@ namespace Massive
 
 		public void Assign<TKey>(TAbstract item)
 		{
-			var typeInfo = TypeId<TKey>.Info;
+			var typeInfo = MiscTypeId<TKey>.Info;
 			var typeIndex = typeInfo.Index;
 
 			// Resize lookup to fit.
 			if (typeIndex >= _lookup.Length)
 			{
-				Array.Resize(ref _lookup, MathUtils.NextPowerOf2(typeIndex + 1));
-				Array.Resize(ref _keyLookup, MathUtils.NextPowerOf2(typeIndex + 1));
+				Array.Resize(ref _lookup, MathUtils.RoundUpToPowerOfTwo(typeIndex + 1));
+				Array.Resize(ref _keyLookup, MathUtils.RoundUpToPowerOfTwo(typeIndex + 1));
 			}
 
 			_lookup[typeIndex] = item;
@@ -123,19 +123,19 @@ namespace Massive
 
 		public int IndexOf(Type key)
 		{
-			return TypeId.GetInfo(key).Index;
+			return MiscTypeId.GetInfo(key).Index;
 		}
 
 		public void Assign(Type keyType, TAbstract item)
 		{
-			var typeInfo = TypeId.GetInfo(keyType);
+			var typeInfo = MiscTypeId.GetInfo(keyType);
 			var typeIndex = typeInfo.Index;
 
 			// Resize lookup to fit.
 			if (typeIndex >= _lookup.Length)
 			{
-				Array.Resize(ref _lookup, MathUtils.NextPowerOf2(typeIndex + 1));
-				Array.Resize(ref _keyLookup, MathUtils.NextPowerOf2(typeIndex + 1));
+				Array.Resize(ref _lookup, MathUtils.RoundUpToPowerOfTwo(typeIndex + 1));
+				Array.Resize(ref _keyLookup, MathUtils.RoundUpToPowerOfTwo(typeIndex + 1));
 			}
 
 			_lookup[typeIndex] = item;

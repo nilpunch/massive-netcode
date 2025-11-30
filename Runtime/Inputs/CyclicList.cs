@@ -88,7 +88,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void TrimExcess()
 		{
-			var adjustedCycledCount = MathUtils.NextPowerOf2(CycledCount);
+			var adjustedCycledCount = MathUtils.RoundUpToPowerOfTwo(CycledCount);
 			if (adjustedCycledCount < CycleCapacity)
 			{
 				Resize(adjustedCycledCount);
@@ -100,7 +100,7 @@ namespace Massive.Netcode
 		{
 			if (CycleCapacity < capcity)
 			{
-				Resize(MathUtils.NextPowerOf2(capcity + 1));
+				Resize(MathUtils.RoundUpToPowerOfTwo(capcity + 1));
 			}
 		}
 

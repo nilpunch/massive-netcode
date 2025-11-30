@@ -65,7 +65,7 @@ namespace Massive.Netcode
 		{
 			if (channel >= InputsCapacity)
 			{
-				ResizeInputs(MathUtils.NextPowerOf2(channel + 1));
+				ResizeInputs(MathUtils.RoundUpToPowerOfTwo(channel + 1));
 			}
 		}
 

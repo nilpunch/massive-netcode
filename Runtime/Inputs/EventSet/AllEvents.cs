@@ -68,7 +68,7 @@ namespace Massive.Netcode
 		{
 			if (index >= EventsCapacity)
 			{
-				ResizeEvents(MathUtils.NextPowerOf2(index + 1));
+				ResizeEvents(MathUtils.RoundUpToPowerOfTwo(index + 1));
 			}
 		}
 

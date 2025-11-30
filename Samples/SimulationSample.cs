@@ -92,7 +92,7 @@ namespace Massive.Netcode.Samples
 
 		public void Update(int tick)
 		{
-			_world.View().ForEach((ref Player player) =>
+			_world.ForEach((ref Player player) =>
 			{
 				var playerInput = _inputs.Get<PlayerShootingInput>(player.InputChannel).LastActual();
 
