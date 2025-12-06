@@ -2,7 +2,11 @@
 {
 	public class Session
 	{
+		public SessionConfig Config { get; }
+
 		public MassiveWorld World { get; }
+
+		public MassiveSystems Systems { get; }
 
 		public SimulationGroup Simulations { get; }
 
@@ -18,18 +22,22 @@
 		{
 		}
 
-		public Session(SessionConfig sessionConfig)
+		public Session(SessionConfig config)
 		{
-			World = new MassiveWorld(sessionConfig.WorldConfig);
+			Config = config;
+			World = new MassiveWorld(config.WorldConfig);
+			Systems = new MassiveSystems(config.FramesCapacity);
 			ChangeTracker = new ChangeTracker();
 
-			Time = new Time(sessionConfig.Framerate);
-			Inputs = new Inputs(Time, ChangeTracker, sessionConfig.StartTick);
+			Time = new Time(config.Framerate);
+			Inputs = new Inputs(Time, ChangeTracker, config.StartTick);
 
 			Simulations = new SimulationGroup();
 			Simulations.Add(Time);
 
-			Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, sessionConfig.SaveEachNthTick);
+			Loop = new ResimulationLoop(
+				new MassiveGroup(config.FramesCapacity, World, Systems),
+				Simulations, Inputs, ChangeTracker, config.SaveEachNthTick);
 		}
 	}
 }

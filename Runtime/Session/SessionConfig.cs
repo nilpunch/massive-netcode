@@ -10,6 +10,10 @@
 
 		public readonly MassiveWorldConfig WorldConfig = new MassiveWorldConfig();
 
+		public int FramesCapacity => WorldConfig.FramesCapacity;
+
+		public int RollbackTicksCapacity => FramesCapacity * SaveEachNthTick;
+
 		public SessionConfig(int? framerate = default, int? saveEachNthTick = default, int? startTick = default, MassiveWorldConfig worldConfig = default)
 		{
 			Framerate = framerate ?? Framerate;

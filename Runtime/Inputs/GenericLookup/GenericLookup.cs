@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 
-namespace Massive
+namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -22,7 +22,7 @@ namespace Massive
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public TAbstract Find<TKey>()
 		{
-			var typeIndex = MiscTypeId<TKey>.Info.Index;
+			var typeIndex = TypeId<GenericKind, TKey>.Info.Index;
 
 			if (typeIndex >= _lookup.Length)
 			{
@@ -60,7 +60,7 @@ namespace Massive
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int IndexOf<TKey>()
 		{
-			return MiscTypeId<TKey>.Info.Index;
+			return TypeId<GenericKind, TKey>.Info.Index;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,7 +93,7 @@ namespace Massive
 
 		public void Assign<TKey>(TAbstract item)
 		{
-			var typeInfo = MiscTypeId<TKey>.Info;
+			var typeInfo = TypeId<GenericKind, TKey>.Info;
 			var typeIndex = typeInfo.Index;
 
 			// Resize lookup to fit.
@@ -123,12 +123,12 @@ namespace Massive
 
 		public int IndexOf(Type key)
 		{
-			return MiscTypeId.GetInfo(key).Index;
+			return TypeId<GenericKind>.GetInfo(key).Index;
 		}
 
 		public void Assign(Type keyType, TAbstract item)
 		{
-			var typeInfo = MiscTypeId.GetInfo(keyType);
+			var typeInfo = TypeId<GenericKind>.GetInfo(keyType);
 			var typeIndex = typeInfo.Index;
 
 			// Resize lookup to fit.
@@ -143,5 +143,9 @@ namespace Massive
 
 			Assign(typeInfo.FullName, item);
 		}
+	}
+
+	internal struct GenericKind
+	{
 	}
 }

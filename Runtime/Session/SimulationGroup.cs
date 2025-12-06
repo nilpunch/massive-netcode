@@ -1,8 +1,10 @@
-﻿namespace Massive.Netcode
+﻿using System.Collections.Generic;
+
+namespace Massive.Netcode
 {
 	public class SimulationGroup : ISimulation
 	{
-		private readonly FastList<ISimulation> _systems = new FastList<ISimulation>();
+		private readonly List<ISimulation> _systems = new List<ISimulation>();
 
 		public void Add(ISimulation system)
 		{
