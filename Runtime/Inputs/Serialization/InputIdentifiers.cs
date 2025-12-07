@@ -17,7 +17,7 @@ namespace Massive.Netcode.Serialization
 		public void RegisterAutomatically()
 		{
 			var asemblies = AppDomain.CurrentDomain.GetAssemblies();
-			
+
 			var inputTypes = asemblies
 				.SelectMany(assembly => assembly.GetTypes())
 				.Where(t => t.IsDefined(typeof(StateInputAttribute), false))

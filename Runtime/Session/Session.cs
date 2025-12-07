@@ -29,7 +29,7 @@
 			Systems = new MassiveSystems(config.FramesCapacity);
 			ChangeTracker = new ChangeTracker();
 
-			Time = new Time(config.Framerate);
+			Time = new Time(config.TickRate);
 			Inputs = new Inputs(Time, ChangeTracker, config.StartTick);
 
 			Simulations = new SimulationGroup();

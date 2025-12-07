@@ -2,7 +2,7 @@
 {
 	public class SessionConfig
 	{
-		public readonly int Framerate = 60;
+		public readonly int TickRate = 60;
 
 		public readonly int SaveEachNthTick = 5;
 
@@ -14,9 +14,9 @@
 
 		public int RollbackTicksCapacity => FramesCapacity * SaveEachNthTick;
 
-		public SessionConfig(int? framerate = default, int? saveEachNthTick = default, int? startTick = default, MassiveWorldConfig worldConfig = default)
+		public SessionConfig(int? tickRate = default, int? saveEachNthTick = default, int? startTick = default, MassiveWorldConfig worldConfig = default)
 		{
-			Framerate = framerate ?? Framerate;
+			TickRate = tickRate ?? TickRate;
 			SaveEachNthTick = saveEachNthTick ?? SaveEachNthTick;
 			StartTick = startTick ?? StartTick;
 			WorldConfig = worldConfig ?? WorldConfig;

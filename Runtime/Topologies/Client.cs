@@ -6,25 +6,24 @@
 
 		public TickSync TickSync { get; }
 
+		public Client(SessionConfig sessionConfig)
+		{
+			Session = new Session(sessionConfig);
+			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
+		}
+
 		public void Connect()
 		{
-			
 		}
 
 		public void Disconnect()
 		{
-			
 		}
 
-		public void Update()
+		public void Update(float currentTime)
 		{
-			var targetTick = TickSync.RemoteSimulationTick + TickSync.OneWayDelay;
-
-			var predictionLimit = TickSync.LastReceivedTick + Session.Config.RollbackTicksCapacity;
-
-			var clampedTargetTick = MathUtils.Min(targetTick, predictionLimit);
-
-			Session.Loop.FastForwardToTick(clampedTargetTick);
+			TickSync.Update(currentTime);
+			Session.Loop.FastForwardToTick(TickSync.TargetTick);
 		}
 	}
 }
