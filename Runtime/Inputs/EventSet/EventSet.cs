@@ -8,11 +8,13 @@ namespace Massive.Netcode
 	public sealed class EventSet<T> : IInputSet
 	{
 		private readonly ChangeTracker _globalChangeTracker;
+		private readonly IInputReceiver _inputReceiver;
 		private readonly CyclicList<AllEvents<T>> _events;
 
-		public EventSet(ChangeTracker globalChangeTracker, int startTick)
+		public EventSet(ChangeTracker globalChangeTracker, int startTick, IInputReceiver inputReceiver = null)
 		{
 			_globalChangeTracker = globalChangeTracker;
+			_inputReceiver = inputReceiver;
 			_events = new CyclicList<AllEvents<T>>(startTick);
 		}
 
@@ -33,6 +35,7 @@ namespace Massive.Netcode
 			_events[tick].Apply(new Event<T>(channel, data));
 
 			_globalChangeTracker.NotifyChange(tick);
+			_inputReceiver?.ApplyEventAt(tick, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

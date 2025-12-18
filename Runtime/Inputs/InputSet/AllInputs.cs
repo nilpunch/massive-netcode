@@ -15,9 +15,10 @@ namespace Massive.Netcode
 		public int InputsCapacity { get; private set; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void EnsureInit()
+		public void EnsureInitialized()
 		{
 			Inputs ??= Array.Empty<Input<T>>();
+			InputsCapacity = Inputs.Length;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,14 +85,14 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Copy(AllInputs<T> other)
+		public void CopyFrom(AllInputs<T> other)
 		{
 			EnsureChannel(other.MaxChannels - 1);
 			Array.Copy(other.Inputs, Inputs, other.MaxChannels);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void CopyAged(AllInputs<T> other)
+		public void CopyAgedFrom(AllInputs<T> other)
 		{
 			EnsureChannel(other.MaxChannels - 1);
 			for (var i = 0; i < other.MaxChannels; ++i)
@@ -101,15 +102,14 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void CopyAgedIfInactual(AllInputs<T> other)
+		public void CopyAgedIfInactualFrom(AllInputs<T> other)
 		{
 			EnsureChannel(other.MaxChannels - 1);
 			for (var i = 0; i < other.MaxChannels; ++i)
 			{
-				var agedInput = other.Inputs[i].Aged();
 				if (Inputs[i].TicksPassed != 0)
 				{
-					Inputs[i] = agedInput;
+					Inputs[i] = other.Inputs[i].Aged();
 				}
 			}
 		}

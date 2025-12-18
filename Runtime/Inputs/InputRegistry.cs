@@ -6,6 +6,7 @@ namespace Massive.Netcode
 	{
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _startTick;
+		private readonly IInputReceiver _inputReceiver;
 		private readonly GenericLookup<object> _eventsLookup = new GenericLookup<object>();
 		private readonly GenericLookup<object> _inputsLookup = new GenericLookup<object>();
 		private readonly FastList<IInputSet> _events = new FastList<IInputSet>();
@@ -13,10 +14,11 @@ namespace Massive.Netcode
 
 		public int Global { get; } = 0;
 
-		public InputRegistry(ChangeTracker changeTracker, int startTick = 0)
+		public InputRegistry(ChangeTracker changeTracker, int startTick = 0, IInputReceiver inputReceiver = null)
 		{
 			_changeTracker = changeTracker;
 			_startTick = startTick;
+			_inputReceiver = inputReceiver;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -112,7 +114,7 @@ namespace Massive.Netcode
 
 			if (eventSet == null)
 			{
-				eventSet = new EventSet<T>(_changeTracker, _startTick);
+				eventSet = new EventSet<T>(_changeTracker, _startTick, _inputReceiver);
 				_eventsLookup.Assign<T>(eventSet);
 				_events.Add(eventSet);
 			}
@@ -127,7 +129,7 @@ namespace Massive.Netcode
 
 			if (inputSet == null)
 			{
-				inputSet = new InputSet<T>(_changeTracker, _startTick);
+				inputSet = new InputSet<T>(_changeTracker, _startTick, _inputReceiver);
 				_inputsLookup.Assign<T>(inputSet);
 				_inputs.Add(inputSet);
 			}

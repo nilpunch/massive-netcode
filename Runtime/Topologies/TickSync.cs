@@ -53,7 +53,7 @@ namespace Massive.Netcode
 		{
 			if (serverTick <= LastReceivedServerTick)
 			{
-				return; // Old or duplicate update
+				return; // Old or duplicate update.
 			}
 
 			LastReceivedServerTick = serverTick;

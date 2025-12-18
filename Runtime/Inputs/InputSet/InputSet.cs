@@ -9,13 +9,15 @@ namespace Massive.Netcode
 	{
 		private readonly ChangeTracker _localChangeTracker = new ChangeTracker();
 		private readonly ChangeTracker _globalChangeTracker;
+		private readonly IInputReceiver _inputReceiver;
 		private readonly CyclicList<AllInputs<T>> _inputs;
 
-		public InputSet(ChangeTracker globalChangeTracker, int startTick)
+		public InputSet(ChangeTracker globalChangeTracker, int startTick, IInputReceiver inputReceiver = null)
 		{
 			_globalChangeTracker = globalChangeTracker;
+			_inputReceiver = inputReceiver;
 			_inputs = new CyclicList<AllInputs<T>>(startTick);
-			_inputs.Append().EnsureInit();
+			_inputs.Append().EnsureInitialized();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -33,6 +35,7 @@ namespace Massive.Netcode
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
+			_inputReceiver?.SetInputAt(tick, channel, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,20 +43,21 @@ namespace Massive.Netcode
 		{
 			PopulateUpTo(tick);
 
-			_inputs[tick].Copy(allInputs);
+			_inputs[tick].CopyFrom(allInputs);
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
+			_inputReceiver?.SetInputsAt(tick, allInputs);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void PopulateUpTo(int tick)
 		{
-			for (var i = _inputs.TailIndex; i <= tick; ++i)
+			for (var currentTick = _inputs.TailIndex; currentTick <= tick; ++currentTick)
 			{
 				ref var inputs = ref _inputs.Append();
-				inputs.EnsureInit();
-				inputs.CopyAged(_inputs[i - 1]);
+				inputs.EnsureInitialized();
+				inputs.CopyAgedFrom(_inputs[currentTick - 1]);
 			}
 		}
 
@@ -74,7 +78,7 @@ namespace Massive.Netcode
 		{
 			for (var i = _localChangeTracker.EarliestChangedTick + 1; i < _inputs.TailIndex; i++)
 			{
-				_inputs[i].CopyAgedIfInactual(_inputs[i - 1]);
+				_inputs[i].CopyAgedIfInactualFrom(_inputs[i - 1]);
 			}
 
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);

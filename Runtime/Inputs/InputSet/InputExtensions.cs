@@ -17,7 +17,13 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static TInput Actual<TInput>(this Input<TInput> input, TInput fallback = default)
+		public static TInput Actual<TInput>(this Input<TInput> input)
+		{
+			return input.TicksPassed == 0 ? input.LastActualInput : Default<TInput>.Value;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static TInput Actual<TInput>(this Input<TInput> input, TInput fallback)
 		{
 			return input.TicksPassed == 0 ? input.LastActualInput : fallback;
 		}

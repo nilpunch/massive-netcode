@@ -16,7 +16,7 @@ namespace Massive.Netcode
 		public static Input<TInput> Inactual
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => new Input<TInput>(default, int.MaxValue);
+			get => new Input<TInput>(Default<TInput>.Value, int.MaxValue);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -16,7 +16,7 @@ namespace Massive.Netcode
 			_index = _allInputs.MaxChannels;
 		}
 
-		public (int channel, Input<T> input) Current
+		public (int Channel, Input<T> Input) Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get => (_index, _allInputs.Inputs[_index]);

@@ -18,11 +18,11 @@
 
 		public ChangeTracker ChangeTracker { get; }
 
-		public Session() : this(new SessionConfig())
+		public Session(IInputReceiver inputReceiver = null) : this(new SessionConfig(), inputReceiver)
 		{
 		}
 
-		public Session(SessionConfig config)
+		public Session(SessionConfig config, IInputReceiver inputReceiver = null)
 		{
 			Config = config;
 			World = new MassiveWorld(config.WorldConfig);
@@ -30,14 +30,14 @@
 			ChangeTracker = new ChangeTracker();
 
 			Time = new Time(config.TickRate);
-			Inputs = new Inputs(Time, ChangeTracker, config.StartTick);
+			Inputs = new Inputs(Time, ChangeTracker, config.StartTick, inputReceiver);
 
 			Simulations = new SimulationGroup();
 			Simulations.Add(Time);
 
-			Loop = new ResimulationLoop(
-				new MassiveGroup(config.FramesCapacity, World, Systems),
-				Simulations, Inputs, ChangeTracker, config.SaveEachNthTick);
+			Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, config.SaveEachNthTick);
+			World.FrameSaved += Systems.SaveFrame;
+			World.Rollbacked += Systems.Rollback;
 		}
 	}
 }
