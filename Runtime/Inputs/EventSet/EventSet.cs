@@ -38,7 +38,6 @@ namespace Massive.Netcode
 			_inputReceiver?.ApplyEventAt(tick, channel, data);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void PopulateUpTo(int tick)
 		{
 			for (var i = _events.TailIndex; i <= tick; ++i)
@@ -49,7 +48,6 @@ namespace Massive.Netcode
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void DiscardUpTo(int tick)
 		{
 			_events.RemoveUpTo(tick);

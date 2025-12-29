@@ -18,9 +18,10 @@ namespace Massive.Netcode.Samples
 			Session = new Session();
 
 			Session.Systems
-				.Instance(new SpawnPlayers(Session.Inputs))
-				.Instance(new Shooting(Session.Inputs))
-				.Build(Session.World);
+				.New<SpawnPlayers>()
+				.New<Shooting>()
+				.Build(Session.World)
+				.Inject(Session);
 
 			Session.Simulations.Add(new SystemsSimulation(Session.Systems));
 		}
@@ -85,12 +86,8 @@ namespace Massive.Netcode.Samples
 		void ISystemMethod<IUpdate>.Run() => Update();
 	}
 
-	public class SpawnPlayers : SystemBase, IUpdate
+	public class SpawnPlayers : NetSystem, IUpdate
 	{
-		public Inputs Inputs { get; }
-
-		public SpawnPlayers(Inputs inputs) => Inputs = inputs;
-
 		public void Update()
 		{
 			foreach (var (channel, spawnEnvent) in Inputs.GetEvents<PlayerSpawnEvent>())
@@ -100,12 +97,8 @@ namespace Massive.Netcode.Samples
 		}
 	}
 
-	public class Shooting : SystemBase, IUpdate
+	public class Shooting : NetSystem, IUpdate
 	{
-		public Inputs Inputs { get; }
-
-		public Shooting(Inputs inputs) => Inputs = inputs;
-
 		public void Update()
 		{
 			World.ForEach(this, static (ref Player player, Shooting system) =>
