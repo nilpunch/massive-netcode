@@ -9,6 +9,8 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void NotifyChange(int tick)
 		{
+			NegativeArgumentException.ThrowIfNegative(tick);
+
 			if (EarliestChangedTick > tick)
 			{
 				EarliestChangedTick = tick;
@@ -18,6 +20,8 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void ConfirmChangesUpTo(int tick)
 		{
+			NegativeArgumentException.ThrowIfNegative(tick);
+
 			if (EarliestChangedTick < tick)
 			{
 				EarliestChangedTick = tick;

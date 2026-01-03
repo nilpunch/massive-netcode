@@ -20,8 +20,7 @@ namespace Massive.Netcode.Samples
 			Session.Systems
 				.New<SpawnPlayers>()
 				.New<Shooting>()
-				.Build(Session.World)
-				.Inject(Session);
+				.Build(Session);
 
 			Session.Simulations.Add(new SystemsSimulation(Session.Systems));
 		}

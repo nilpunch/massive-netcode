@@ -50,7 +50,6 @@ namespace Massive.Netcode
 			_inputReceiver?.SetInputsAt(tick, allInputs);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void PopulateUpTo(int tick)
 		{
 			for (var currentTick = _inputs.TailIndex; currentTick <= tick; ++currentTick)
@@ -61,7 +60,6 @@ namespace Massive.Netcode
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void DiscardUpTo(int tick)
 		{
 			// Ensure there at least one input left in list, so we can populate from it.
@@ -73,7 +71,6 @@ namespace Massive.Netcode
 			_inputs.RemoveUpTo(tick);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Reevaluate()
 		{
 			for (var i = _localChangeTracker.EarliestChangedTick + 1; i < _inputs.TailIndex; i++)
