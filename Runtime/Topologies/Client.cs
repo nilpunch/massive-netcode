@@ -20,10 +20,9 @@
 		{
 		}
 
-		public void Update(float currentTime)
+		public void Update(float clientTime)
 		{
-			TickSync.Update(currentTime);
-			Session.Loop.FastForwardToTick(TickSync.TargetTick);
+			Session.Loop.FastForwardToTick(TickSync.CalculateTargetTick(clientTime));
 		}
 	}
 }

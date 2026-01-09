@@ -8,89 +8,108 @@ namespace Massive.Netcode
 		private readonly int _maxRollbackTicks;
 		private readonly int _safetyBufferTicks;
 
-		public float LastUpdateClientTime { get; private set; }
+		public int ApprovedSimulationTick { get; private set; }
 
-		public int LastReceivedServerTick { get; private set; } = -1;
+		public int TimeSyncServerTick { get; private set; }
+		public float TimeSyncClientTime { get; private set; }
 
-		public int EstimatedServerTick { get; private set; } = 0;
-
-		public int PredictionOffset { get; private set; }
-
-		public int TargetTick
-		{
-			get
-			{
-				if (LastReceivedServerTick < 0)
-				{
-					return 0;
-				}
-
-				var desiredTarget = EstimatedServerTick + PredictionOffset;
-				return MathUtils.Min(desiredTarget, LastReceivedServerTick + _maxRollbackTicks);
-			}
-		}
+		public int PredictionLeadTicks { get; private set; }
 
 		public TickSync(int tickRate, int maxRollbackTicks, int safetyBufferTicks = 2)
 		{
 			_tickRate = tickRate;
 			_maxRollbackTicks = maxRollbackTicks;
 			_safetyBufferTicks = safetyBufferTicks;
-			PredictionOffset = safetyBufferTicks;
+
+			PredictionLeadTicks = safetyBufferTicks;
 		}
 
 		/// <summary>
-		/// Update time estimation. Call every frame with current client time.
+		/// Computes the client simulation target tick.
+		/// Clamped to the allowed rollback window.
 		/// </summary>
-		public void Update(float clientTime)
+		public int CalculateTargetTick(float clientTime)
 		{
-			UpdateEstimation(clientTime);
+			var desired = EstimateServerTick(clientTime) + PredictionLeadTicks;
+			return MathUtils.Min(desired, ApprovedSimulationTick + _maxRollbackTicks);
 		}
 
 		/// <summary>
-		/// Call when receiving server tick.
+		/// Estimates the current server tick from the time-sync anchor.
 		/// </summary>
-		public void UpdateServerTick(int serverTick, float clientTime, float rttEstimate = 0)
+		public int EstimateServerTick(float clientTime)
 		{
-			if (serverTick <= LastReceivedServerTick)
+			var elapsed = clientTime - TimeSyncClientTime;
+			var elapsedTicks = (int)MathF.Floor(elapsed * _tickRate);
+
+			return TimeSyncServerTick + MathUtils.Max(0, elapsedTicks);
+		}
+
+		/// <summary>
+		/// Updates the server clock time-sync anchor.<br/>
+		/// Call when receiving time syncing packet.
+		/// </summary>
+		public void UpdateTimeSync(int serverTick, float clientTime)
+		{
+			if (serverTick <= TimeSyncServerTick)
 			{
-				return; // Old or duplicate update.
+				return;
 			}
 
-			LastReceivedServerTick = serverTick;
-			LastUpdateClientTime = clientTime;
+			TimeSyncServerTick = serverTick;
+			TimeSyncClientTime = clientTime;
+		}
 
+		/// <summary>
+		/// Marks this simulation tick as approved for extending rollback window.<br/>
+		/// Call when all input packets received up to this simulation tick.
+		/// </summary>
+		public void ApproveSimulationTick(int tick)
+		{
+			if (tick <= ApprovedSimulationTick)
+			{
+				return;
+			}
+
+			ApprovedSimulationTick = tick;
+		}
+
+		/// <summary>
+		/// Updates prediction lead based on RTT.
+		/// </summary>
+		public void UpdateRTT(float rttEstimate)
+		{
 			if (rttEstimate > 0)
 			{
-				var oneWayDelaySeconds = rttEstimate * 0.5f;
-				var oneWayDelayTicks = (int)MathF.Round(oneWayDelaySeconds * _tickRate);
-
-				var desiredOffset = oneWayDelayTicks + _safetyBufferTicks;
-
-				PredictionOffset = MathUtils.Min(desiredOffset, _maxRollbackTicks);
+				var oneWayTicks = (int)MathF.Round(rttEstimate * 0.5f * _tickRate);
+				PredictionLeadTicks = MathUtils.Min(
+					oneWayTicks + _safetyBufferTicks,
+					_maxRollbackTicks);
 			}
+		}
 
-			UpdateEstimation(clientTime);
+		/// <summary>
+		/// Returns normalized interpolation within the current tick [0..1].
+		/// </summary>
+		public float CalculateInterpolation(float clientTime)
+		{
+			var estimatedServerTime = EstimateServerTick(clientTime) / (float)_tickRate;
+
+			var simulationDeltaTime = 1f / _tickRate;
+
+			var interpolation = (clientTime - estimatedServerTime) / simulationDeltaTime;
+
+			var interpolation01 = interpolation < 0f ? 0f : interpolation > 1f ? 1f : interpolation;
+
+			return interpolation01;
 		}
 
 		public void Reset()
 		{
-			LastReceivedServerTick = -1;
-			LastUpdateClientTime = -1f;
-			EstimatedServerTick = 0;
-			PredictionOffset = _safetyBufferTicks;
-		}
-
-		private void UpdateEstimation(float clientTime)
-		{
-			if (LastReceivedServerTick < 0)
-			{
-				EstimatedServerTick = 0;
-				return;
-			}
-
-			var elapsed = clientTime - LastUpdateClientTime;
-			var elapsedTicks = (int)MathF.Floor(elapsed * _tickRate);
-			EstimatedServerTick = LastReceivedServerTick + MathUtils.Max(0, elapsedTicks);
+			ApprovedSimulationTick = 0;
+			TimeSyncServerTick = 0;
+			TimeSyncClientTime = 0f;
+			PredictionLeadTicks = _safetyBufferTicks;
 		}
 	}
 }

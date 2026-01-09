@@ -1,6 +1,6 @@
 ﻿namespace Massive.Netcode
 {
-	public class NetSystem : ISystem, ISystemInject<Session>
+	public class NetSystem : ISystem, IInject<Session>
 	{
 		public int Id { get; private set; }
 		public Session Session { get; private set; }
@@ -16,7 +16,7 @@
 			Id = id;
 		}
 
-		void ISystemInject<Session>.Inject(Session session)
+		void IInject<Session>.Inject(Session session)
 		{
 			Session = session;
 		}
