@@ -2,7 +2,7 @@
 
 namespace Massive.Netcode
 {
-	public readonly struct AllActualInputs<T>
+	public readonly struct AllActualInputs<T> where T : IInput
 	{
 		public readonly AllInputs<T> AllInputs;
 

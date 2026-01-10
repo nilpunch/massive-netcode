@@ -4,11 +4,11 @@ namespace Massive.Netcode.Samples
 {
 	public struct Player { public int InputChannel; }
 
-	public struct PlayerSpawnEvent { public int PlayerInputChannel; }
+	public struct PlayerSpawnEvent : IEvent { public int PlayerInputChannel; }
 
-	public struct SessionFinishedEvent { }
+	public struct SessionFinishedEvent : IEvent { }
 
-	public struct PlayerShootingInput { public bool IsShooting; }
+	public struct PlayerShootingInput : IInput { public bool IsShooting; }
 
 	public class SimulationSample
 	{

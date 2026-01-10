@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Massive.Netcode.Serialization
 {
@@ -14,19 +15,44 @@ namespace Massive.Netcode.Serialization
 		private readonly FastList<Type> _inputs = new FastList<Type>();
 		private readonly FastList<Type> _events = new FastList<Type>();
 
-		public void RegisterAutomatically()
+		public void RegisterAutomatically(Assembly assembly)
+		{
+			var assemblyTypes = assembly.GetTypes();
+
+			var inputTypes = assemblyTypes
+				.Where(t => typeof(IInput).IsAssignableFrom(t))
+				.OrderBy(type => type.GetFullGenericName())
+				.ToArray();
+
+			var eventTypes = assemblyTypes
+				.Where(t => typeof(IEvent).IsAssignableFrom(t))
+				.OrderBy(type => type.GetFullGenericName())
+				.ToArray();
+
+			foreach (var inputType in inputTypes)
+			{
+				RegisterInput(inputType);
+			}
+
+			foreach (var eventType in eventTypes)
+			{
+				RegisterEvent(eventType);
+			}
+		}
+
+		public void RegisterAutomaticallyFromAllAssemblies()
 		{
 			var asemblies = AppDomain.CurrentDomain.GetAssemblies();
 
 			var inputTypes = asemblies
 				.SelectMany(assembly => assembly.GetTypes())
-				.Where(t => t.IsDefined(typeof(StateInputAttribute), false))
+				.Where(t => typeof(IInput).IsAssignableFrom(t))
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
 			var eventTypes = asemblies
 				.SelectMany(assembly => assembly.GetTypes())
-				.Where(t => t.IsDefined(typeof(EventInputAttribute), false))
+				.Where(t => typeof(IEvent).IsAssignableFrom(t))
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 

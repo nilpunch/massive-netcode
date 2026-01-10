@@ -22,49 +22,49 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> GetGlobalAt<T>(int tick)
+		public Input<T> GetGlobalAt<T>(int tick) where T : IInput
 		{
 			return GetInputSet<T>().GetInputs(tick).Get(Global);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetGlobalAt<T>(int tick, T input)
+		public void SetGlobalAt<T>(int tick, T input) where T : IInput
 		{
 			GetInputSet<T>().SetInput(tick, Global, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyEventAt<T>(int tick, int localOrder, T data)
+		public void ApplyEventAt<T>(int tick, int localOrder, T data) where T : IEvent
 		{
 			GetEventSet<T>().ApplyEvent(tick, localOrder, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> GetAt<T>(int tick, int channel)
+		public Input<T> GetAt<T>(int tick, int channel) where T : IInput
 		{
 			return GetInputSet<T>().GetInputs(tick).Get(channel);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetAt<T>(int tick, int channel, T input)
+		public void SetAt<T>(int tick, int channel, T input) where T : IInput
 		{
 			GetInputSet<T>().SetInput(tick, channel, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllInputs<T> GetAllInputsAt<T>(int tick)
+		public AllInputs<T> GetAllInputsAt<T>(int tick) where T : IInput
 		{
 			return GetInputSet<T>().GetInputs(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllActualInputs<T> GetAllActualAt<T>(int tick)
+		public AllActualInputs<T> GetAllActualAt<T>(int tick) where T : IInput
 		{
 			return new AllActualInputs<T>(GetInputSet<T>().GetInputs(tick));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllEvents<T> GetEventsAt<T>(int tick)
+		public AllEvents<T> GetEventsAt<T>(int tick) where T : IEvent
 		{
 			return GetEventSet<T>().GetEvents(tick);
 		}
@@ -102,7 +102,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public EventSet<T> GetEventSet<T>()
+		public EventSet<T> GetEventSet<T>() where T : IEvent
 		{
 			var eventSet = (EventSet<T>)_eventsLookup.Find<T>();
 
@@ -117,7 +117,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public InputSet<T> GetInputSet<T>()
+		public InputSet<T> GetInputSet<T>() where T : IInput
 		{
 			var inputSet = (InputSet<T>)_inputsLookup.Find<T>();
 

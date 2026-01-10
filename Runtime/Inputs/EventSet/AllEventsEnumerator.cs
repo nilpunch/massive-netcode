@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public struct AllEventsEnumerator<T>
+	public struct AllEventsEnumerator<T> where T : IEvent
 	{
 		private readonly AllEvents<T> _allEvents;
 		private ulong[] _allBits;

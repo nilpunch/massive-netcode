@@ -6,7 +6,7 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public struct AllEvents<T>
+	public struct AllEvents<T> where T : IEvent
 	{
 		public int Count { get; private set; }
 

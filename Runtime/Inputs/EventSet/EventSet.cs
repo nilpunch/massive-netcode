@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public sealed class EventSet<T> : IInputSet
+	public sealed class EventSet<T> : IInputSet where T : IEvent
 	{
 		private readonly ChangeTracker _globalChangeTracker;
 		private readonly IInputReceiver _inputReceiver;

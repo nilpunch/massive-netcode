@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public sealed class InputSet<T> : IInputSet
+	public sealed class InputSet<T> : IInputSet where T : IInput
 	{
 		private readonly ChangeTracker _localChangeTracker = new ChangeTracker();
 		private readonly ChangeTracker _globalChangeTracker;
@@ -17,7 +17,7 @@ namespace Massive.Netcode
 			_globalChangeTracker = globalChangeTracker;
 			_inputReceiver = inputReceiver;
 			_inputs = new CyclicList<AllInputs<T>>(startTick);
-			_inputs.Append().EnsureInitialized(startTick);
+			_inputs.Append().EnsureInitialized();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -39,7 +39,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetAllInputs(int tick, AllInputs<T> allInputs)
+		public void SetInputs(int tick, AllInputs<T> allInputs)
 		{
 			PopulateUpTo(tick);
 
@@ -55,8 +55,8 @@ namespace Massive.Netcode
 			for (var currentTick = _inputs.TailIndex; currentTick <= tick; ++currentTick)
 			{
 				ref var inputs = ref _inputs.Append();
-				inputs.EnsureInitialized(currentTick);
-				inputs.CopyFrom(_inputs[currentTick - 1]);
+				inputs.EnsureInitialized();
+				inputs.CopyAgedFrom(_inputs[currentTick - 1]);
 			}
 		}
 
@@ -75,7 +75,7 @@ namespace Massive.Netcode
 		{
 			for (var i = _localChangeTracker.EarliestChangedTick + 1; i < _inputs.TailIndex; i++)
 			{
-				_inputs[i].CopyFrom(_inputs[i - 1]);
+				_inputs[i].CopyAgedIfInactualFrom(_inputs[i - 1]);
 			}
 
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);

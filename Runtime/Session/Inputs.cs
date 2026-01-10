@@ -13,37 +13,37 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> GetGlobal<T>()
+		public Input<T> GetGlobal<T>() where T : IInput
 		{
 			return GetGlobalAt<T>(Time.Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> Get<T>(int channel)
+		public Input<T> Get<T>(int channel) where T : IInput
 		{
 			return GetAt<T>(Time.Tick, channel);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllInputs<T> GetAllInputs<T>()
+		public AllInputs<T> GetAllInputs<T>() where T : IInput
 		{
 			return GetAllInputsAt<T>(Time.Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllActualInputs<T> GetAllActual<T>()
+		public AllActualInputs<T> GetAllActual<T>() where T : IInput
 		{
 			return GetAllActualAt<T>(Time.Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllEvents<T> GetEvents<T>()
+		public AllEvents<T> GetEvents<T>() where T : IEvent
 		{
 			return GetEventsAt<T>(Time.Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyEvent<T>(int localOrder, T data)
+		public void ApplyEvent<T>(int localOrder, T data) where T : IEvent
 		{
 			ApplyEventAt(Time.Tick, localOrder, data);
 		}
