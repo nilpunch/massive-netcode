@@ -40,6 +40,12 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void AppendEventAt<T>(int tick, T data) where T : IEvent
+		{
+			GetEventSet<T>().AppendEvent(tick, data);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Input<T> GetAt<T>(int tick, int channel) where T : IInput
 		{
 			return GetInputSet<T>().GetInputs(tick).Get(channel);

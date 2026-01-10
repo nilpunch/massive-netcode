@@ -47,5 +47,11 @@ namespace Massive.Netcode
 		{
 			ApplyEventAt(Time.Tick, localOrder, data);
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void AppendEvent<T>(T data) where T : IEvent
+		{
+			AppendEventAt(Time.Tick, data);
+		}
 	}
 }

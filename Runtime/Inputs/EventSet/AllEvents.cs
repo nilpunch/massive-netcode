@@ -31,6 +31,14 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public int Append(T data)
+		{
+			var localOrder = Count;
+			Apply(localOrder, data);
+			return localOrder;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Apply(int localOrder, T data)
 		{
 			EnsureEventAt(localOrder);
@@ -78,6 +86,15 @@ namespace Massive.Netcode
 			AppliedMask = AppliedMask.Resize((EventsCapacity + 63) >> 6);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void CopyFrom(AllEvents<T> other)
+		{
+			EnsureEventAt(other.Count - 1);
+			Array.Copy(other.Events, Events, other.Count);
+			Array.Copy(other.AppliedMask, AppliedMask, other.UsedMaskLength);
+			Count = other.Count;
+		}
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllEventsEnumerator<T> GetEnumerator()
 		{

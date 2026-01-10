@@ -32,7 +32,29 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void ApplyEvent(int tick, int localOrder, T data)
 		{
+			PopulateUpTo(tick);
+
 			_events[tick].Apply(localOrder, data);
+
+			_globalChangeTracker.NotifyChange(tick);
+			_inputReceiver?.ApplyEventAt(tick, localOrder, data);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ApplyEvents(int tick, AllEvents<T> allEvents)
+		{
+			PopulateUpTo(tick);
+
+			_events[tick].CopyFrom(allEvents);
+
+			_globalChangeTracker.NotifyChange(tick);
+			_inputReceiver?.ApplyEventsAt(tick, allEvents);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void AppendEvent(int tick, T data)
+		{
+			var localOrder = _events[tick].Append(data);
 
 			_globalChangeTracker.NotifyChange(tick);
 			_inputReceiver?.ApplyEventAt(tick, localOrder, data);
