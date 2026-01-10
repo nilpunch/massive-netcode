@@ -10,7 +10,7 @@ namespace Massive.Netcode
 
 		public int ApprovedSimulationTick { get; private set; }
 
-		public int TimeSyncServerTick { get; private set; }
+		public float TimeSyncServerTime { get; private set; }
 		public float TimeSyncClientTime { get; private set; }
 
 		public int PredictionLeadTicks { get; private set; }
@@ -40,23 +40,22 @@ namespace Massive.Netcode
 		public int EstimateServerTick(float clientTime)
 		{
 			var elapsed = clientTime - TimeSyncClientTime;
-			var elapsedTicks = (int)MathF.Floor(elapsed * _tickRate);
-
-			return TimeSyncServerTick + MathUtils.Max(0, elapsedTicks);
+			var serverTime = TimeSyncServerTime + elapsed;
+			return (int)MathF.Floor(serverTime * _tickRate);
 		}
 
 		/// <summary>
 		/// Updates the server clock time-sync anchor.<br/>
 		/// Call when receiving time syncing packet.
 		/// </summary>
-		public void UpdateTimeSync(int serverTick, float clientTime)
+		public void UpdateTimeSync(float serverTime, float clientTime)
 		{
-			if (serverTick <= TimeSyncServerTick)
+			if (serverTime <= TimeSyncServerTime)
 			{
 				return;
 			}
 
-			TimeSyncServerTick = serverTick;
+			TimeSyncServerTime = serverTime;
 			TimeSyncClientTime = clientTime;
 		}
 
@@ -93,11 +92,11 @@ namespace Massive.Netcode
 		/// </summary>
 		public float CalculateInterpolation(float clientTime)
 		{
-			var estimatedServerTime = EstimateServerTick(clientTime) / (float)_tickRate;
+			var serverTickStartTime = EstimateServerTick(clientTime) / (float)_tickRate;
 
 			var simulationDeltaTime = 1f / _tickRate;
 
-			var interpolation = (clientTime - estimatedServerTime) / simulationDeltaTime;
+			var interpolation = (clientTime - serverTickStartTime) / simulationDeltaTime;
 
 			var interpolation01 = interpolation < 0f ? 0f : interpolation > 1f ? 1f : interpolation;
 
@@ -107,7 +106,7 @@ namespace Massive.Netcode
 		public void Reset()
 		{
 			ApprovedSimulationTick = 0;
-			TimeSyncServerTick = 0;
+			TimeSyncServerTime = 0f;
 			TimeSyncClientTime = 0f;
 			PredictionLeadTicks = _safetyBufferTicks;
 		}

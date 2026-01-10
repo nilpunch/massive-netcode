@@ -8,28 +8,73 @@ namespace Massive.Netcode
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 	public struct AllInputs<T>
 	{
-		public int MaxChannels { get; private set; }
+		public struct StoredInput
+		{
+			public readonly T State;
+			public readonly int Tick;
 
-		public Input<T>[] Inputs { get; private set; }
+			public StoredInput(T state, int tick)
+			{
+				State = state;
+				Tick = tick;
+			}
+
+			public static readonly StoredInput Inactual = new StoredInput(Default<T>.Value, -1);
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public bool IsActualAt(int tick)
+			{
+				return Tick == tick;
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public Input<T> GetInputAt(int tick)
+			{
+				if (Tick < 0)
+				{
+					return Input<T>.Inactual;
+				}
+
+				var ticksPassed = tick - Tick;
+
+				NegativeArgumentException.ThrowIfNegative(ticksPassed);
+
+				return new Input<T>(State, ticksPassed);
+			}
+		}
+
+		public int UsedChannels { get; private set; }
+
+		public StoredInput[] Inputs { get; private set; }
 
 		public int InputsCapacity { get; private set; }
 
+		public int Tick { get; private set; }
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void EnsureInitialized()
+		public void EnsureInitialized(int tick)
 		{
-			Inputs ??= Array.Empty<Input<T>>();
+			Inputs ??= Array.Empty<StoredInput>();
 			InputsCapacity = Inputs.Length;
+			Tick = tick;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<T> Get(int channel)
+		public readonly Input<T> Get(int channel)
 		{
-			if (channel < 0 || channel >= MaxChannels)
+			if (channel < 0 || channel >= UsedChannels)
 			{
 				return Input<T>.Inactual;
 			}
 
-			return Inputs[channel];
+			var input = Inputs[channel];
+
+			if (input.Tick < 0)
+			{
+				return Input<T>.Inactual;
+			}
+
+			return new Input<T>(input.State, Tick - input.Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,28 +82,28 @@ namespace Massive.Netcode
 		{
 			EnsureChannel(channel);
 
-			Inputs[channel] = new Input<T>(input, 0);
+			Inputs[channel] = new StoredInput(input, Tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void EnsureChannel(int channel)
 		{
 			// If channel already there, nothing to be done.
-			if (channel < MaxChannels)
+			if (channel < UsedChannels)
 			{
 				return;
 			}
 
 			EnsureInputForChannel(channel);
 
-			MaxChannels = channel + 1;
+			UsedChannels = channel + 1;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Clear()
 		{
-			Array.Fill(Inputs, Input<T>.Inactual);
-			MaxChannels = 0;
+			Array.Fill(Inputs, StoredInput.Inactual);
+			UsedChannels = 0;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,7 +124,7 @@ namespace Massive.Netcode
 			Inputs = Inputs.Resize(capacity);
 			if (capacity > InputsCapacity)
 			{
-				Array.Fill(Inputs, Input<T>.Inactual, InputsCapacity, capacity - InputsCapacity);
+				Array.Fill(Inputs, StoredInput.Inactual, InputsCapacity, capacity - InputsCapacity);
 			}
 			InputsCapacity = capacity;
 		}
@@ -87,31 +132,8 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyFrom(AllInputs<T> other)
 		{
-			EnsureChannel(other.MaxChannels - 1);
-			Array.Copy(other.Inputs, Inputs, other.MaxChannels);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void CopyAgedFrom(AllInputs<T> other)
-		{
-			EnsureChannel(other.MaxChannels - 1);
-			for (var i = 0; i < other.MaxChannels; ++i)
-			{
-				Inputs[i] = other.Inputs[i].Aged();
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void CopyAgedIfInactualFrom(AllInputs<T> other)
-		{
-			EnsureChannel(other.MaxChannels - 1);
-			for (var i = 0; i < other.MaxChannels; ++i)
-			{
-				if (Inputs[i].TicksPassed != 0)
-				{
-					Inputs[i] = other.Inputs[i].Aged();
-				}
-			}
+			EnsureChannel(other.UsedChannels - 1);
+			Array.Copy(other.Inputs, Inputs, other.UsedChannels);
 		}
 	}
 }

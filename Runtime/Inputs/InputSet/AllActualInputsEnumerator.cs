@@ -7,29 +7,29 @@ namespace Massive.Netcode
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 	public struct ActualInputEnumerator<T>
 	{
-		private readonly AllInputs<T> _allInputs;
+		private AllInputs<T> _allInputs;
 		private int _index;
 
 		public ActualInputEnumerator(AllInputs<T> allInputs)
 		{
 			_allInputs = allInputs;
-			_index = _allInputs.MaxChannels;
+			_index = _allInputs.UsedChannels;
 		}
 
 		public (int Channel, Input<T> Input) Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => (_index, _allInputs.Inputs[_index]);
+			get => (_index, _allInputs.Inputs[_index].GetInputAt(_allInputs.Tick));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool MoveNext()
 		{
-			while (--_index >= 0 && !_allInputs.Inputs[_index].IsActual())
+			while (++_index < _allInputs.UsedChannels && !_allInputs.Inputs[_index].IsActualAt(_allInputs.Tick))
 			{
 			}
 
-			return _index >= 0;
+			return _index < _allInputs.UsedChannels;
 		}
 	}
 }

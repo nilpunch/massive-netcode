@@ -34,9 +34,9 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyGlobalEventAt<T>(int tick, T data)
+		public void ApplyEventAt<T>(int tick, int localOrder, T data)
 		{
-			GetEventSet<T>().ApplyEvent(tick, Global, data);
+			GetEventSet<T>().ApplyEvent(tick, localOrder, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -67,12 +67,6 @@ namespace Massive.Netcode
 		public AllEvents<T> GetEventsAt<T>(int tick)
 		{
 			return GetEventSet<T>().GetEvents(tick);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyEventAt<T>(int tick, int channel, T data)
-		{
-			GetEventSet<T>().ApplyEvent(tick, channel, data);
 		}
 
 		public void PopulateUpTo(int tick)

@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace Massive.Netcode
+﻿namespace Massive.Netcode
 {
 	public readonly struct Input<TInput>
 	{
@@ -13,17 +11,6 @@ namespace Massive.Netcode
 			TicksPassed = ticksPassed;
 		}
 
-		public static Input<TInput> Inactual
-		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => new Input<TInput>(Default<TInput>.Value, int.MaxValue);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Input<TInput> Aged()
-		{
-			var clampedNextTick = MathUtils.SaturationAdd(TicksPassed, 1);
-			return new Input<TInput>(LastActualInput, clampedNextTick);
-		}
+		public static readonly Input<TInput> Inactual = new Input<TInput>(Default<TInput>.Value, int.MaxValue);
 	}
 }

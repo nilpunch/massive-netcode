@@ -30,12 +30,12 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyEvent(int tick, int channel, T data)
+		public void ApplyEvent(int tick, int localOrder, T data)
 		{
-			_events[tick].Apply(new Event<T>(channel, data));
+			_events[tick].Apply(localOrder, data);
 
 			_globalChangeTracker.NotifyChange(tick);
-			_inputReceiver?.ApplyEventAt(tick, channel, data);
+			_inputReceiver?.ApplyEventAt(tick, localOrder, data);
 		}
 
 		public void PopulateUpTo(int tick)

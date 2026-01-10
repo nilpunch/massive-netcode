@@ -4,7 +4,8 @@ namespace Massive.Netcode.Samples
 {
 	public struct Player { public int InputChannel; }
 
-	public struct PlayerSpawnEvent { }
+	public struct PlayerSpawnEvent { public int PlayerInputChannel; }
+
 	public struct SessionFinishedEvent { }
 
 	public struct PlayerShootingInput { public bool IsShooting; }
@@ -26,9 +27,9 @@ namespace Massive.Netcode.Samples
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
-		public void ConnectClient(int inputChannel, int connectionTick)
+		public void ConnectClient(int connectionTick, int localOrder)
 		{
-			Session.Inputs.ApplyEventAt(connectionTick, inputChannel, new PlayerSpawnEvent());
+			Session.Inputs.ApplyEventAt(connectionTick, localOrder, new PlayerSpawnEvent());
 		}
 
 		public void ApplyPlayerInput(int inputChannel, int tick, PlayerShootingInput playerInput)
@@ -36,9 +37,9 @@ namespace Massive.Netcode.Samples
 			Session.Inputs.SetAt(tick, inputChannel, playerInput);
 		}
 
-		public void FinishSession(int finishTick)
+		public void FinishSession(int finishTick, int localOrder)
 		{
-			Session.Inputs.ApplyGlobalEventAt(finishTick, new SessionFinishedEvent());
+			Session.Inputs.ApplyEventAt(finishTick, localOrder, new SessionFinishedEvent());
 		}
 
 		public async void Run()
@@ -89,9 +90,9 @@ namespace Massive.Netcode.Samples
 	{
 		public void Update()
 		{
-			foreach (var (channel, spawnEnvent) in Inputs.GetEvents<PlayerSpawnEvent>())
+			foreach (var spawnEnvent in Inputs.GetEvents<PlayerSpawnEvent>())
 			{
-				World.CreateEntity(new Player() { InputChannel = channel });
+				World.CreateEntity(new Player() { InputChannel = spawnEnvent.PlayerInputChannel });
 			}
 		}
 	}

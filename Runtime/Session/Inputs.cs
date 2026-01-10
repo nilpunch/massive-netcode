@@ -43,9 +43,9 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyEvent<T>(int channel, T data)
+		public void ApplyEvent<T>(int localOrder, T data)
 		{
-			ApplyEventAt(Time.Tick, channel, data);
+			ApplyEventAt(Time.Tick, localOrder, data);
 		}
 	}
 }

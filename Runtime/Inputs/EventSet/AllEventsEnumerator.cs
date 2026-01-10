@@ -8,24 +8,69 @@ namespace Massive.Netcode
 	public struct AllEventsEnumerator<T>
 	{
 		private readonly AllEvents<T> _allEvents;
-		private int _index;
+		private ulong[] _allBits;
+		private int _allBitsLength;
+		private int _bitsIndex;
+
+		private readonly byte[] _deBruijn;
+
+		private ulong _bits;
+		private int _bitsOffset;
+		private int _bit;
 
 		public AllEventsEnumerator(AllEvents<T> allEvents)
 		{
 			_allEvents = allEvents;
-			_index = _allEvents.Count;
+			_allBitsLength = allEvents.UsedMaskLength;
+			_allBits = allEvents.AppliedMask;
+
+			_deBruijn = MathUtils.DeBruijn;
+
+			_bitsIndex = -1;
+			_bitsOffset = default;
+			_bits = default;
+			_bit = default;
+
+			while (++_bitsIndex < _allBitsLength)
+			{
+				_bits = _allBits[_bitsIndex];
+				if (_bits != 0UL)
+				{
+					_bitsOffset = _bitsIndex << 6;
+					return;
+				}
+			}
 		}
 
-		public Event<T> Current
+		public T Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => _allEvents.Events[_index];
+			get => _allEvents.Events[_bit + _bitsOffset];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool MoveNext()
 		{
-			return --_index >= 0;
+			if (_bits != 0UL)
+			{
+				_bit = _deBruijn[(int)(((_bits & (ulong)-(long)_bits) * 0x37E84A99DAE458FUL) >> 58)];
+				_bits &= _bits - 1UL;
+				return true;
+			}
+
+			while (++_bitsIndex < _allBitsLength)
+			{
+				_bits = _allBits[_bitsIndex];
+				if (_bits != 0UL)
+				{
+					_bitsOffset = _bitsIndex << 6;
+					_bit = _deBruijn[(int)(((_bits & (ulong)-(long)_bits) * 0x37E84A99DAE458FUL) >> 58)];
+					_bits &= _bits - 1UL;
+					return true;
+				}
+			}
+
+			return false;
 		}
 	}
 }
