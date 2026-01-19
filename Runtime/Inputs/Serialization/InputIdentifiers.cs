@@ -77,6 +77,16 @@ namespace Massive.Netcode.Serialization
 			RegisterEvent(typeof(T));
 		}
 
+		public Type GetInputType(int inputId)
+		{
+			return _inputsByIds[inputId];
+		}
+
+		public Type GetEventType(int eventId)
+		{
+			return _eventsByIds[eventId];
+		}
+		
 		private void RegisterEvent(Type type)
 		{
 			if (!_idsByEvents.TryAdd(type, _events.Count))

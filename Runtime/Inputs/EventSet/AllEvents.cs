@@ -41,11 +41,16 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Apply(int localOrder, T data)
 		{
+			if ((AppliedMask[localOrder >> 6] & (1UL << (localOrder & 63))) != 0)
+			{
+				throw new InvalidOperationException($"You are trying to override existing event with local order {localOrder}.");
+			}
+			
 			EnsureEventAt(localOrder);
 
 			Events[localOrder] = data;
 
-			AppliedMask[localOrder >> 6] |= 1UL << localOrder & 63;
+			AppliedMask[localOrder >> 6] |= 1UL << (localOrder & 63);
 
 			Count = MathUtils.Max(Count, localOrder + 1);
 		}

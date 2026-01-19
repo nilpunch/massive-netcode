@@ -7,8 +7,8 @@ namespace Massive.Netcode
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _startTick;
 		private readonly IInputReceiver _inputReceiver;
-		private readonly GenericLookup<object> _eventsLookup = new GenericLookup<object>();
-		private readonly GenericLookup<object> _inputsLookup = new GenericLookup<object>();
+		private readonly GenericLookup<IInputSet> _eventsLookup = new GenericLookup<IInputSet>();
+		private readonly GenericLookup<IInputSet> _inputsLookup = new GenericLookup<IInputSet>();
 		private readonly FastList<IInputSet> _events = new FastList<IInputSet>();
 		private readonly FastList<IInputSet> _inputs = new FastList<IInputSet>();
 

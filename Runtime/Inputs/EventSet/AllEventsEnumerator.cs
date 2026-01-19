@@ -33,9 +33,9 @@ namespace Massive.Netcode
 
 			while (++_bitsIndex < _allBitsLength)
 			{
-				_bits = _allBits[_bitsIndex];
-				if (_bits != 0UL)
+				if (_allBits[_bitsIndex] != 0UL)
 				{
+					_bits = _allBits[_bitsIndex];
 					_bitsOffset = _bitsIndex << 6;
 					return;
 				}
@@ -60,9 +60,9 @@ namespace Massive.Netcode
 
 			while (++_bitsIndex < _allBitsLength)
 			{
-				_bits = _allBits[_bitsIndex];
-				if (_bits != 0UL)
+				if (_allBits[_bitsIndex] != 0UL)
 				{
+					_bits = _allBits[_bitsIndex];
 					_bitsOffset = _bitsIndex << 6;
 					_bit = _deBruijn[(int)(((_bits & (ulong)-(long)_bits) * 0x37E84A99DAE458FUL) >> 58)];
 					_bits &= _bits - 1UL;
