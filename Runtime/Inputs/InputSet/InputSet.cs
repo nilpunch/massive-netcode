@@ -55,9 +55,9 @@ namespace Massive.Netcode
 		{
 			PopulateUpTo(endTick);
 
-			if (startTick < _inputs.HeadIndex + 1)
+			if (startTick < _inputs.HeadIndex)
 			{
-				startTick = _inputs.HeadIndex + 1;
+				startTick = _inputs.HeadIndex;
 			}
 
 			if (endTick > _inputs.TailIndex - 1)
