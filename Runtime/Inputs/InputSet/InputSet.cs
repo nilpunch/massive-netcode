@@ -55,9 +55,14 @@ namespace Massive.Netcode
 		{
 			PopulateUpTo(endTick);
 
-			if (startTick < _inputs.TailIndex)
+			if (startTick < _inputs.HeadIndex + 1)
 			{
-				startTick = _inputs.TailIndex;
+				startTick = _inputs.HeadIndex + 1;
+			}
+
+			if (endTick > _inputs.TailIndex - 1)
+			{
+				endTick = _inputs.TailIndex - 1;
 			}
 
 			for (var currentTick = startTick; currentTick <= endTick; ++currentTick)
