@@ -50,6 +50,25 @@ namespace Massive.Netcode
 			_inputReceiver?.SetInputsAt(tick, allInputs);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void MakeInactualInRange(int startTick, int endTick)
+		{
+			PopulateUpTo(endTick);
+
+			if (startTick < _inputs.TailIndex)
+			{
+				startTick = _inputs.TailIndex;
+			}
+
+			for (var currentTick = startTick; currentTick <= endTick; ++currentTick)
+			{
+				_inputs[currentTick].CopyAgedFrom(_inputs[currentTick - 1]);
+			}
+
+			_localChangeTracker.NotifyChange(startTick);
+			_globalChangeTracker.NotifyChange(startTick);
+		}
+
 		public void PopulateUpTo(int tick)
 		{
 			for (var currentTick = _inputs.TailIndex; currentTick <= tick; ++currentTick)

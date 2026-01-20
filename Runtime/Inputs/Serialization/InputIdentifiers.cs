@@ -7,6 +7,8 @@ namespace Massive.Netcode.Serialization
 {
 	public class InputIdentifiers
 	{
+		private readonly int _idOffset;
+
 		private readonly Dictionary<Type, int> _idsByInputs = new Dictionary<Type, int>();
 		private readonly Dictionary<Type, int> _idsByEvents = new Dictionary<Type, int>();
 		private readonly Dictionary<int, Type> _inputsByIds = new Dictionary<int, Type>();
@@ -15,6 +17,11 @@ namespace Massive.Netcode.Serialization
 		private readonly FastList<Type> _inputs = new FastList<Type>();
 		private readonly FastList<Type> _events = new FastList<Type>();
 
+		public InputIdentifiers(int idOffset = 0)
+		{
+			_idOffset = idOffset;
+		}
+		
 		public void RegisterAutomatically(Assembly assembly)
 		{
 			var assemblyTypes = assembly.GetTypes();
@@ -89,21 +96,21 @@ namespace Massive.Netcode.Serialization
 		
 		private void RegisterEvent(Type type)
 		{
-			if (!_idsByEvents.TryAdd(type, _events.Count))
+			if (!_idsByEvents.TryAdd(type, _events.Count + _idOffset))
 			{
 				throw new Exception($"Duplicate event type registration. Type: {type.GetFullGenericName()}");
 			}
-			_eventsByIds.Add(_events.Count, type);
+			_eventsByIds.Add(_events.Count + _idOffset, type);
 			_events.Add(type);
 		}
 
 		private void RegisterInput(Type type)
 		{
-			if (!_idsByInputs.TryAdd(type, _inputs.Count))
+			if (!_idsByInputs.TryAdd(type, _inputs.Count + _idOffset))
 			{
 				throw new Exception($"Duplicate input type registration. Type: {type.GetFullGenericName()}");
 			}
-			_inputsByIds.Add(_inputs.Count, type);
+			_inputsByIds.Add(_inputs.Count + _idOffset, type);
 			_inputs.Add(type);
 		}
 	}
