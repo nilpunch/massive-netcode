@@ -5,34 +5,34 @@ namespace Massive.Netcode
 	public static class InputExtensions
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static TInput LastActual<TInput>(this Input<TInput> input) where TInput : IInput
+		public static TInput LastFresh<TInput>(this Input<TInput> input) where TInput : IInput
 		{
-			return input.LastActualInput;
+			return input.LastFreshInput;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool IsActual<TInput>(this Input<TInput> input) where TInput : IInput
+		public static bool IsFresh<TInput>(this Input<TInput> input) where TInput : IInput
 		{
 			return input.TicksPassed == 0;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static TInput Actual<TInput>(this Input<TInput> input) where TInput : IInput
+		public static TInput FreshOrDefault<TInput>(this Input<TInput> input) where TInput : IInput
 		{
-			return input.TicksPassed == 0 ? input.LastActualInput : Default<TInput>.Value;
+			return input.TicksPassed == 0 ? input.LastFreshInput : Default<TInput>.Value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static TInput Actual<TInput>(this Input<TInput> input, TInput fallback) where TInput : IInput
+		public static TInput FreshOrDefault<TInput>(this Input<TInput> input, TInput fallback) where TInput : IInput
 		{
-			return input.TicksPassed == 0 ? input.LastActualInput : fallback;
+			return input.TicksPassed == 0 ? input.LastFreshInput : fallback;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static TInput FadeOut<TInput>(this Input<TInput> input, in FadeOutConfig fadeOutConfig)
 			where TInput : IInput, IFadeOutInput<TInput>
 		{
-			return input.LastActualInput.FadeOut(input.TicksPassed, fadeOutConfig);
+			return input.LastFreshInput.FadeOut(input.TicksPassed, fadeOutConfig);
 		}
 	}
 }

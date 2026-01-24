@@ -5,12 +5,12 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public struct ActualInputEnumerator<T> where T : IInput
+	public struct FreshInputsEnumerator<T> where T : IInput
 	{
 		private AllInputs<T> _allInputs;
 		private int _index;
 
-		public ActualInputEnumerator(AllInputs<T> allInputs)
+		public FreshInputsEnumerator(AllInputs<T> allInputs)
 		{
 			_allInputs = allInputs;
 			_index = -1;
@@ -25,7 +25,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool MoveNext()
 		{
-			while (++_index < _allInputs.UsedChannels && !_allInputs.Inputs[_index].IsActual())
+			while (++_index < _allInputs.UsedChannels && !_allInputs.Inputs[_index].IsFresh())
 			{
 			}
 

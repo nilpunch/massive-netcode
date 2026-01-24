@@ -26,7 +26,7 @@ namespace Massive.Netcode
 		{
 			if (channel < 0 || channel >= UsedChannels)
 			{
-				return Input<T>.Inactual;
+				return Input<T>.Stale;
 			}
 
 			return Inputs[channel];
@@ -37,7 +37,20 @@ namespace Massive.Netcode
 		{
 			EnsureChannel(channel);
 
-			Inputs[channel] = new Input<T>(input, 0);
+			Inputs[channel] = new Input<T>(input, 0, true);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void SetPrediction(int channel, T input)
+		{
+			EnsureChannel(channel);
+
+			if (Inputs[channel].IsActual)
+			{
+				throw new InvalidOperationException($"You are trying to override actual input at channel {channel}.");
+			}
+
+			Inputs[channel] = new Input<T>(input, 0, false);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -57,8 +70,22 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Clear()
 		{
-			Array.Fill(Inputs, Input<T>.Inactual);
+			Array.Fill(Inputs, Input<T>.Stale);
 			UsedChannels = 0;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ClearPrediction()
+		{
+			var staleInput = Input<T>.Stale;
+
+			for (var i = 0; i < UsedChannels; i++)
+			{
+				if (!Inputs[i].IsActual)
+				{
+					Inputs[i] = staleInput;
+				}
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,7 +106,7 @@ namespace Massive.Netcode
 			Inputs = Inputs.Resize(capacity);
 			if (capacity > InputsCapacity)
 			{
-				Array.Fill(Inputs, Input<T>.Inactual, InputsCapacity, capacity - InputsCapacity);
+				Array.Fill(Inputs, Input<T>.Stale, InputsCapacity, capacity - InputsCapacity);
 			}
 			InputsCapacity = capacity;
 		}
@@ -95,17 +122,17 @@ namespace Massive.Netcode
 		public void CopyAgedFrom(AllInputs<T> other)
 		{
 			EnsureChannel(other.UsedChannels - 1);
-			for (var i = 0; i < other.UsedChannels; ++i)
+			for (var i = 0; i < other.UsedChannels; i++)
 			{
 				Inputs[i] = other.Inputs[i].Aged();
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void CopyAgedIfInactualFrom(AllInputs<T> other)
+		public void CopyAgedIfNotFreshFrom(AllInputs<T> other)
 		{
 			EnsureChannel(other.UsedChannels - 1);
-			for (var i = 0; i < other.UsedChannels; ++i)
+			for (var i = 0; i < other.UsedChannels; i++)
 			{
 				if (Inputs[i].TicksPassed != 0)
 				{

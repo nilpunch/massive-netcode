@@ -10,11 +10,11 @@ namespace Massive.Netcode.Samples
 
 	public struct PlayerShootingInput : IInput { public bool IsShooting; }
 
-	public class SimulationSample
+	public class SessionSample
 	{
 		private Session Session { get; }
 
-		public SimulationSample()
+		public SessionSample()
 		{
 			Session = new Session();
 
@@ -103,7 +103,7 @@ namespace Massive.Netcode.Samples
 		{
 			World.ForEach(this, static (ref Player player, Shooting system) =>
 			{
-				var playerInput = system.Inputs.Get<PlayerShootingInput>(player.InputChannel).LastActual();
+				var playerInput = system.Inputs.Get<PlayerShootingInput>(player.InputChannel).LastFresh();
 
 				if (playerInput.IsShooting)
 				{

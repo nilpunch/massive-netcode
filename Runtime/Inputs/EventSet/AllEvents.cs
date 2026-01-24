@@ -4,6 +4,10 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
 {
+	/// <summary>
+	/// Abscence of ChannelId makes it feel bad.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 	public struct AllEvents<T> where T : IEvent
@@ -11,61 +15,129 @@ namespace Massive.Netcode
 		public int Count { get; private set; }
 
 		public T[] Events { get; private set; }
-		public ulong[] AppliedMask { get; private set; }
-
 		public int EventsCapacity { get; private set; }
 
-		public int UsedMaskLength => (Count + 63) >> 6;
+		public ulong[] AllMask { get; private set; }
+		public ulong[] PredictionMask { get; private set; }
+
+		public int MaskLength => (Count + 63) >> 6;
 
 		public bool HasAny => Count != 0;
 
 		public static AllEvents<T> Empty => new AllEvents<T>
 		{
 			Events = Array.Empty<T>(),
+			AllMask = Array.Empty<ulong>(),
+			PredictionMask = Array.Empty<ulong>()
 		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void EnsureInit()
 		{
 			Events ??= Array.Empty<T>();
+			AllMask ??= Array.Empty<ulong>();
+			PredictionMask ??= Array.Empty<ulong>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public int Append(T data)
+		public int AppendPrediction(T data)
 		{
-			var localOrder = Count;
-			Apply(localOrder, data);
+			var localOrder = Count++;
+
+			EnsureEventAt(localOrder);
+
+			var maskIndex = localOrder >> 6;
+			var maskBit = 1UL << (localOrder & 63);
+
+			AllMask[maskIndex] |= maskBit;
+			PredictionMask[maskIndex] |= maskBit;
+
+			Events[localOrder] = data;
+
 			return localOrder;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Apply(int localOrder, T data)
+		public int AppendActual(T data)
 		{
-			if ((AppliedMask[localOrder >> 6] & (1UL << (localOrder & 63))) != 0)
-			{
-				throw new InvalidOperationException($"You are trying to override existing event with local order {localOrder}.");
-			}
-			
+			var localOrder = Count++;
+			SetActual(localOrder, data);
+			return localOrder;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void SetActual(int localOrder, T data)
+		{
 			EnsureEventAt(localOrder);
 
+			var maskIndex = localOrder >> 6;
+			var maskBit = 1UL << (localOrder & 63);
+
+			var hasEvent = (AllMask[maskIndex] & maskBit) != 0;
+			var hasPrediction = (PredictionMask[maskIndex] & maskBit) != 0;
+
+			if (hasEvent && !hasPrediction)
+			{
+				throw new InvalidOperationException($"You are trying to override actual event with local order {localOrder}.");
+			}
+
+			AllMask[maskIndex] |= maskBit;
+
+			// If there is prediction, we need to move it somewhere else, while keeping the order.
+			if (hasPrediction)
+			{
+				var latestPredictionMaskIndex = MaskLength;
+				while (--latestPredictionMaskIndex >= 0 && PredictionMask[latestPredictionMaskIndex] == 0)
+				{
+				}
+				var latestPredictionIndex = (latestPredictionMaskIndex << 6) + MathUtils.MSB(AllMask[latestPredictionMaskIndex]);
+
+				// Move head prediction further.
+				AppendPrediction(Events[latestPredictionIndex]);
+
+				for (var i = latestPredictionIndex - 1; i >= 0; i--)
+				{
+					if ((PredictionMask[i >> 6] & (1UL << (i & 63))) != 0)
+					{
+						Events[latestPredictionIndex] = Events[i];
+						latestPredictionIndex = i;
+					}
+				}
+
+				PredictionMask[maskIndex] &= ~maskBit;
+			}
+			else
+			{
+				Count = MathUtils.Max(Count, localOrder + 1);
+			}
+
 			Events[localOrder] = data;
-
-			AppliedMask[localOrder >> 6] |= 1UL << (localOrder & 63);
-
-			Count = MathUtils.Max(Count, localOrder + 1);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Clear()
 		{
-			var usedMaskLength = UsedMaskLength;
+			var usedMaskLength = MaskLength;
 
 			for (var i = 0; i < usedMaskLength; i++)
 			{
-				AppliedMask[i] = 0UL;
+				AllMask[i] = 0;
+				PredictionMask[i] = 0;
 			}
 
 			Count = 0;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ClearPrediction()
+		{
+			var usedMaskLength = MaskLength;
+
+			for (var i = 0; i < usedMaskLength; i++)
+			{
+				AllMask[i] &= ~PredictionMask[i];
+				PredictionMask[i] = 0;
+			}
 		}
 
 		/// <summary>
@@ -88,7 +160,13 @@ namespace Massive.Netcode
 		{
 			Events = Events.Resize(capacity);
 			EventsCapacity = capacity;
-			AppliedMask = AppliedMask.Resize((EventsCapacity + 63) >> 6);
+
+			var maskLength = (EventsCapacity + 63) >> 6;
+			if (maskLength > AllMask.Length)
+			{
+				AllMask = AllMask.Resize(maskLength);
+				PredictionMask = PredictionMask.Resize(maskLength);
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,10 +174,14 @@ namespace Massive.Netcode
 		{
 			EnsureEventAt(other.Count - 1);
 			Array.Copy(other.Events, Events, other.Count);
-			Array.Copy(other.AppliedMask, AppliedMask, other.UsedMaskLength);
+			for (var i = 0; i < other.MaskLength; i++)
+			{
+				AllMask[i] = other.AllMask[i];
+				PredictionMask[i] = other.PredictionMask[i];
+			}
 			Count = other.Count;
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllEventsEnumerator<T> GetEnumerator()
 		{

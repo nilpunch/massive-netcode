@@ -21,8 +21,8 @@ namespace Massive.Netcode
 		public AllEventsEnumerator(AllEvents<T> allEvents)
 		{
 			_allEvents = allEvents;
-			_allBitsLength = allEvents.UsedMaskLength;
-			_allBits = allEvents.AppliedMask;
+			_allBitsLength = allEvents.MaskLength;
+			_allBits = allEvents.AllMask;
 
 			_deBruijn = MathUtils.DeBruijn;
 

@@ -18,11 +18,11 @@
 
 		public ChangeTracker ChangeTracker { get; }
 
-		public Session(IInputReceiver inputReceiver = null) : this(new SessionConfig(), inputReceiver)
+		public Session(IPredictionReceiver predictionReceiver = null) : this(new SessionConfig(), predictionReceiver)
 		{
 		}
 
-		public Session(SessionConfig config, IInputReceiver inputReceiver = null)
+		public Session(SessionConfig config, IPredictionReceiver predictionReceiver = null)
 		{
 			Config = config;
 			World = new MassiveWorld(config.WorldConfig);
@@ -30,7 +30,7 @@
 			ChangeTracker = new ChangeTracker();
 
 			Time = new Time(config.TickRate);
-			Inputs = new Inputs(Time, ChangeTracker, config.StartTick, inputReceiver);
+			Inputs = new Inputs(Time, ChangeTracker, config.StartTick, predictionReceiver);
 
 			Simulations = new SimulationGroup();
 			Simulations.Add(Time);

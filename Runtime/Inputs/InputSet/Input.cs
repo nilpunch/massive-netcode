@@ -4,22 +4,24 @@ namespace Massive.Netcode
 {
 	public readonly struct Input<TInput> where TInput : IInput
 	{
-		public readonly TInput LastActualInput;
+		public readonly TInput LastFreshInput;
 		public readonly int TicksPassed;
+		public readonly bool IsActual;
 
-		public Input(TInput lastActualInput, int ticksPassed)
+		public Input(TInput lastFreshInput, int ticksPassed, bool isActual)
 		{
-			LastActualInput = lastActualInput;
+			LastFreshInput = lastFreshInput;
 			TicksPassed = ticksPassed;
+			IsActual = isActual;
 		}
 
-		public static readonly Input<TInput> Inactual = new Input<TInput>(Default<TInput>.Value, int.MaxValue);
+		public static readonly Input<TInput> Stale = new Input<TInput>(Default<TInput>.Value, int.MaxValue, false);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Input<TInput> Aged()
 		{
 			var clampedNextTick = MathUtils.SaturationAdd(TicksPassed, 1);
-			return new Input<TInput>(LastActualInput, clampedNextTick);
+			return new Input<TInput>(LastFreshInput, clampedNextTick, IsActual);
 		}
 	}
 }

@@ -9,13 +9,13 @@ namespace Massive.Netcode
 	{
 		private readonly ChangeTracker _localChangeTracker = new ChangeTracker();
 		private readonly ChangeTracker _globalChangeTracker;
-		private readonly IInputReceiver _inputReceiver;
+		private readonly IPredictionReceiver _predictionReceiver;
 		private readonly CyclicList<AllInputs<T>> _inputs;
 
-		public InputSet(ChangeTracker globalChangeTracker, int startTick, IInputReceiver inputReceiver = null)
+		public InputSet(ChangeTracker globalChangeTracker, int startTick, IPredictionReceiver predictionReceiver = null)
 		{
 			_globalChangeTracker = globalChangeTracker;
-			_inputReceiver = inputReceiver;
+			_predictionReceiver = predictionReceiver;
 			_inputs = new CyclicList<AllInputs<T>>(startTick);
 			_inputs.Append().EnsureInitialized();
 		}
@@ -27,7 +27,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetInput(int tick, int channel, T input)
+		public void SetActual(int tick, int channel, T input)
 		{
 			PopulateUpTo(tick);
 
@@ -35,7 +35,18 @@ namespace Massive.Netcode
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
-			_inputReceiver?.SetInputAt(tick, channel, input);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void SetPrediction(int tick, int channel, T input)
+		{
+			PopulateUpTo(tick);
+
+			_inputs[tick].SetPrediction(channel, input);
+
+			_localChangeTracker.NotifyChange(tick);
+			_globalChangeTracker.NotifyChange(tick);
+			_predictionReceiver?.OnInputPredicted(tick, channel, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,11 +58,16 @@ namespace Massive.Netcode
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
-			_inputReceiver?.SetInputsAt(tick, allInputs);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void MakeInactualInRange(int startTick, int endTick)
+		public void ClearPrediction(int tick)
+		{
+			ClearPrediction(tick, tick);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ClearPrediction(int startTick, int endTick)
 		{
 			PopulateUpTo(endTick);
 
@@ -60,14 +76,14 @@ namespace Massive.Netcode
 				startTick = _inputs.HeadIndex;
 			}
 
-			if (endTick > _inputs.TailIndex - 1)
+			if (endTick >= _inputs.TailIndex)
 			{
 				endTick = _inputs.TailIndex - 1;
 			}
 
-			for (var currentTick = startTick; currentTick <= endTick; ++currentTick)
+			for (var currentTick = startTick; currentTick <= endTick; currentTick++)
 			{
-				_inputs[currentTick].CopyAgedFrom(_inputs[currentTick - 1]);
+				_inputs[currentTick].ClearPrediction();
 			}
 
 			_localChangeTracker.NotifyChange(startTick);
@@ -76,7 +92,7 @@ namespace Massive.Netcode
 
 		public void PopulateUpTo(int tick)
 		{
-			for (var currentTick = _inputs.TailIndex; currentTick <= tick; ++currentTick)
+			for (var currentTick = _inputs.TailIndex; currentTick <= tick; currentTick++)
 			{
 				ref var inputs = ref _inputs.Append();
 				inputs.EnsureInitialized();
@@ -99,7 +115,7 @@ namespace Massive.Netcode
 		{
 			for (var i = _localChangeTracker.EarliestChangedTick + 1; i < _inputs.TailIndex; i++)
 			{
-				_inputs[i].CopyAgedIfInactualFrom(_inputs[i - 1]);
+				_inputs[i].CopyAgedIfNotFreshFrom(_inputs[i - 1]);
 			}
 
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);

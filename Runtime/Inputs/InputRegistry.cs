@@ -6,7 +6,7 @@ namespace Massive.Netcode
 	{
 		private readonly ChangeTracker _changeTracker;
 		private readonly int _startTick;
-		private readonly IInputReceiver _inputReceiver;
+		private readonly IPredictionReceiver _predictionReceiver;
 		private readonly GenericLookup<IInputSet> _eventsLookup = new GenericLookup<IInputSet>();
 		private readonly GenericLookup<IInputSet> _inputsLookup = new GenericLookup<IInputSet>();
 		private readonly FastList<IInputSet> _events = new FastList<IInputSet>();
@@ -14,11 +14,11 @@ namespace Massive.Netcode
 
 		public int Global { get; } = 0;
 
-		public InputRegistry(ChangeTracker changeTracker, int startTick = 0, IInputReceiver inputReceiver = null)
+		public InputRegistry(ChangeTracker changeTracker, int startTick = 0, IPredictionReceiver predictionReceiver = null)
 		{
 			_changeTracker = changeTracker;
 			_startTick = startTick;
-			_inputReceiver = inputReceiver;
+			_predictionReceiver = predictionReceiver;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -30,19 +30,19 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetGlobalAt<T>(int tick, T input) where T : IInput
 		{
-			GetInputSet<T>().SetInput(tick, Global, input);
+			GetInputSet<T>().SetActual(tick, Global, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void ApplyEventAt<T>(int tick, int localOrder, T data) where T : IEvent
 		{
-			GetEventSet<T>().ApplyEvent(tick, localOrder, data);
+			GetEventSet<T>().SetActual(tick, localOrder, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void AppendEventAt<T>(int tick, T data) where T : IEvent
 		{
-			GetEventSet<T>().AppendEvent(tick, data);
+			GetEventSet<T>().AppendPrediction(tick, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,7 +54,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void SetAt<T>(int tick, int channel, T input) where T : IInput
 		{
-			GetInputSet<T>().SetInput(tick, channel, input);
+			GetInputSet<T>().SetActual(tick, channel, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,9 +64,9 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllActualInputs<T> GetAllActualAt<T>(int tick) where T : IInput
+		public FreshInputsEnumerable<T> GetAllActualAt<T>(int tick) where T : IInput
 		{
-			return new AllActualInputs<T>(GetInputSet<T>().GetInputs(tick));
+			return new FreshInputsEnumerable<T>(GetInputSet<T>().GetInputs(tick));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,7 +114,7 @@ namespace Massive.Netcode
 
 			if (eventSet == null)
 			{
-				eventSet = new EventSet<T>(_changeTracker, _startTick, _inputReceiver);
+				eventSet = new EventSet<T>(_changeTracker, _startTick);
 				_eventsLookup.Assign<T>(eventSet);
 				_events.Add(eventSet);
 			}
@@ -129,7 +129,7 @@ namespace Massive.Netcode
 
 			if (inputSet == null)
 			{
-				inputSet = new InputSet<T>(_changeTracker, _startTick, _inputReceiver);
+				inputSet = new InputSet<T>(_changeTracker, _startTick, _predictionReceiver);
 				_inputsLookup.Assign<T>(inputSet);
 				_inputs.Add(inputSet);
 			}

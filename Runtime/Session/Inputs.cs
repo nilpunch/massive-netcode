@@ -6,8 +6,8 @@ namespace Massive.Netcode
 	{
 		private Time Time { get; }
 
-		public Inputs(Time time, ChangeTracker changeTracker, int startTick = 0, IInputReceiver inputReceiver = null)
-			: base(changeTracker, startTick, inputReceiver)
+		public Inputs(Time time, ChangeTracker changeTracker, int startTick = 0, IPredictionReceiver predictionReceiver = null)
+			: base(changeTracker, startTick, predictionReceiver)
 		{
 			Time = time;
 		}
@@ -31,7 +31,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllActualInputs<T> GetAllActual<T>() where T : IInput
+		public FreshInputsEnumerable<T> GetAllActual<T>() where T : IInput
 		{
 			return GetAllActualAt<T>(Time.Tick);
 		}

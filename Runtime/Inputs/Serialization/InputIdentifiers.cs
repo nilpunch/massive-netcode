@@ -21,7 +21,7 @@ namespace Massive.Netcode.Serialization
 		{
 			_idOffset = idOffset;
 		}
-		
+
 		public void RegisterAutomatically(Assembly assembly)
 		{
 			var assemblyTypes = assembly.GetTypes();
@@ -93,7 +93,7 @@ namespace Massive.Netcode.Serialization
 		{
 			return _eventsByIds[eventId];
 		}
-		
+
 		private void RegisterEvent(Type type)
 		{
 			if (!_idsByEvents.TryAdd(type, _events.Count + _idOffset))

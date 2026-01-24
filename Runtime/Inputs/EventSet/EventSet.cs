@@ -8,13 +8,13 @@ namespace Massive.Netcode
 	public sealed class EventSet<T> : IInputSet where T : IEvent
 	{
 		private readonly ChangeTracker _globalChangeTracker;
-		private readonly IInputReceiver _inputReceiver;
+		private readonly IPredictionReceiver _predictionReceiver;
 		private readonly CyclicList<AllEvents<T>> _events;
 
-		public EventSet(ChangeTracker globalChangeTracker, int startTick, IInputReceiver inputReceiver = null)
+		public EventSet(ChangeTracker globalChangeTracker, int startTick, IPredictionReceiver predictionReceiver = null)
 		{
 			_globalChangeTracker = globalChangeTracker;
-			_inputReceiver = inputReceiver;
+			_predictionReceiver = predictionReceiver;
 			_events = new CyclicList<AllEvents<T>>(startTick);
 		}
 
@@ -30,39 +30,65 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyEvent(int tick, int localOrder, T data)
+		public void SetActual(int tick, int localOrder, T data)
 		{
 			PopulateUpTo(tick);
 
-			_events[tick].Apply(localOrder, data);
+			_events[tick].SetActual(localOrder, data);
 
 			_globalChangeTracker.NotifyChange(tick);
-			_inputReceiver?.ApplyEventAt(tick, localOrder, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ApplyEvents(int tick, AllEvents<T> allEvents)
+		public void AppendActual(int tick, T data)
+		{
+			var localOrder = _events[tick].AppendActual(data);
+
+			_globalChangeTracker.NotifyChange(tick);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void AppendPrediction(int tick, T data)
+		{
+			var localOrder = _events[tick].AppendPrediction(data);
+
+			_globalChangeTracker.NotifyChange(tick);
+			_predictionReceiver?.OnEventPredicted(tick, localOrder, data);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void SetEvents(int tick, AllEvents<T> allEvents)
 		{
 			PopulateUpTo(tick);
 
 			_events[tick].CopyFrom(allEvents);
 
 			_globalChangeTracker.NotifyChange(tick);
-			_inputReceiver?.ApplyEventsAt(tick, allEvents);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendEvent(int tick, T data)
+		public void Clear(int tick)
 		{
-			var localOrder = _events[tick].Append(data);
+			PopulateUpTo(tick);
+
+			_events[tick].Clear();
 
 			_globalChangeTracker.NotifyChange(tick);
-			_inputReceiver?.ApplyEventAt(tick, localOrder, data);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ClearPrediction(int tick)
+		{
+			PopulateUpTo(tick);
+
+			_events[tick].ClearPrediction();
+
+			_globalChangeTracker.NotifyChange(tick);
 		}
 
 		public void PopulateUpTo(int tick)
 		{
-			for (var i = _events.TailIndex; i <= tick; ++i)
+			for (var i = _events.TailIndex; i <= tick; i++)
 			{
 				ref var events = ref _events.Append();
 				events.EnsureInit();
@@ -77,7 +103,7 @@ namespace Massive.Netcode
 
 		public void Reevaluate()
 		{
-			// Events are not predicted, nothing to reevaluate.
+			// Events are not stateful, nothing to reevaluate.
 		}
 	}
 }
