@@ -29,17 +29,17 @@ namespace Massive.Netcode.Samples
 		// Modify inputs via RPC or any other source, in any order, at any time.
 		public void ConnectClient(int connectionTick, int localOrder)
 		{
-			Session.Inputs.ApplyEventAt(connectionTick, localOrder, new PlayerSpawnEvent());
+			Session.Inputs.SetActualEventAt(connectionTick, localOrder, new PlayerSpawnEvent());
 		}
 
 		public void ApplyPlayerInput(int inputChannel, int tick, PlayerShootingInput playerInput)
 		{
-			Session.Inputs.SetAt(tick, inputChannel, playerInput);
+			Session.Inputs.SetActualInputAt(tick, inputChannel, playerInput);
 		}
 
 		public void FinishSession(int finishTick, int localOrder)
 		{
-			Session.Inputs.ApplyEventAt(finishTick, localOrder, new SessionFinishedEvent());
+			Session.Inputs.SetActualEventAt(finishTick, localOrder, new SessionFinishedEvent());
 		}
 
 		public async void Run()
@@ -49,7 +49,7 @@ namespace Massive.Netcode.Samples
 
 			while (true)
 			{
-				if (Session.Inputs.GetEvents<SessionFinishedEvent>().HasAny)
+				if (Session.Inputs.GetAllEvents<SessionFinishedEvent>().HasAny)
 				{
 					break;
 				}
@@ -90,7 +90,7 @@ namespace Massive.Netcode.Samples
 	{
 		public void Update()
 		{
-			foreach (var spawnEnvent in Inputs.GetEvents<PlayerSpawnEvent>())
+			foreach (var spawnEnvent in Inputs.GetAllEvents<PlayerSpawnEvent>())
 			{
 				World.CreateEntity(new Player() { InputChannel = spawnEnvent.PlayerInputChannel });
 			}
@@ -103,7 +103,7 @@ namespace Massive.Netcode.Samples
 		{
 			World.ForEach(this, static (ref Player player, Shooting system) =>
 			{
-				var playerInput = system.Inputs.Get<PlayerShootingInput>(player.InputChannel).LastFresh();
+				var playerInput = system.Inputs.GetInput<PlayerShootingInput>(player.InputChannel).LastFresh();
 
 				if (playerInput.IsShooting)
 				{

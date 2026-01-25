@@ -19,7 +19,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public AllEvents<T> GetEvents(int tick)
+		public AllEvents<T> GetAllEvents(int tick)
 		{
 			if (_events.CycledCount == 0)
 			{

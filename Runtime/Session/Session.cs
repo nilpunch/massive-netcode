@@ -1,4 +1,6 @@
-﻿namespace Massive.Netcode
+﻿using System;
+
+namespace Massive.Netcode
 {
 	public class Session
 	{
@@ -11,8 +13,6 @@
 		public SimulationGroup Simulations { get; }
 
 		public Inputs Inputs { get; }
-
-		public Time Time { get; }
 
 		public ResimulationLoop Loop { get; }
 
@@ -27,17 +27,21 @@
 			Config = config;
 			World = new MassiveWorld(config.WorldConfig);
 			Systems = new MassiveSystems(config.FramesCapacity);
+			Simulations = new SimulationGroup();
 			ChangeTracker = new ChangeTracker();
 
-			Time = new Time(config.TickRate);
-			Inputs = new Inputs(Time, ChangeTracker, config.StartTick, predictionReceiver);
-
-			Simulations = new SimulationGroup();
-			Simulations.Add(Time);
+			Inputs = new Inputs(ChangeTracker, config.StartTick, predictionReceiver);
+			Simulations.Add(Inputs);
 
 			Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, config.SaveEachNthTick);
 			World.FrameSaved += Systems.SaveFrame;
 			World.Rollbacked += Systems.Rollback;
+		}
+
+		public void FastForwardToTime(double targetTime)
+		{
+			var targetTick = (int)Math.Floor(targetTime * Config.TickRate);
+			Loop.FastForwardToTick(targetTick);
 		}
 	}
 }

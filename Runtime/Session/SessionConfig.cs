@@ -8,7 +8,7 @@
 
 		public readonly int StartTick = 0;
 
-		public readonly MassiveWorldConfig WorldConfig = new MassiveWorldConfig();
+		public readonly MassiveWorldConfig WorldConfig = new MassiveWorldConfig(framesCapacity: 25);
 
 		public int FramesCapacity => WorldConfig.FramesCapacity;
 

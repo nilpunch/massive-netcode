@@ -3,23 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Massive.Netcode.Serialization
+namespace Massive.Netcode
 {
 	public class InputIdentifiers
 	{
-		private readonly int _idOffset;
+		private int _registeredIdCount;
 
 		private readonly Dictionary<Type, int> _idsByInputs = new Dictionary<Type, int>();
 		private readonly Dictionary<Type, int> _idsByEvents = new Dictionary<Type, int>();
-		private readonly Dictionary<int, Type> _inputsByIds = new Dictionary<int, Type>();
-		private readonly Dictionary<int, Type> _eventsByIds = new Dictionary<int, Type>();
 
-		private readonly FastList<Type> _inputs = new FastList<Type>();
-		private readonly FastList<Type> _events = new FastList<Type>();
+		private readonly FastList<Type> _registeredTypes = new FastList<Type>();
 
-		public InputIdentifiers(int idOffset = 0)
+		public InputIdentifiers(int registeredIdOffset = (int)SpecialPacketType.SpecialPacketsCount)
 		{
-			_idOffset = idOffset;
+			_registeredIdCount = registeredIdOffset;
 		}
 
 		public void RegisterAutomatically(Assembly assembly)
@@ -84,34 +81,29 @@ namespace Massive.Netcode.Serialization
 			RegisterEvent(typeof(T));
 		}
 
-		public Type GetInputType(int inputId)
+		public Type GetType(int inputId)
 		{
-			return _inputsByIds[inputId];
-		}
-
-		public Type GetEventType(int eventId)
-		{
-			return _eventsByIds[eventId];
+			return _registeredTypes[inputId];
 		}
 
 		private void RegisterEvent(Type type)
 		{
-			if (!_idsByEvents.TryAdd(type, _events.Count + _idOffset))
+			if (!_idsByEvents.TryAdd(type, _registeredIdCount))
 			{
 				throw new Exception($"Duplicate event type registration. Type: {type.GetFullGenericName()}");
 			}
-			_eventsByIds.Add(_events.Count + _idOffset, type);
-			_events.Add(type);
+			_registeredTypes.Add(type);
+			_registeredIdCount++;
 		}
 
 		private void RegisterInput(Type type)
 		{
-			if (!_idsByInputs.TryAdd(type, _inputs.Count + _idOffset))
+			if (!_idsByInputs.TryAdd(type, _registeredIdCount))
 			{
 				throw new Exception($"Duplicate input type registration. Type: {type.GetFullGenericName()}");
 			}
-			_inputsByIds.Add(_inputs.Count + _idOffset, type);
-			_inputs.Add(type);
+			_registeredTypes.Add(type);
+			_registeredIdCount++;
 		}
 	}
 }

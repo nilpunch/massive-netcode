@@ -7,7 +7,7 @@
 
 		public Inputs Inputs => Session.Inputs;
 
-		public Time Time => Session.Time;
+		public int Tick => Session.Loop.CurrentTick;
 
 		public MassiveWorld World => Session.World;
 
