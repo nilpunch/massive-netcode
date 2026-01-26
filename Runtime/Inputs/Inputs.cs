@@ -187,12 +187,12 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ReadActualInput(Stream stream)
+		public void ReadActual(Stream stream)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void ReadFullSyncInput(Stream stream)
+		public void ReadFullSync(Stream stream)
 		{
 			throw new NotImplementedException();
 		}

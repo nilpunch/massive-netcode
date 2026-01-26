@@ -19,10 +19,10 @@ namespace Massive.Netcode
 
 		public void ReadActualInput(int messageId, Stream stream)
 		{
-			GetInputSet(messageId).ReadActualInput(stream);
+			GetInputSet(messageId).ReadActual(stream);
 		}
 
-		public void ReadActualAndPredictionInputs(Stream stream)
+		public void ReadFullSync(Stream stream)
 		{
 			var messagesCount = SerializationUtils.ReadInt(stream);
 
@@ -30,7 +30,7 @@ namespace Massive.Netcode
 			{
 				var messageId = SerializationUtils.ReadByte(stream);
 
-				GetInputSet(messageId).ReadFullSyncInput(stream);
+				GetInputSet(messageId).ReadFullSync(stream);
 			}
 		}
 

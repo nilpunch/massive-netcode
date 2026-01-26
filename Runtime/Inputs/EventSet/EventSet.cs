@@ -112,12 +112,12 @@ namespace Massive.Netcode
 			_events.Reset(startTick);
 		}
 
-		public void ReadActualInput(Stream stream)
+		public void ReadActual(Stream stream)
 		{
 			throw new System.NotImplementedException();
 		}
 
-		public void ReadFullSyncInput(Stream stream)
+		public void ReadFullSync(Stream stream)
 		{
 			throw new System.NotImplementedException();
 		}

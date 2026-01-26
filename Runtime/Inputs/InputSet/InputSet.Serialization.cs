@@ -18,7 +18,7 @@ namespace Massive.Netcode
 			_fullSyncBufferHandle.Free();
 		}
 
-		public unsafe void ReadActualInput(Stream stream)
+		public unsafe void ReadActual(Stream stream)
 		{
 			throw new NotImplementedException();
 
@@ -40,7 +40,7 @@ namespace Massive.Netcode
 			_allInputsBuffer.Clear();
 		}
 
-		public unsafe void ReadFullSyncInput(Stream stream)
+		public unsafe void ReadFullSync(Stream stream)
 		{
 			var tick = SerializationUtils.ReadInt(stream);
 			var channelsAmount = SerializationUtils.ReadInt(stream);

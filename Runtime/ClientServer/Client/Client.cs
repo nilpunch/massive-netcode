@@ -76,7 +76,7 @@ namespace Massive.Netcode
 
 						WorldSerializer.Deserialize(Session.World, Connection.Incoming);
 						SerializationUtils.ReadAllocator(Session.Systems.Allocator, Connection.Incoming);
-						InputSerializer.ReadActualAndPredictionInputs(Connection.Incoming);
+						InputSerializer.ReadFullSync(Connection.Incoming);
 						break;
 					}
 
