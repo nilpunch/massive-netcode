@@ -19,11 +19,6 @@ namespace Massive.Netcode
 
 		public void ReadActualInput(int messageId, Stream stream)
 		{
-			if (!_inputIdentifiers.IsRegistered(messageId))
-			{
-				return;
-			}
-
 			GetInputSet(messageId).ReadActualInput(stream);
 		}
 
@@ -35,12 +30,7 @@ namespace Massive.Netcode
 			{
 				var messageId = SerializationUtils.ReadByte(stream);
 
-				if (!_inputIdentifiers.IsRegistered(messageId))
-				{
-					continue;
-				}
-
-				GetInputSet(messageId).ReadActualAndPredictionInput(stream);
+				GetInputSet(messageId).ReadFullSyncInput(stream);
 			}
 		}
 

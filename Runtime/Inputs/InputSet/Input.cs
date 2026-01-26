@@ -1,7 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Massive.Netcode
 {
+	[StructLayout(LayoutKind.Sequential)]
 	public readonly struct Input<TInput> where TInput : IInput
 	{
 		public readonly TInput LastFreshInput;

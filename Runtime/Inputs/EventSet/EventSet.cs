@@ -117,7 +117,7 @@ namespace Massive.Netcode
 			throw new System.NotImplementedException();
 		}
 
-		public void ReadActualAndPredictionInput(Stream stream)
+		public void ReadFullSyncInput(Stream stream)
 		{
 			throw new System.NotImplementedException();
 		}

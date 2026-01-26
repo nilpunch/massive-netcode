@@ -10,6 +10,6 @@ namespace Massive.Netcode
 
 		void Reset(int startTick);
 		void ReadActualInput(Stream stream);
-		void ReadActualAndPredictionInput(Stream stream);
+		void ReadFullSyncInput(Stream stream);
 	}
 }

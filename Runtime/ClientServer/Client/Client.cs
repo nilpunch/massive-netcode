@@ -55,9 +55,9 @@ namespace Massive.Netcode
 		{
 			while (Connection.Incoming.CanRead)
 			{
-				var messageTypeId = SerializationUtils.ReadByte(Connection.Incoming);
+				var messageId = SerializationUtils.ReadByte(Connection.Incoming);
 
-				switch (messageTypeId)
+				switch (messageId)
 				{
 					case (int)MessageType.Pong:
 					{
@@ -82,7 +82,12 @@ namespace Massive.Netcode
 
 					default:
 					{
-						InputSerializer.ReadActualInput(messageTypeId, Connection.Incoming);
+						if (!InputIdentifiers.IsRegistered(messageId))
+						{
+							throw new InvalidOperationException();
+						}
+
+						InputSerializer.ReadActualInput(messageId, Connection.Incoming);
 						break;
 					}
 				}
