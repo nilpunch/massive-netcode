@@ -21,6 +21,11 @@ namespace Massive.Netcode
 
 		public int CurrentTick { get; private set; }
 
+		public void Reset(int startTick)
+		{
+			CurrentTick = startTick;
+		}
+
 		public void FastForwardToTick(int targetTick)
 		{
 			if (targetTick < 0)

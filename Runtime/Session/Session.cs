@@ -30,7 +30,7 @@ namespace Massive.Netcode
 			Simulations = new SimulationGroup();
 			ChangeTracker = new ChangeTracker();
 
-			Inputs = new Inputs(ChangeTracker, config.StartTick, predictionReceiver);
+			Inputs = new Inputs(ChangeTracker, predictionReceiver);
 			Simulations.Add(Inputs);
 
 			Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, config.SaveEachNthTick);
@@ -42,6 +42,14 @@ namespace Massive.Netcode
 		{
 			var targetTick = (int)Math.Floor(targetTime * Config.TickRate);
 			Loop.FastForwardToTick(targetTick);
+		}
+
+		public void Reset(int startTick)
+		{
+			Inputs.Reset(startTick);
+			Loop.Reset(startTick);
+			ChangeTracker.NotifyChange(0);
+			ChangeTracker.ConfirmChangesUpTo(startTick);
 		}
 	}
 }

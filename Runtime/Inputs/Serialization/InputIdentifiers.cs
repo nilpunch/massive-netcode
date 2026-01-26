@@ -7,16 +7,19 @@ namespace Massive.Netcode
 {
 	public class InputIdentifiers
 	{
-		private int _registeredIdCount;
+		private readonly int _startId;
+		private int _usedIds;
 
 		private readonly Dictionary<Type, int> _idsByInputs = new Dictionary<Type, int>();
 		private readonly Dictionary<Type, int> _idsByEvents = new Dictionary<Type, int>();
 
 		private readonly FastList<Type> _registeredTypes = new FastList<Type>();
+		private readonly FastList<bool> _isEvent = new FastList<bool>();
 
-		public InputIdentifiers(int registeredIdOffset = (int)SpecialPacketType.SpecialPacketsCount)
+		public InputIdentifiers(int startId)
 		{
-			_registeredIdCount = registeredIdOffset;
+			_startId = startId;
+			_usedIds = startId;
 		}
 
 		public void RegisterAutomatically(Assembly assembly)
@@ -81,29 +84,41 @@ namespace Massive.Netcode
 			RegisterEvent(typeof(T));
 		}
 
-		public Type GetType(int inputId)
+		public bool IsRegistered(int inputId)
+		{
+			return inputId >= _startId && inputId < _usedIds;
+		}
+
+		public bool IsEvent(int inputId)
+		{
+			return _isEvent[inputId];
+		}
+
+		public Type GetTypeById(int inputId)
 		{
 			return _registeredTypes[inputId];
 		}
 
 		private void RegisterEvent(Type type)
 		{
-			if (!_idsByEvents.TryAdd(type, _registeredIdCount))
+			if (!_idsByEvents.TryAdd(type, _usedIds))
 			{
 				throw new Exception($"Duplicate event type registration. Type: {type.GetFullGenericName()}");
 			}
 			_registeredTypes.Add(type);
-			_registeredIdCount++;
+			_isEvent.Add(true);
+			_usedIds++;
 		}
 
 		private void RegisterInput(Type type)
 		{
-			if (!_idsByInputs.TryAdd(type, _registeredIdCount))
+			if (!_idsByInputs.TryAdd(type, _usedIds))
 			{
 				throw new Exception($"Duplicate input type registration. Type: {type.GetFullGenericName()}");
 			}
 			_registeredTypes.Add(type);
-			_registeredIdCount++;
+			_isEvent.Add(false);
+			_usedIds++;
 		}
 	}
 }

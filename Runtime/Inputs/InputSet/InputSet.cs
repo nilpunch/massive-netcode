@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.IO;
+using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
@@ -119,6 +120,22 @@ namespace Massive.Netcode
 			}
 
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);
+		}
+
+		public void Reset(int startTick)
+		{
+			_inputs.Reset(startTick);
+			_inputs.Append().EnsureInitialized();
+		}
+
+		public void ReadActualInput(Stream stream)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public void ReadActualAndPredictionInput(Stream stream)
+		{
+			throw new System.NotImplementedException();
 		}
 	}
 }

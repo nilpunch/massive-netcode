@@ -10,8 +10,8 @@ namespace Massive.Netcode
 
 		public int ApprovedSimulationTick { get; private set; }
 
-		public float TimeSyncServerTime { get; private set; }
-		public float TimeSyncClientTime { get; private set; }
+		public double TimeSyncServerTime { get; private set; }
+		public double TimeSyncClientTime { get; private set; }
 
 		public int PredictionLeadTicks { get; private set; }
 
@@ -28,7 +28,7 @@ namespace Massive.Netcode
 		/// Computes the client simulation target tick.
 		/// Clamped to the allowed rollback window.
 		/// </summary>
-		public int CalculateTargetTick(float clientTime)
+		public int CalculateTargetTick(double clientTime)
 		{
 			var desired = EstimateServerTick(clientTime) + PredictionLeadTicks;
 			return MathUtils.Min(desired, ApprovedSimulationTick + _maxRollbackTicks);
@@ -37,18 +37,18 @@ namespace Massive.Netcode
 		/// <summary>
 		/// Estimates the current server tick from the time-sync anchor.
 		/// </summary>
-		public int EstimateServerTick(float clientTime)
+		public int EstimateServerTick(double clientTime)
 		{
 			var elapsed = clientTime - TimeSyncClientTime;
 			var serverTime = TimeSyncServerTime + elapsed;
-			return (int)MathF.Floor(serverTime * _tickRate);
+			return (int)Math.Floor(serverTime * _tickRate);
 		}
 
 		/// <summary>
 		/// Updates the server clock time-sync anchor.<br/>
 		/// Call when receiving time syncing packet.
 		/// </summary>
-		public void UpdateTimeSync(float serverTime, float clientTime)
+		public void UpdateTimeSync(double serverTime, double clientTime)
 		{
 			if (serverTime <= TimeSyncServerTime)
 			{
@@ -76,11 +76,11 @@ namespace Massive.Netcode
 		/// <summary>
 		/// Updates prediction lead based on RTT.
 		/// </summary>
-		public void UpdateRTT(float rttEstimate)
+		public void UpdateRTT(double rttEstimate)
 		{
 			if (rttEstimate > 0)
 			{
-				var oneWayTicks = (int)MathF.Round(rttEstimate * 0.5f * _tickRate);
+				var oneWayTicks = (int)Math.Round(rttEstimate * 0.5 * _tickRate);
 				PredictionLeadTicks = MathUtils.Min(
 					oneWayTicks + _safetyBufferTicks,
 					_maxRollbackTicks);

@@ -1,12 +1,13 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
 {
 	public class Inputs : IInputSet, ISimulation
 	{
+		private int _startTick;
 		private readonly ChangeTracker _changeTracker;
-		private readonly int _startTick;
 		private readonly IPredictionReceiver _predictionReceiver;
 
 		private IInputSet[] _eventsLookup = Array.Empty<IInputSet>();
@@ -18,16 +19,10 @@ namespace Massive.Netcode
 
 		private int CurrentTick { get; set; }
 
-		public Inputs(ChangeTracker changeTracker, int startTick = 0, IPredictionReceiver predictionReceiver = null)
+		public Inputs(ChangeTracker changeTracker, IPredictionReceiver predictionReceiver = null)
 		{
 			_changeTracker = changeTracker;
-			_startTick = startTick;
 			_predictionReceiver = predictionReceiver;
-		}
-
-		void ISimulation.Update(int tick)
-		{
-			CurrentTick = tick;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -138,6 +133,26 @@ namespace Massive.Netcode
 			return GetEventSet<T>().GetAllEvents(tick);
 		}
 
+		void ISimulation.Update(int tick)
+		{
+			CurrentTick = tick;
+		}
+
+		public void Reset(int startTick)
+		{
+			_startTick = startTick;
+			CurrentTick = _startTick;
+
+			for (var i = 0; i < _inputs.Count; i++)
+			{
+				_inputs[i].Reset(_startTick);
+			}
+			for (var i = 0; i < _events.Count; i++)
+			{
+				_events[i].Reset(_startTick);
+			}
+		}
+
 		public void PopulateUpTo(int tick)
 		{
 			for (var i = 0; i < _inputs.Count; i++)
@@ -152,6 +167,8 @@ namespace Massive.Netcode
 
 		public void DiscardUpTo(int tick)
 		{
+			_startTick = tick;
+
 			for (var i = 0; i < _inputs.Count; i++)
 			{
 				_inputs[i].DiscardUpTo(tick);
@@ -168,6 +185,16 @@ namespace Massive.Netcode
 			{
 				_inputs[i].Reevaluate();
 			}
+		}
+
+		public void ReadActualInput(Stream stream)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void ReadActualAndPredictionInput(Stream stream)
+		{
+			throw new NotImplementedException();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
