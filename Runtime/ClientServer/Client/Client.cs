@@ -73,11 +73,6 @@ namespace Massive.Netcode
 
 					default:
 					{
-						if (!InputIdentifiers.IsRegistered(messageId))
-						{
-							throw new InvalidOperationException();
-						}
-
 						InputSerializer.ReadActualInput(messageId, Incoming);
 						break;
 					}

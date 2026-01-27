@@ -91,11 +91,21 @@ namespace Massive.Netcode
 
 		public bool IsEvent(int inputId)
 		{
+			if (!IsRegistered(inputId))
+			{
+				throw new InvalidOperationException($"Input with id: {inputId} is not registered.");
+			}
+
 			return _isEvent[inputId];
 		}
 
 		public Type GetTypeById(int inputId)
 		{
+			if (!IsRegistered(inputId))
+			{
+				throw new InvalidOperationException($"Input with id: {inputId} is not registered.");
+			}
+
 			return _registeredTypes[inputId];
 		}
 
