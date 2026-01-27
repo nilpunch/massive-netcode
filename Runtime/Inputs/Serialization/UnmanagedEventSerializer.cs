@@ -18,7 +18,7 @@ namespace Massive.Netcode
 		{
 			_eventSet = eventSet;
 
-			_actualEventSize = ReflectionUtils.SizeOfUnmanaged(typeof(ActualEvent<T>));
+			_actualEventSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
 			_actualBuffer = new T[1];
 			_actualBufferHandle = GCHandle.Alloc(_actualBuffer, GCHandleType.Pinned);
 			_actualBufferPtr = _actualBufferHandle.AddrOfPinnedObject().ToPointer();

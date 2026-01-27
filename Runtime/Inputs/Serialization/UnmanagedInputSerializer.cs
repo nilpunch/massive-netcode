@@ -25,7 +25,7 @@ namespace Massive.Netcode
 		{
 			_inputSet = inputSet;
 
-			_actualInputSize = ReflectionUtils.SizeOfUnmanaged(typeof(ActualInput<T>));
+			_actualInputSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
 			_actualBuffer = new T[1];
 			_actualBufferHandle = GCHandle.Alloc(_actualBuffer, GCHandleType.Pinned);
 			_actualBufferPtr = _actualBufferHandle.AddrOfPinnedObject().ToPointer();
