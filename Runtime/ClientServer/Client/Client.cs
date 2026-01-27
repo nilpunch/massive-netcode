@@ -20,8 +20,6 @@ namespace Massive.Netcode
 
 		public Stream Outgoing { get; private set; }
 
-		public bool IsConnected { get; private set; }
-
 		public Client(SessionConfig sessionConfig)
 		{
 			Session = new Session(sessionConfig);
@@ -34,10 +32,7 @@ namespace Massive.Netcode
 
 		public void Update(double clientTime)
 		{
-			if (IsConnected)
-			{
-				ReadMessages(clientTime);
-			}
+			ReadMessages(clientTime);
 
 			Session.Loop.FastForwardToTick(TickSync.CalculateTargetTick(clientTime));
 		}

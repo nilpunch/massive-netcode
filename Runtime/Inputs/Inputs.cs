@@ -16,8 +16,8 @@ namespace Massive.Netcode
 		private IInputSerializer[] _inputsSerializerLookup = Array.Empty<IInputSerializer>();
 		private int _lookupCapacity;
 
-		private readonly FastList<IInputSet> _events = new FastList<IInputSet>();
-		private readonly FastList<IInputSet> _inputs = new FastList<IInputSet>();
+		public FastList<IInputSet> EventSets { get; } = new FastList<IInputSet>();
+		public FastList<IInputSet> InputSets { get; } = new FastList<IInputSet>();
 
 		private int CurrentTick { get; set; }
 
@@ -145,25 +145,25 @@ namespace Massive.Netcode
 			_startTick = startTick;
 			CurrentTick = _startTick;
 
-			for (var i = 0; i < _inputs.Count; i++)
+			for (var i = 0; i < InputSets.Count; i++)
 			{
-				_inputs[i].Reset(_startTick);
+				InputSets[i].Reset(_startTick);
 			}
-			for (var i = 0; i < _events.Count; i++)
+			for (var i = 0; i < EventSets.Count; i++)
 			{
-				_events[i].Reset(_startTick);
+				EventSets[i].Reset(_startTick);
 			}
 		}
 
 		public void PopulateUpTo(int tick)
 		{
-			for (var i = 0; i < _inputs.Count; i++)
+			for (var i = 0; i < InputSets.Count; i++)
 			{
-				_inputs[i].PopulateUpTo(tick);
+				InputSets[i].PopulateUpTo(tick);
 			}
-			for (var i = 0; i < _events.Count; i++)
+			for (var i = 0; i < EventSets.Count; i++)
 			{
-				_events[i].PopulateUpTo(tick);
+				EventSets[i].PopulateUpTo(tick);
 			}
 		}
 
@@ -171,21 +171,21 @@ namespace Massive.Netcode
 		{
 			_startTick = tick;
 
-			for (var i = 0; i < _inputs.Count; i++)
+			for (var i = 0; i < InputSets.Count; i++)
 			{
-				_inputs[i].DiscardUpTo(tick);
+				InputSets[i].DiscardUpTo(tick);
 			}
-			for (var i = 0; i < _events.Count; i++)
+			for (var i = 0; i < EventSets.Count; i++)
 			{
-				_events[i].DiscardUpTo(tick);
+				EventSets[i].DiscardUpTo(tick);
 			}
 		}
 
 		public void Reevaluate()
 		{
-			for (var i = 0; i < _inputs.Count; i++)
+			for (var i = 0; i < InputSets.Count; i++)
 			{
-				_inputs[i].Reevaluate();
+				InputSets[i].Reevaluate();
 			}
 		}
 
@@ -205,7 +205,7 @@ namespace Massive.Netcode
 			var eventSet = new EventSet<T>(_changeTracker, _startTick, _predictionReceiver);
 			_eventsLookup[info.Index] = eventSet;
 			_eventsSerializerLookup[info.Index] = new UnmanagedEventSerializer<T>(eventSet);
-			_events.Add(eventSet);
+			EventSets.Add(eventSet);
 
 			return eventSet;
 		}
@@ -274,7 +274,7 @@ namespace Massive.Netcode
 			var inputSet = new InputSet<T>(_changeTracker, _startTick, _predictionReceiver);
 			_inputsLookup[info.Index] = inputSet;
 			_inputsSerializerLookup[info.Index] = new UnmanagedInputSerializer<T>(inputSet);
-			_inputs.Add(inputSet);
+			InputSets.Add(inputSet);
 
 			return inputSet;
 		}

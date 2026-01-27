@@ -33,6 +33,11 @@ namespace Massive.Netcode
 				GetInputSerializer(messageId).ReadFullSync(stream);
 			}
 		}
+		
+		public void WriteFullSync(Stream stream)
+		{
+			throw new NotImplementedException();
+		}
 
 		public IReadSerializer GetInputSerializer(int messageId)
 		{
