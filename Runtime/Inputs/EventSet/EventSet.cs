@@ -92,7 +92,7 @@ namespace Massive.Netcode
 			for (var i = _events.TailIndex; i <= tick; i++)
 			{
 				ref var events = ref _events.Append();
-				events.EnsureInit();
+				events.EnsureInitialized();
 				events.Clear();
 			}
 		}

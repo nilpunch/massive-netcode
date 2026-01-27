@@ -9,8 +9,5 @@ namespace Massive.Netcode
 		void Reevaluate();
 
 		void Reset(int startTick);
-
-		void ReadActual(Stream stream);
-		void ReadFullSync(Stream stream);
 	}
 }

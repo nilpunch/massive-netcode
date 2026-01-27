@@ -9,7 +9,7 @@ namespace Massive.Netcode
 		private readonly InputIdentifiers _inputIdentifiers;
 		private readonly Inputs _inputs;
 
-		private IInputSet[] _lookupById = Array.Empty<IInputSet>();
+		private IInputSerializer[] _lookupById = Array.Empty<IInputSerializer>();
 
 		public InputSerializer(Inputs inputs, InputIdentifiers inputIdentifiers)
 		{
@@ -19,7 +19,7 @@ namespace Massive.Netcode
 
 		public void ReadActualInput(int messageId, Stream stream)
 		{
-			GetInputSet(messageId).ReadActual(stream);
+			GetInputSerializer(messageId).ReadActual(stream);
 		}
 
 		public void ReadFullSync(Stream stream)
@@ -30,11 +30,11 @@ namespace Massive.Netcode
 			{
 				var messageId = SerializationUtils.ReadByte(stream);
 
-				GetInputSet(messageId).ReadFullSync(stream);
+				GetInputSerializer(messageId).ReadFullSync(stream);
 			}
 		}
 
-		private IInputSet GetInputSet(int messageId)
+		private IInputSerializer GetInputSerializer(int messageId)
 		{
 			EnsureLookupByIdAt(messageId);
 
@@ -43,8 +43,8 @@ namespace Massive.Netcode
 			if (candidate == null)
 			{
 				candidate = _inputIdentifiers.IsEvent(messageId)
-					? _inputs.GetEventSetReflected(_inputIdentifiers.GetTypeById(messageId))
-					: _inputs.GetInputSetReflected(_inputIdentifiers.GetTypeById(messageId));
+					? _inputs.GetEventSetSerializer(_inputIdentifiers.GetTypeById(messageId))
+					: _inputs.GetInputSetSerializer(_inputIdentifiers.GetTypeById(messageId));
 				_lookupById[messageId] = candidate;
 			}
 			return candidate;

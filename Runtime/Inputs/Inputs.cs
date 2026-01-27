@@ -12,6 +12,8 @@ namespace Massive.Netcode
 
 		private IInputSet[] _eventsLookup = Array.Empty<IInputSet>();
 		private IInputSet[] _inputsLookup = Array.Empty<IInputSet>();
+		private IInputSerializer[] _eventsSerializerLookup = Array.Empty<IInputSerializer>();
+		private IInputSerializer[] _inputsSerializerLookup = Array.Empty<IInputSerializer>();
 		private int _lookupCapacity;
 
 		private readonly FastList<IInputSet> _events = new FastList<IInputSet>();
@@ -187,16 +189,6 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ReadActual(Stream stream)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void ReadFullSync(Stream stream)
-		{
-			throw new NotImplementedException();
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public EventSet<T> GetEventSet<T>() where T : IEvent
 		{
@@ -212,29 +204,10 @@ namespace Massive.Netcode
 
 			var eventSet = new EventSet<T>(_changeTracker, _startTick, _predictionReceiver);
 			_eventsLookup[info.Index] = eventSet;
+			_eventsSerializerLookup[info.Index] = new UnmanagedEventSerializer<T>(eventSet);
 			_events.Add(eventSet);
 
 			return eventSet;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public InputSet<T> GetInputSet<T>() where T : IInput
-		{
-			var info = TypeId<InputKind, T>.Info;
-
-			EnsureLookupByTypeAt(info.Index);
-			var candidate = _inputsLookup[info.Index];
-
-			if (candidate != null)
-			{
-				return (InputSet<T>)candidate;
-			}
-
-			var inputSet = new InputSet<T>(_changeTracker, _startTick, _predictionReceiver);
-			_inputsLookup[info.Index] = inputSet;
-			_inputs.Add(inputSet);
-
-			return inputSet;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -257,6 +230,37 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public IInputSerializer GetEventSetSerializer(Type inputType)
+		{
+			// Warmup serializer.
+			GetEventSetReflected(inputType);
+
+			var info = TypeId<InputKind>.GetInfo(inputType);
+			return _eventsSerializerLookup[info.Index];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public InputSet<T> GetInputSet<T>() where T : IInput
+		{
+			var info = TypeId<InputKind, T>.Info;
+
+			EnsureLookupByTypeAt(info.Index);
+			var candidate = _inputsLookup[info.Index];
+
+			if (candidate != null)
+			{
+				return (InputSet<T>)candidate;
+			}
+
+			var inputSet = new InputSet<T>(_changeTracker, _startTick, _predictionReceiver);
+			_inputsLookup[info.Index] = inputSet;
+			_inputsSerializerLookup[info.Index] = new UnmanagedInputSerializer<T>(inputSet);
+			_inputs.Add(inputSet);
+
+			return inputSet;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public IInputSet GetInputSetReflected(Type inputType)
 		{
 			if (TypeId<InputKind>.TryGetInfo(inputType, out var info))
@@ -276,6 +280,16 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public IInputSerializer GetInputSetSerializer(Type inputType)
+		{
+			// Warmup serializer.
+			GetInputSetReflected(inputType);
+
+			var info = TypeId<InputKind>.GetInfo(inputType);
+			return _inputsSerializerLookup[info.Index];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void EnsureLookupByTypeAt(int index)
 		{
 			if (index >= _lookupCapacity)
@@ -283,6 +297,8 @@ namespace Massive.Netcode
 				_lookupCapacity = MathUtils.RoundUpToPowerOfTwo(index + 1);
 				_eventsLookup = _eventsLookup.Resize(_lookupCapacity);
 				_inputsLookup = _inputsLookup.Resize(_lookupCapacity);
+				_eventsSerializerLookup = _eventsSerializerLookup.Resize(_lookupCapacity);
+				_inputsSerializerLookup = _inputsSerializerLookup.Resize(_lookupCapacity);
 			}
 		}
 	}

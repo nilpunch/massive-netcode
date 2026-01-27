@@ -32,7 +32,7 @@ namespace Massive.Netcode
 		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void EnsureInit()
+		public void EnsureInitialized()
 		{
 			Events ??= Array.Empty<T>();
 			AllMask ??= Array.Empty<ulong>();

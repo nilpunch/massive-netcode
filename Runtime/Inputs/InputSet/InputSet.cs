@@ -90,6 +90,12 @@ namespace Massive.Netcode
 			_globalChangeTracker.NotifyChange(startTick);
 		}
 
+		public void Reset(int startTick)
+		{
+			_inputs.Reset(startTick);
+			_inputs.Append().EnsureInitialized();
+		}
+
 		public void PopulateUpTo(int tick)
 		{
 			for (var currentTick = _inputs.TailIndex; currentTick <= tick; currentTick++)
@@ -119,12 +125,6 @@ namespace Massive.Netcode
 			}
 
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);
-		}
-
-		public void Reset(int startTick)
-		{
-			_inputs.Reset(startTick);
-			_inputs.Append().EnsureInitialized();
 		}
 	}
 }
