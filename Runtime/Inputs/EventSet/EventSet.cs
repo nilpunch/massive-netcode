@@ -54,7 +54,7 @@ namespace Massive.Netcode
 			var localOrder = _events[tick].AppendPrediction(data);
 
 			_globalChangeTracker.NotifyChange(tick);
-			_predictionReceiver?.OnEventPredicted(tick, localOrder, data);
+			_predictionReceiver?.OnEventPredicted<T>(tick, localOrder);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

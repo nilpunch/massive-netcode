@@ -9,7 +9,7 @@ namespace Massive.Netcode
 		private readonly InputIdentifiers _inputIdentifiers;
 		private readonly Inputs _inputs;
 
-		private IInputSerializer[] _lookupById = Array.Empty<IInputSerializer>();
+		private IReadSerializer[] _lookupById = Array.Empty<IReadSerializer>();
 
 		public InputSerializer(Inputs inputs, InputIdentifiers inputIdentifiers)
 		{
@@ -19,7 +19,7 @@ namespace Massive.Netcode
 
 		public void ReadActualInput(int messageId, Stream stream)
 		{
-			GetInputSerializer(messageId).ReadActual(stream);
+			GetInputSerializer(messageId).ReadOne(stream);
 		}
 
 		public void ReadFullSync(Stream stream)
@@ -34,7 +34,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		private IInputSerializer GetInputSerializer(int messageId)
+		public IReadSerializer GetInputSerializer(int messageId)
 		{
 			EnsureLookupByIdAt(messageId);
 

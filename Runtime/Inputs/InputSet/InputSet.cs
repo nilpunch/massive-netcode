@@ -46,7 +46,7 @@ namespace Massive.Netcode
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
-			_predictionReceiver?.OnInputPredicted(tick, channel, input);
+			_predictionReceiver?.OnInputPredicted<T>(tick, channel);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

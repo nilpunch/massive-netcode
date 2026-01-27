@@ -10,7 +10,7 @@ namespace Massive.Netcode
 		private readonly InputSet<T> _inputSet;
 
 		private readonly int _actualInputSize;
-		private ActualInput<T>[] _actualBuffer;
+		private T[] _actualBuffer;
 		private GCHandle _actualBufferHandle;
 		private void* _actualBufferPtr;
 
@@ -26,15 +26,14 @@ namespace Massive.Netcode
 			_inputSet = inputSet;
 
 			_actualInputSize = ReflectionUtils.SizeOfUnmanaged(typeof(ActualInput<T>));
-			_actualBuffer = Array.Empty<ActualInput<T>>();
-			_actualBufferHandle = GCHandle.Alloc(_fullSyncBuffer, GCHandleType.Pinned);
+			_actualBuffer = new T[1];
+			_actualBufferHandle = GCHandle.Alloc(_actualBuffer, GCHandleType.Pinned);
 			_actualBufferPtr = _actualBufferHandle.AddrOfPinnedObject().ToPointer();
 
 			_fullSyncInputSize = ReflectionUtils.SizeOfUnmanaged(typeof(Input<T>));
-			_fullSyncBuffer = Array.Empty<Input<T>>();
+			_fullSyncBuffer = new Input<T>[1];
 			_fullSyncBufferHandle = GCHandle.Alloc(_fullSyncBuffer, GCHandleType.Pinned);
 			_fullSyncBufferPtr = _fullSyncBufferHandle.AddrOfPinnedObject().ToPointer();
-
 		}
 
 		~UnmanagedInputSerializer()
@@ -43,19 +42,29 @@ namespace Massive.Netcode
 			_fullSyncBufferHandle.Free();
 		}
 
-		public void ReadActual(Stream stream)
+		public void Write(int tick, int channel, Stream stream)
+		{
+			SerializationUtils.WriteInt(tick, stream);
+			SerializationUtils.WriteShort((short)channel, stream);
+
+			_actualBuffer[0] = _inputSet.GetInputs(tick).Inputs[channel].LastFreshInput;
+
+			stream.Write(new Span<byte>(_actualBufferPtr, _actualInputSize));
+		}
+
+		public void WriteFullSync(int tick, Stream stream)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void ReadOne(Stream stream)
 		{
 			var tick = SerializationUtils.ReadInt(stream);
-			var inputsAmount = SerializationUtils.ReadShort(stream);
+			var channel = SerializationUtils.ReadShort(stream);
 
-			EnsureActualBufferSize(inputsAmount);
-			var actualSpan = new Span<byte>(_actualBufferPtr, _actualInputSize * inputsAmount);
-			SerializationUtils.ReadExactly(stream, actualSpan);
+			SerializationUtils.ReadExactly(stream, new Span<byte>(_actualBufferPtr, _actualInputSize));
 
-			for (var i = 0; i < inputsAmount; i++)
-			{
-				_inputSet.SetActual(tick, _actualBuffer[i].Channel, _actualBuffer[i].Input);
-			}
+			_inputSet.SetActual(tick, channel, _actualBuffer[0]);
 		}
 
 		public void ReadFullSync(Stream stream)

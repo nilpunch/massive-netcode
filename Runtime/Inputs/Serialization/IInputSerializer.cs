@@ -2,9 +2,9 @@
 
 namespace Massive.Netcode
 {
-	public interface IInputSerializer
+	public interface IInputSerializer : IReadSerializer
 	{
-		void ReadActual(Stream stream);
-		void ReadFullSync(Stream stream);
+		void Write(int tick, int channel, Stream stream);
+		void WriteFullSync(int tick, Stream stream);
 	}
 }
