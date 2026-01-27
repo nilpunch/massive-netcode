@@ -4,7 +4,7 @@ namespace Massive.Netcode
 {
 	public interface IEventSerializer : IReadSerializer
 	{
-		void Write(int tick, int localOrder, Stream stream);
+		void WriteOne(int tick, int localOrder, Stream stream);
 		void WriteFullSync(int tick, Stream stream);
 	}
 }

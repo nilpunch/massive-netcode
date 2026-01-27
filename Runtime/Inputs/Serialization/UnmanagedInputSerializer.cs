@@ -42,7 +42,7 @@ namespace Massive.Netcode
 			_fullSyncBufferHandle.Free();
 		}
 
-		public void Write(int tick, int channel, Stream stream)
+		public void WriteOne(int tick, int channel, Stream stream)
 		{
 			SerializationUtils.WriteInt(tick, stream);
 			SerializationUtils.WriteShort((short)channel, stream);
@@ -54,7 +54,18 @@ namespace Massive.Netcode
 
 		public void WriteFullSync(int tick, Stream stream)
 		{
-			throw new NotImplementedException();
+			var inputs = _inputSet.GetInputs(tick);
+
+			SerializationUtils.WriteInt(tick, stream);
+			SerializationUtils.WriteShort((short)inputs.UsedChannels, stream);
+
+			EnsureFullSyncBufferSize(inputs.UsedChannels);
+			for (var i = 0; i < inputs.UsedChannels; i++)
+			{
+				_fullSyncBuffer[i] = _allInputsBuffer.Inputs[i];
+			}
+
+			stream.Write(new Span<byte>(_fullSyncBufferPtr, _fullSyncInputSize * inputs.UsedChannels));
 		}
 
 		public void ReadOne(Stream stream)
@@ -70,32 +81,21 @@ namespace Massive.Netcode
 		public void ReadFullSync(Stream stream)
 		{
 			var tick = SerializationUtils.ReadInt(stream);
-			var channelsAmount = SerializationUtils.ReadShort(stream);
+			var channelsCount = SerializationUtils.ReadShort(stream);
 
-			EnsureFullSyncBufferSize(channelsAmount);
-			var fullSyncSpan = new Span<byte>(_fullSyncBufferPtr, _fullSyncInputSize * channelsAmount);
+			EnsureFullSyncBufferSize(channelsCount);
+			var fullSyncSpan = new Span<byte>(_fullSyncBufferPtr, _fullSyncInputSize * channelsCount);
 			SerializationUtils.ReadExactly(stream, fullSyncSpan);
 
 			_allInputsBuffer.EnsureInitialized();
-			_allInputsBuffer.EnsureChannel(channelsAmount - 1);
-			for (var i = 0; i < channelsAmount; i++)
+			_allInputsBuffer.EnsureChannel(channelsCount - 1);
+			for (var i = 0; i < channelsCount; i++)
 			{
 				_allInputsBuffer.Inputs[i] = _fullSyncBuffer[i];
 			}
 
 			_inputSet.SetInputs(tick, _allInputsBuffer);
 			_allInputsBuffer.Clear();
-		}
-
-		private void EnsureActualBufferSize(int length)
-		{
-			if (length > _actualBuffer.Length)
-			{
-				_actualBuffer = _actualBuffer.ResizeToNextPowOf2(length);
-				_actualBufferHandle.Free();
-				_actualBufferHandle = GCHandle.Alloc(_actualBuffer, GCHandleType.Pinned);
-				_actualBufferPtr = _actualBufferHandle.AddrOfPinnedObject().ToPointer();
-			}
 		}
 
 		private void EnsureFullSyncBufferSize(int length)

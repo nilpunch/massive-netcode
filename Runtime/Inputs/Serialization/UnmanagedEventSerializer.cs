@@ -29,7 +29,7 @@ namespace Massive.Netcode
 			_actualBufferHandle.Free();
 		}
 
-		public void Write(int tick, int localOrder, Stream stream)
+		public void WriteOne(int tick, int localOrder, Stream stream)
 		{
 			SerializationUtils.WriteInt(tick, stream);
 			SerializationUtils.WriteShort((short)localOrder, stream);
@@ -41,7 +41,13 @@ namespace Massive.Netcode
 
 		public void WriteFullSync(int tick, Stream stream)
 		{
-			throw new NotImplementedException();
+			var eventsCount = (short)_eventSet.GetAllEvents(tick).Count;
+			SerializationUtils.WriteShort((short)eventsCount, stream);
+
+			for (var i = 0; i < eventsCount; i++)
+			{
+				WriteOne(tick, i, stream);
+			}
 		}
 
 		public unsafe void ReadOne(Stream stream)
@@ -56,22 +62,11 @@ namespace Massive.Netcode
 
 		public unsafe void ReadFullSync(Stream stream)
 		{
-			var eventsAmount = SerializationUtils.ReadShort(stream);
+			var eventsCount = SerializationUtils.ReadShort(stream);
 
-			for (var i = 0; i < eventsAmount; i++)
+			for (var i = 0; i < eventsCount; i++)
 			{
 				ReadOne(stream);
-			}
-		}
-
-		private void EnsureActualBufferSize(int length)
-		{
-			if (length > _actualBuffer.Length)
-			{
-				_actualBuffer = _actualBuffer.ResizeToNextPowOf2(length);
-				_actualBufferHandle.Free();
-				_actualBufferHandle = GCHandle.Alloc(_actualBuffer, GCHandleType.Pinned);
-				_actualBufferPtr = _actualBufferHandle.AddrOfPinnedObject().ToPointer();
 			}
 		}
 	}

@@ -87,12 +87,12 @@ namespace Massive.Netcode
 
 		void IPredictionReceiver.OnInputPredicted<T>(int tick, int channel)
 		{
-			Session.Inputs.GetInputSetSerializer<T>().Write(tick, channel, Outgoing);
+			Session.Inputs.GetInputSetSerializer<T>().WriteOne(tick, channel, Outgoing);
 		}
 
 		void IPredictionReceiver.OnEventPredicted<T>(int tick, int localOrder)
 		{
-			Session.Inputs.GetEventSetSerializer<T>().Write(tick, localOrder, Outgoing);
+			Session.Inputs.GetEventSetSerializer<T>().WriteOne(tick, localOrder, Outgoing);
 		}
 	}
 }
