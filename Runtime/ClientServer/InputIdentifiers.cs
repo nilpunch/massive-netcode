@@ -17,7 +17,7 @@ namespace Massive.Netcode
 
 		public List<Type> RegisteredTypes { get; } = new List<Type>();
 
-		public InputIdentifiers(int startId)
+		public InputIdentifiers(int startId = (int)MessageType.Count)
 		{
 			_startId = startId;
 			_usedIds = startId;

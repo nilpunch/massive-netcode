@@ -27,7 +27,7 @@ namespace Massive.Netcode
 		{
 			Session = new Session(sessionConfig);
 
-			InputIdentifiers = new InputIdentifiers((int)MessageType.Count);
+			InputIdentifiers = new InputIdentifiers();
 			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers, AcceptFutureInputs);
 			WorldSerializer = new WorldSerializer();
 

@@ -25,7 +25,7 @@ namespace Massive.Netcode
 			Session = new Session(sessionConfig);
 			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
 
-			InputIdentifiers = new InputIdentifiers((int)MessageType.Count);
+			InputIdentifiers = new InputIdentifiers();
 			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers);
 			WorldSerializer = new WorldSerializer();
 		}
