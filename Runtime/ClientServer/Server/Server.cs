@@ -47,7 +47,7 @@ namespace Massive.Netcode
 			{
 				while (connection.Incoming.CanRead)
 				{
-					var messageId = SerializationUtils.ReadByte(connection.Incoming);
+					var messageId = connection.Incoming.Read1Byte();
 
 					switch (messageId)
 					{
@@ -60,14 +60,14 @@ namespace Massive.Netcode
 								ServerReceiveTime = serverTime
 							};
 
-							SerializationUtils.WriteByte(connection.Outgoing, (int)MessageType.Pong);
+							connection.Outgoing.Write1Byte((int)MessageType.Pong);
 							PongMessage.Write(pongMessage, connection.Outgoing);
 							break;
 						}
 
 						case (int)MessageType.FullSync:
 						{
-							SerializationUtils.WriteByte(connection.Outgoing, (int)MessageType.FullSync);
+							connection.Outgoing.Write1Byte((int)MessageType.FullSync);
 
 							connection.Outgoing.WriteInt(Session.Loop.CurrentTick);
 							WorldSerializer.Serialize(Session.World, connection.Outgoing);

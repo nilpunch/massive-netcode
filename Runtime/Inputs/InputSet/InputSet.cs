@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.CompilerServices;
 using Massive.Serialization;
 using Unity.IL2CPP.CompilerServices;
@@ -21,9 +22,12 @@ namespace Massive.Netcode
 			_inputs = new CyclicList<AllInputs<T>>(startTick);
 			_inputs.Append().EnsureInitialized();
 			Serializer = serializer ?? new UnmanagedInputSerializer<T>();
+			InputType = typeof(T);
 		}
 
-		public IInputSerializer<T> Serializer { get; private set; }
+		public IInputSerializer<T> Serializer { get; }
+
+		public Type InputType { get; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllInputs<T> GetInputs(int tick)

@@ -40,7 +40,7 @@ namespace Massive.Netcode
 			{
 				for (var i = 0; i < messagesCount; i++)
 				{
-					var messageId = SerializationUtils.ReadByte(stream);
+					var messageId = stream.Read1Byte();
 					ReadOne(messageId, tick, stream);
 				}
 			}
@@ -48,7 +48,7 @@ namespace Massive.Netcode
 			{
 				for (var i = 0; i < messagesCount; i++)
 				{
-					var messageId = SerializationUtils.ReadByte(stream);
+					var messageId = stream.Read1Byte();
 					SkipOne(messageId, stream);
 				}
 			}
@@ -56,7 +56,24 @@ namespace Massive.Netcode
 
 		public void WriteMany(int tick, Stream stream)
 		{
-			throw new NotImplementedException();
+			var messagesCount = _inputs.EventSets.Count + _inputs.InputSets.Count;
+
+			stream.WriteInt(messagesCount);
+			stream.WriteInt(tick);
+
+			foreach (var eventSet in _inputs.EventSets)
+			{
+				var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
+				stream.Write1Byte((byte)messageId);
+				eventSet.WriteAll(tick, stream);
+			}
+
+			foreach (var inputSet in _inputs.InputSets)
+			{
+				var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
+				stream.Write1Byte((byte)messageId);
+				inputSet.WriteAll(tick, stream);
+			}
 		}
 
 		private void ReadOne(int messageId, int tick, Stream stream)

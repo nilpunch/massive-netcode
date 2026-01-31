@@ -41,7 +41,7 @@ namespace Massive.Netcode
 		{
 			while (Incoming.CanRead)
 			{
-				var messageId = SerializationUtils.ReadByte(Incoming);
+				var messageId = Incoming.Read1Byte();
 
 				switch (messageId)
 				{

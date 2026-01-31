@@ -1,9 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Massive.Netcode
 {
 	public interface IInputSet
 	{
+		Type InputType { get; }
+
 		void PopulateUpTo(int tick);
 		void DiscardUpTo(int tick);
 		void Reevaluate();

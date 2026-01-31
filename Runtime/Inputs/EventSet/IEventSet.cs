@@ -1,9 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Massive.Netcode
 {
 	public interface IEventSet
 	{
+		Type EventType { get; }
+
 		void PopulateUpTo(int tick);
 		void DiscardUpTo(int tick);
 

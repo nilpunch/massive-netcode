@@ -110,6 +110,26 @@ namespace Massive.Netcode
 			return RegisteredTypes[inputId];
 		}
 
+		public int GetEventId(Type type)
+		{
+			if (!_idsByEvents.TryGetValue(type, out var id))
+			{
+				throw new InvalidOperationException($"Event with type: {type.GetGenericName()} is not registered.");
+			}
+
+			return id;
+		}
+
+		public int GetInputId(Type type)
+		{
+			if (!_idsByInputs.TryGetValue(type, out var id))
+			{
+				throw new InvalidOperationException($"Input with type: {type.GetGenericName()} is not registered.");
+			}
+
+			return id;
+		}
+
 		private void RegisterEvent(Type type)
 		{
 			if (!_idsByEvents.TryAdd(type, _usedIds))

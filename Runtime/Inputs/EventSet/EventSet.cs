@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.CompilerServices;
 using Massive.Serialization;
 using Unity.IL2CPP.CompilerServices;
@@ -19,9 +20,12 @@ namespace Massive.Netcode
 			_predictionReceiver = predictionReceiver;
 			_events = new CyclicList<AllEvents<T>>(startTick);
 			Serializer = serializer ?? new UnmanagedEventSerializer<T>();
+			EventType = typeof(T);
 		}
 
-		public IEventSerializer<T> Serializer { get; private set; }
+		public IEventSerializer<T> Serializer { get; }
+
+		public Type EventType { get; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllEvents<T> GetAllEvents(int tick)
