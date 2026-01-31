@@ -132,9 +132,8 @@ namespace Massive.Netcode
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);
 		}
 
-		public void Read(Stream stream)
+		public void Read(int tick, Stream stream)
 		{
-			var tick = stream.ReadInt();
 			var encoded = stream.ReadShort();
 
 			PopulateUpTo(tick);
@@ -162,7 +161,6 @@ namespace Massive.Netcode
 
 		public void Write(int tick, int channel, Stream stream)
 		{
-			stream.WriteInt(tick);
 			stream.WriteShort((short)channel);
 			Serializer.WriteData(_inputs[tick].Get(channel).LastFreshInput, stream);
 		}
@@ -171,12 +169,30 @@ namespace Massive.Netcode
 		{
 			ref var inputs = ref _inputs[tick];
 
-			stream.WriteInt(tick);
 			stream.WriteShort((short)~inputs.UsedChannels);
 
 			for (var channel = 0; channel < inputs.UsedChannels; channel++)
 			{
 				Serializer.WriteInput(_inputs[tick].Get(channel), stream);
+			}
+		}
+
+		public void Skip(Stream stream)
+		{
+			var encoded = stream.ReadShort();
+
+			if (encoded >= 0)
+			{
+				Serializer.ReadData(stream);
+			}
+			else
+			{
+				var channelsCount = ~encoded;
+
+				for (var channel = 0; channel < channelsCount; channel++)
+				{
+					Serializer.ReadInput(stream);
+				}
 			}
 		}
 	}

@@ -111,9 +111,8 @@ namespace Massive.Netcode
 			_events.Reset(startTick);
 		}
 
-		public void Read(Stream stream)
+		public void Read(int tick, Stream stream)
 		{
-			var tick = stream.ReadInt();
 			var encoded = stream.ReadShort();
 
 			PopulateUpTo(tick);
@@ -140,7 +139,6 @@ namespace Massive.Netcode
 
 		public void Write(int tick, int localOrder, Stream stream)
 		{
-			stream.WriteInt(tick);
 			stream.WriteShort((short)localOrder);
 			Serializer.Write(_events[tick].Events[localOrder], stream);
 		}
@@ -149,12 +147,30 @@ namespace Massive.Netcode
 		{
 			ref var events = ref _events[tick];
 
-			stream.WriteInt(tick);
 			stream.WriteShort((short)~events.DenseCount());
 
 			foreach (var data in events)
 			{
 				Serializer.Write(data, stream);
+			}
+		}
+
+		public void Skip(Stream stream)
+		{
+			var encoded = stream.ReadShort();
+
+			if (encoded >= 0)
+			{
+				Serializer.Read(stream);
+			}
+			else
+			{
+				var eventsCount = ~encoded;
+
+				for (var i = 0; i < eventsCount; i++)
+				{
+					Serializer.Read(stream);
+				}
 			}
 		}
 	}

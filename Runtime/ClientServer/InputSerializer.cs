@@ -4,85 +4,82 @@ using Massive.Serialization;
 
 namespace Massive.Netcode
 {
-	public class InputSerializer
+	public partial class InputSerializer
 	{
 		private readonly InputIdentifiers _inputIdentifiers;
 		private readonly Inputs _inputs;
+		private readonly Func<int, bool> _acceptTick;
 
-		private IInputSet[] _inputLookupById = Array.Empty<IInputSet>();
-		private IEventSet[] _eventLookupById = Array.Empty<IEventSet>();
-
-		public InputSerializer(Inputs inputs, InputIdentifiers inputIdentifiers)
+		public InputSerializer(Inputs inputs, InputIdentifiers inputIdentifiers, Func<int, bool> acceptTick = null)
 		{
 			_inputIdentifiers = inputIdentifiers;
 			_inputs = inputs;
+			_acceptTick = acceptTick ?? (_ => true);
 		}
 
 		public void Read(int messageId, Stream stream)
 		{
-			if (_inputIdentifiers.IsEvent(messageId))
+			var tick = stream.ReadInt();
+
+			if (_acceptTick(tick))
 			{
-				GetEventSet(messageId).Read(stream);
+				ReadOne(messageId, tick, stream);
 			}
 			else
 			{
-				GetInputSet(messageId).Read(stream);
+				SkipOne(messageId, stream);
 			}
 		}
 
 		public void ReadMany(Stream stream)
 		{
 			var messagesCount = stream.ReadInt();
+			var tick = stream.ReadInt();
 
-			for (var i = 0; i < messagesCount; i++)
+			if (_acceptTick(tick))
 			{
-				var messageId = SerializationUtils.ReadByte(stream);
-
-				Read(messageId, stream);
+				for (var i = 0; i < messagesCount; i++)
+				{
+					var messageId = SerializationUtils.ReadByte(stream);
+					ReadOne(messageId, tick, stream);
+				}
+			}
+			else
+			{
+				for (var i = 0; i < messagesCount; i++)
+				{
+					var messageId = SerializationUtils.ReadByte(stream);
+					SkipOne(messageId, stream);
+				}
 			}
 		}
 
-		public void WriteFullSync(Stream stream)
+		public void WriteMany(int tick, Stream stream)
 		{
 			throw new NotImplementedException();
 		}
 
-		public IInputSet GetInputSet(int messageId)
+		private void ReadOne(int messageId, int tick, Stream stream)
 		{
-			EnsureLookupByIdAt(messageId);
-
-			var candidate = _inputLookupById[messageId];
-
-			if (candidate == null)
+			if (_inputIdentifiers.IsEvent(messageId))
 			{
-				candidate = _inputs.GetInputSetReflected(_inputIdentifiers.GetTypeById(messageId));
-				_inputLookupById[messageId] = candidate;
+				GetEventSet(messageId).Read(tick, stream);
 			}
-
-			return candidate;
-		}
-		
-		public IEventSet GetEventSet(int messageId)
-		{
-			EnsureLookupByIdAt(messageId);
-
-			var candidate = _eventLookupById[messageId];
-
-			if (candidate == null)
+			else
 			{
-				candidate = _inputs.GetEventSetReflected(_inputIdentifiers.GetTypeById(messageId));
-				_eventLookupById[messageId] = candidate;
+				GetInputSet(messageId).Read(tick, stream);
 			}
-
-			return candidate;
 		}
 
-		private void EnsureLookupByIdAt(int index)
+		private void SkipOne(int messageId, Stream stream)
 		{
-			if (index >= _inputLookupById.Length)
+			if (_inputIdentifiers.IsEvent(messageId))
 			{
-				_inputLookupById = _inputLookupById.ResizeToNextPowOf2(index + 1);
-				_eventLookupById = _eventLookupById.Resize(_inputLookupById.Length);
+				GetEventSet(messageId).Skip(stream);
+			}
+			else
+			{
+				GetInputSet(messageId).Skip(stream);
 			}
 		}
 	}

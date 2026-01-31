@@ -10,8 +10,10 @@ namespace Massive.Netcode
 
 		void Reset(int startTick);
 
-		void Read(Stream stream);
+		void Read(int tick, Stream stream);
 		void Write(int tick, int channel, Stream stream);
 		void WriteAll(int tick, Stream stream);
+
+		void Skip(Stream stream);
 	}
 }

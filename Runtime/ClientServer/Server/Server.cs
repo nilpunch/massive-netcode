@@ -72,7 +72,7 @@ namespace Massive.Netcode
 							connection.Outgoing.WriteInt(Session.Loop.CurrentTick);
 							WorldSerializer.Serialize(Session.World, connection.Outgoing);
 							connection.Outgoing.WriteAllocator(Session.Systems.Allocator);
-							InputSerializer.WriteFullSync(connection.Outgoing);
+							InputSerializer.WriteMany(Session.Loop.CurrentTick, connection.Outgoing);
 							break;
 						}
 
