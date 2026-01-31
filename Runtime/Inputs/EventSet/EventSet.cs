@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Runtime.CompilerServices;
+using Massive.Serialization;
 using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
@@ -112,17 +113,49 @@ namespace Massive.Netcode
 
 		public void Read(Stream stream)
 		{
-			throw new System.NotImplementedException();
+			var tick = stream.ReadInt();
+			var encoded = stream.ReadShort();
+
+			PopulateUpTo(tick);
+
+			if (encoded >= 0)
+			{
+				var localOrder = encoded;
+
+				_events[tick].SetActual(localOrder, Serializer.Read(stream));
+			}
+			else
+			{
+				var eventsCount = ~encoded;
+
+				ref var events = ref _events[tick];
+				events.Clear();
+
+				for (var i = 0; i < eventsCount; i++)
+				{
+					events.AppendActual(Serializer.Read(stream));
+				}
+			}
 		}
 
 		public void Write(int tick, int localOrder, Stream stream)
 		{
-			throw new System.NotImplementedException();
+			stream.WriteInt(tick);
+			stream.WriteShort((short)localOrder);
+			Serializer.Write(_events[tick].Events[localOrder], stream);
 		}
 
 		public void WriteAll(int tick, Stream stream)
 		{
-			throw new System.NotImplementedException();
+			ref var events = ref _events[tick];
+
+			stream.WriteInt(tick);
+			stream.WriteShort((short)~events.DenseCount());
+
+			foreach (var data in events)
+			{
+				Serializer.Write(data, stream);
+			}
 		}
 	}
 }

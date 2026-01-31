@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Runtime.CompilerServices;
+using Massive.Serialization;
 using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
@@ -133,17 +134,50 @@ namespace Massive.Netcode
 
 		public void Read(Stream stream)
 		{
-			throw new System.NotImplementedException();
+			var tick = stream.ReadInt();
+			var encoded = stream.ReadShort();
+
+			PopulateUpTo(tick);
+
+			if (encoded >= 0)
+			{
+				var channel = encoded;
+
+				_inputs[tick].SetActual(channel, Serializer.ReadData(stream));
+			}
+			else
+			{
+				var channelsCount = ~encoded;
+
+				ref var inputs = ref _inputs[tick];
+				inputs.Clear();
+				inputs.EnsureInputForChannel(channelsCount - 1);
+
+				for (var channel = 0; channel < channelsCount; channel++)
+				{
+					inputs.Inputs[channel] = Serializer.ReadInput(stream);
+				}
+			}
 		}
 
 		public void Write(int tick, int channel, Stream stream)
 		{
-			throw new System.NotImplementedException();
+			stream.WriteInt(tick);
+			stream.WriteShort((short)channel);
+			Serializer.WriteData(_inputs[tick].Get(channel).LastFreshInput, stream);
 		}
 
 		public void WriteAll(int tick, Stream stream)
 		{
-			throw new System.NotImplementedException();
+			ref var inputs = ref _inputs[tick];
+
+			stream.WriteInt(tick);
+			stream.WriteShort((short)~inputs.UsedChannels);
+
+			for (var channel = 0; channel < inputs.UsedChannels; channel++)
+			{
+				Serializer.WriteInput(_inputs[tick].Get(channel), stream);
+			}
 		}
 	}
 }

@@ -12,7 +12,7 @@ namespace Massive.Netcode
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 	public struct AllEvents<T> where T : IEvent
 	{
-		public int Count { get; private set; }
+		public int SparseCount { get; private set; }
 
 		public T[] Events { get; private set; }
 		public int EventsCapacity { get; private set; }
@@ -20,9 +20,9 @@ namespace Massive.Netcode
 		public ulong[] AllMask { get; private set; }
 		public ulong[] PredictionMask { get; private set; }
 
-		public int MaskLength => (Count + 63) >> 6;
+		public int MaskLength => (SparseCount + 63) >> 6;
 
-		public bool HasAny => Count != 0;
+		public bool HasAny => SparseCount != 0;
 
 		public static AllEvents<T> Empty => new AllEvents<T>
 		{
@@ -42,7 +42,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int AppendPrediction(T data)
 		{
-			var localOrder = Count++;
+			var localOrder = SparseCount++;
 
 			EnsureEventAt(localOrder);
 
@@ -60,7 +60,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int AppendActual(T data)
 		{
-			var localOrder = Count++;
+			var localOrder = SparseCount++;
 			SetActual(localOrder, data);
 			return localOrder;
 		}
@@ -108,7 +108,7 @@ namespace Massive.Netcode
 			}
 			else
 			{
-				Count = MathUtils.Max(Count, localOrder + 1);
+				SparseCount = MathUtils.Max(SparseCount, localOrder + 1);
 			}
 
 			Events[localOrder] = data;
@@ -125,7 +125,7 @@ namespace Massive.Netcode
 				PredictionMask[i] = 0;
 			}
 
-			Count = 0;
+			SparseCount = 0;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -138,6 +138,18 @@ namespace Massive.Netcode
 				AllMask[i] &= ~PredictionMask[i];
 				PredictionMask[i] = 0;
 			}
+		}
+
+		public int DenseCount()
+		{
+			var count = 0;
+
+			for (var i = 0; i < MaskLength; i++)
+			{
+				count += MathUtils.PopCount(AllMask[i]);
+			}
+
+			return count;
 		}
 
 		/// <summary>
@@ -172,14 +184,14 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyFrom(AllEvents<T> other)
 		{
-			EnsureEventAt(other.Count - 1);
-			Array.Copy(other.Events, Events, other.Count);
+			EnsureEventAt(other.SparseCount - 1);
+			Array.Copy(other.Events, Events, other.SparseCount);
 			for (var i = 0; i < other.MaskLength; i++)
 			{
 				AllMask[i] = other.AllMask[i];
 				PredictionMask[i] = other.PredictionMask[i];
 			}
-			Count = other.Count;
+			SparseCount = other.SparseCount;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
