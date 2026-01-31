@@ -6,18 +6,21 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public sealed class EventSet<T> : IInputSet where T : IEvent
+	public sealed class EventSet<T> : IEventSet where T : IEvent
 	{
 		private readonly ChangeTracker _globalChangeTracker;
 		private readonly IPredictionReceiver _predictionReceiver;
 		private readonly CyclicList<AllEvents<T>> _events;
 
-		public EventSet(ChangeTracker globalChangeTracker, int startTick, IPredictionReceiver predictionReceiver = null)
+		public EventSet(ChangeTracker globalChangeTracker, int startTick, IPredictionReceiver predictionReceiver = null, IEventSerializer<T> serializer = null)
 		{
 			_globalChangeTracker = globalChangeTracker;
 			_predictionReceiver = predictionReceiver;
 			_events = new CyclicList<AllEvents<T>>(startTick);
+			Serializer = serializer ?? new UnmanagedEventSerializer<T>();
 		}
+
+		public IEventSerializer<T> Serializer { get; private set; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllEvents<T> GetAllEvents(int tick)
@@ -54,7 +57,7 @@ namespace Massive.Netcode
 			var localOrder = _events[tick].AppendPrediction(data);
 
 			_globalChangeTracker.NotifyChange(tick);
-			_predictionReceiver?.OnEventPredicted<T>(tick, localOrder);
+			_predictionReceiver?.OnEventPredicted(this, tick, localOrder);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -102,22 +105,22 @@ namespace Massive.Netcode
 			_events.RemoveUpTo(tick);
 		}
 
-		public void Reevaluate()
-		{
-			// Events are not stateful, nothing to reevaluate.
-		}
-
 		public void Reset(int startTick)
 		{
 			_events.Reset(startTick);
 		}
 
-		public void ReadActual(Stream stream)
+		public void Read(Stream stream)
 		{
 			throw new System.NotImplementedException();
 		}
 
-		public void ReadFullSync(Stream stream)
+		public void Write(int tick, int localOrder, Stream stream)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public void WriteAll(int tick, Stream stream)
 		{
 			throw new System.NotImplementedException();
 		}

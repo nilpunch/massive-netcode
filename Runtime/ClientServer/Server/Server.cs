@@ -60,18 +60,18 @@ namespace Massive.Netcode
 								ServerReceiveTime = serverTime
 							};
 
-							SerializationUtils.WriteByte((int)MessageType.Pong, connection.Outgoing);
+							SerializationUtils.WriteByte(connection.Outgoing, (int)MessageType.Pong);
 							PongMessage.Write(pongMessage, connection.Outgoing);
 							break;
 						}
 
 						case (int)MessageType.FullSync:
 						{
-							SerializationUtils.WriteByte((int)MessageType.FullSync, connection.Outgoing);
+							SerializationUtils.WriteByte(connection.Outgoing, (int)MessageType.FullSync);
 
-							SerializationUtils.WriteInt(Session.Loop.CurrentTick, connection.Outgoing);
+							connection.Outgoing.WriteInt(Session.Loop.CurrentTick);
 							WorldSerializer.Serialize(Session.World, connection.Outgoing);
-							SerializationUtils.WriteAllocator(Session.Systems.Allocator, connection.Outgoing);
+							connection.Outgoing.WriteAllocator(Session.Systems.Allocator);
 							InputSerializer.WriteFullSync(connection.Outgoing);
 							break;
 						}
@@ -79,7 +79,7 @@ namespace Massive.Netcode
 						default:
 						{
 							// Need to add old input discaring.
-							InputSerializer.ReadActualInput(messageId, connection.Incoming);
+							InputSerializer.Read(messageId, connection.Incoming);
 							break;
 						}
 					}

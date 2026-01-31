@@ -9,5 +9,9 @@ namespace Massive.Netcode
 		void Reevaluate();
 
 		void Reset(int startTick);
+
+		void Read(Stream stream);
+		void Write(int tick, int channel, Stream stream);
+		void WriteAll(int tick, Stream stream);
 	}
 }

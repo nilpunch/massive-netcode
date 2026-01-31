@@ -10,8 +10,8 @@ namespace Massive.Netcode
 
 		public static PongMessage Read(Stream stream)
 		{
-			var clientSendTime = SerializationUtils.ReadDouble(stream);
-			var serverReceiveTime = SerializationUtils.ReadDouble(stream);
+			var clientSendTime = stream.ReadDouble();
+			var serverReceiveTime = stream.ReadDouble();
 			return new PongMessage()
 			{
 				ClientPingSendTime = clientSendTime,
@@ -21,8 +21,8 @@ namespace Massive.Netcode
 
 		public static void Write(PongMessage message, Stream stream)
 		{
-			SerializationUtils.WriteDouble(message.ClientPingSendTime, stream);
-			SerializationUtils.WriteDouble(message.ServerReceiveTime, stream);
+			stream.WriteDouble(message.ClientPingSendTime);
+			stream.WriteDouble(message.ServerReceiveTime);
 		}
 	}
 }

@@ -13,8 +13,9 @@ namespace Massive.Netcode
 		private readonly Dictionary<Type, int> _idsByInputs = new Dictionary<Type, int>();
 		private readonly Dictionary<Type, int> _idsByEvents = new Dictionary<Type, int>();
 
-		private readonly FastList<Type> _registeredTypes = new FastList<Type>();
-		private readonly FastList<bool> _isEvent = new FastList<bool>();
+		private readonly List<bool> _isEvent = new List<bool>();
+
+		public List<Type> RegisteredTypes { get; } = new List<Type>();
 
 		public InputIdentifiers(int startId)
 		{
@@ -106,7 +107,7 @@ namespace Massive.Netcode
 				throw new InvalidOperationException($"Input with id: {inputId} is not registered.");
 			}
 
-			return _registeredTypes[inputId];
+			return RegisteredTypes[inputId];
 		}
 
 		private void RegisterEvent(Type type)
@@ -115,7 +116,7 @@ namespace Massive.Netcode
 			{
 				throw new Exception($"Duplicate event type registration. Type: {type.GetFullGenericName()}");
 			}
-			_registeredTypes.Add(type);
+			RegisteredTypes.Add(type);
 			_isEvent.Add(true);
 			_usedIds++;
 		}
@@ -126,7 +127,7 @@ namespace Massive.Netcode
 			{
 				throw new Exception($"Duplicate input type registration. Type: {type.GetFullGenericName()}");
 			}
-			_registeredTypes.Add(type);
+			RegisteredTypes.Add(type);
 			_isEvent.Add(false);
 			_usedIds++;
 		}

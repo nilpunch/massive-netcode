@@ -1,24 +1,28 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.IO;
+using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public sealed partial class InputSet<T> : IInputSet where T : IInput
+	public sealed class InputSet<T> : IInputSet where T : IInput
 	{
 		private readonly ChangeTracker _localChangeTracker = new ChangeTracker();
 		private readonly ChangeTracker _globalChangeTracker;
 		private readonly IPredictionReceiver _predictionReceiver;
 		private readonly CyclicList<AllInputs<T>> _inputs;
 
-		public InputSet(ChangeTracker globalChangeTracker, int startTick, IPredictionReceiver predictionReceiver = null)
+		public InputSet(ChangeTracker globalChangeTracker, int startTick, IPredictionReceiver predictionReceiver = null, IInputSerializer<T> serializer = null)
 		{
 			_globalChangeTracker = globalChangeTracker;
 			_predictionReceiver = predictionReceiver;
 			_inputs = new CyclicList<AllInputs<T>>(startTick);
 			_inputs.Append().EnsureInitialized();
+			Serializer = serializer ?? new UnmanagedInputSerializer<T>();
 		}
+
+		public IInputSerializer<T> Serializer { get; private set; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllInputs<T> GetInputs(int tick)
@@ -46,7 +50,7 @@ namespace Massive.Netcode
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
-			_predictionReceiver?.OnInputPredicted<T>(tick, channel);
+			_predictionReceiver?.OnInputPredicted(this, tick, channel);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -125,6 +129,21 @@ namespace Massive.Netcode
 			}
 
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);
+		}
+
+		public void Read(Stream stream)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public void Write(int tick, int channel, Stream stream)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public void WriteAll(int tick, Stream stream)
+		{
+			throw new System.NotImplementedException();
 		}
 	}
 }

@@ -5,108 +5,59 @@ using Massive.Serialization;
 
 namespace Massive.Netcode
 {
-	public unsafe class UnmanagedInputSerializer<T> : IInputSerializer where T : IInput
+	public unsafe class UnmanagedInputSerializer<T> : IInputSerializer<T> where T : IInput
 	{
-		private readonly InputSet<T> _inputSet;
+		private readonly int _dataSize;
+		private T[] _dataBuffer;
+		private GCHandle _dataBufferHandle;
+		private void* _dataBufferPtr;
 
-		private readonly int _actualInputSize;
-		private T[] _actualBuffer;
-		private GCHandle _actualBufferHandle;
-		private void* _actualBufferPtr;
+		private readonly int _inputSize;
+		private Input<T>[] _inputBuffer;
+		private GCHandle _inputBufferHandle;
+		private void* _inputBufferPtr;
 
-		private readonly int _fullSyncInputSize;
-		private Input<T>[] _fullSyncBuffer;
-		private GCHandle _fullSyncBufferHandle;
-		private void* _fullSyncBufferPtr;
-
-		private AllInputs<T> _allInputsBuffer;
-
-		public UnmanagedInputSerializer(InputSet<T> inputSet)
+		public UnmanagedInputSerializer()
 		{
-			_inputSet = inputSet;
+			_dataSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
+			_dataBuffer = new T[1];
+			_dataBufferHandle = GCHandle.Alloc(_dataBuffer, GCHandleType.Pinned);
+			_dataBufferPtr = _dataBufferHandle.AddrOfPinnedObject().ToPointer();
 
-			_actualInputSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
-			_actualBuffer = new T[1];
-			_actualBufferHandle = GCHandle.Alloc(_actualBuffer, GCHandleType.Pinned);
-			_actualBufferPtr = _actualBufferHandle.AddrOfPinnedObject().ToPointer();
-
-			_fullSyncInputSize = ReflectionUtils.SizeOfUnmanaged(typeof(Input<T>));
-			_fullSyncBuffer = new Input<T>[1];
-			_fullSyncBufferHandle = GCHandle.Alloc(_fullSyncBuffer, GCHandleType.Pinned);
-			_fullSyncBufferPtr = _fullSyncBufferHandle.AddrOfPinnedObject().ToPointer();
+			_inputSize = ReflectionUtils.SizeOfUnmanaged(typeof(Input<T>));
+			_inputBuffer = new Input<T>[1];
+			_inputBufferHandle = GCHandle.Alloc(_inputBuffer, GCHandleType.Pinned);
+			_inputBufferPtr = _inputBufferHandle.AddrOfPinnedObject().ToPointer();
 		}
 
 		~UnmanagedInputSerializer()
 		{
-			_actualBufferHandle.Free();
-			_fullSyncBufferHandle.Free();
+			_dataBufferHandle.Free();
+			_inputBufferHandle.Free();
 		}
 
-		public void WriteOne(int tick, int channel, Stream stream)
+		public void WriteData(T data, Stream stream)
 		{
-			SerializationUtils.WriteInt(tick, stream);
-			SerializationUtils.WriteShort((short)channel, stream);
-
-			_actualBuffer[0] = _inputSet.GetInputs(tick).Inputs[channel].LastFreshInput;
-
-			stream.Write(new Span<byte>(_actualBufferPtr, _actualInputSize));
+			_dataBuffer[0] = data;
+			stream.Write(new Span<byte>(_dataBufferPtr, _dataSize));
 		}
 
-		public void WriteFullSync(int tick, Stream stream)
+		public void WriteInput(Input<T> data, Stream stream)
 		{
-			var inputs = _inputSet.GetInputs(tick);
-
-			SerializationUtils.WriteInt(tick, stream);
-			SerializationUtils.WriteShort((short)inputs.UsedChannels, stream);
-
-			EnsureFullSyncBufferSize(inputs.UsedChannels);
-			for (var i = 0; i < inputs.UsedChannels; i++)
-			{
-				_fullSyncBuffer[i] = _allInputsBuffer.Inputs[i];
-			}
-
-			stream.Write(new Span<byte>(_fullSyncBufferPtr, _fullSyncInputSize * inputs.UsedChannels));
+			_inputBuffer[0] = data;
+			stream.Write(new Span<byte>(_inputBufferPtr, _inputSize));
 		}
 
-		public void ReadOne(Stream stream)
+		public T ReadData(Stream stream)
 		{
-			var tick = SerializationUtils.ReadInt(stream);
-			var channel = SerializationUtils.ReadShort(stream);
-
-			SerializationUtils.ReadExactly(stream, new Span<byte>(_actualBufferPtr, _actualInputSize));
-
-			_inputSet.SetActual(tick, channel, _actualBuffer[0]);
+			stream.ReadExactly(new Span<byte>(_dataBufferPtr, _dataSize));
+			return _dataBuffer[0];
 		}
 
-		public void ReadFullSync(Stream stream)
+		public Input<T> ReadInput(Stream stream)
 		{
-			var tick = SerializationUtils.ReadInt(stream);
-			var channelsCount = SerializationUtils.ReadShort(stream);
-
-			EnsureFullSyncBufferSize(channelsCount);
-			var fullSyncSpan = new Span<byte>(_fullSyncBufferPtr, _fullSyncInputSize * channelsCount);
-			SerializationUtils.ReadExactly(stream, fullSyncSpan);
-
-			_allInputsBuffer.EnsureInitialized();
-			_allInputsBuffer.EnsureChannel(channelsCount - 1);
-			for (var i = 0; i < channelsCount; i++)
-			{
-				_allInputsBuffer.Inputs[i] = _fullSyncBuffer[i];
-			}
-
-			_inputSet.SetInputs(tick, _allInputsBuffer);
-			_allInputsBuffer.Clear();
-		}
-
-		private void EnsureFullSyncBufferSize(int length)
-		{
-			if (length > _fullSyncBuffer.Length)
-			{
-				_fullSyncBuffer = _fullSyncBuffer.ResizeToNextPowOf2(length);
-				_fullSyncBufferHandle.Free();
-				_fullSyncBufferHandle = GCHandle.Alloc(_fullSyncBuffer, GCHandleType.Pinned);
-				_fullSyncBufferPtr = _fullSyncBufferHandle.AddrOfPinnedObject().ToPointer();
-			}
+			stream.ReadExactly(new Span<byte>(_inputBufferPtr, _inputSize));
+			return _inputBuffer[0];
 		}
 	}
 }

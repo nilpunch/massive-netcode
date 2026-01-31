@@ -57,32 +57,32 @@ namespace Massive.Netcode
 
 					case (int)MessageType.FullSync:
 					{
-						var serverTick = SerializationUtils.ReadInt(Incoming);
+						var serverTick = Incoming.ReadInt();
 						Session.Reset(serverTick);
 
 						WorldSerializer.Deserialize(Session.World, Incoming);
-						SerializationUtils.ReadAllocator(Session.Systems.Allocator, Incoming);
-						InputSerializer.ReadFullSync(Incoming);
+						Incoming.ReadAllocator(Session.Systems.Allocator);
+						InputSerializer.ReadMany(Incoming);
 						break;
 					}
 
 					default:
 					{
-						InputSerializer.ReadActualInput(messageId, Incoming);
+						InputSerializer.Read(messageId, Incoming);
 						break;
 					}
 				}
 			}
 		}
 
-		void IPredictionReceiver.OnInputPredicted<T>(int tick, int channel)
+		public void OnInputPredicted(IInputSet inputSet, int tick, int channel)
 		{
-			Session.Inputs.GetInputSetSerializer<T>().WriteOne(tick, channel, Outgoing);
+			inputSet.Write(tick, channel, Outgoing);
 		}
 
-		void IPredictionReceiver.OnEventPredicted<T>(int tick, int localOrder)
+		public void OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
 		{
-			Session.Inputs.GetEventSetSerializer<T>().WriteOne(tick, localOrder, Outgoing);
+			eventSet.Write(tick, localOrder, Outgoing);
 		}
 	}
 }

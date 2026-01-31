@@ -5,69 +5,36 @@ using Massive.Serialization;
 
 namespace Massive.Netcode
 {
-	public unsafe class UnmanagedEventSerializer<T> : IEventSerializer where T : IEvent
+	public unsafe class UnmanagedEventSerializer<T> : IEventSerializer<T> where T : IEvent
 	{
-		private readonly EventSet<T> _eventSet;
+		private readonly int _dataSize;
+		private T[] _dataBuffer;
+		private GCHandle _dataBufferHandle;
+		private void* _dataBufferPtr;
 
-		private readonly int _actualEventSize;
-		private T[] _actualBuffer;
-		private GCHandle _actualBufferHandle;
-		private void* _actualBufferPtr;
-
-		public UnmanagedEventSerializer(EventSet<T> eventSet)
+		public UnmanagedEventSerializer()
 		{
-			_eventSet = eventSet;
-
-			_actualEventSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
-			_actualBuffer = new T[1];
-			_actualBufferHandle = GCHandle.Alloc(_actualBuffer, GCHandleType.Pinned);
-			_actualBufferPtr = _actualBufferHandle.AddrOfPinnedObject().ToPointer();
+			_dataSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
+			_dataBuffer = new T[1];
+			_dataBufferHandle = GCHandle.Alloc(_dataBuffer, GCHandleType.Pinned);
+			_dataBufferPtr = _dataBufferHandle.AddrOfPinnedObject().ToPointer();
 		}
 
 		~UnmanagedEventSerializer()
 		{
-			_actualBufferHandle.Free();
+			_dataBufferHandle.Free();
 		}
 
-		public void WriteOne(int tick, int localOrder, Stream stream)
+		public void Write(T data, Stream stream)
 		{
-			SerializationUtils.WriteInt(tick, stream);
-			SerializationUtils.WriteShort((short)localOrder, stream);
-
-			_actualBuffer[0] = _eventSet.GetAllEvents(tick).Events[localOrder];
-
-			stream.Write(new Span<byte>(_actualBufferPtr, _actualEventSize));
+			_dataBuffer[0] = data;
+			stream.Write(new Span<byte>(_dataBufferPtr, _dataSize));
 		}
 
-		public void WriteFullSync(int tick, Stream stream)
+		public T Read(Stream stream)
 		{
-			var eventsCount = (short)_eventSet.GetAllEvents(tick).Count;
-			SerializationUtils.WriteShort((short)eventsCount, stream);
-
-			for (var i = 0; i < eventsCount; i++)
-			{
-				WriteOne(tick, i, stream);
-			}
-		}
-
-		public unsafe void ReadOne(Stream stream)
-		{
-			var tick = SerializationUtils.ReadInt(stream);
-			var localOrder = SerializationUtils.ReadShort(stream);
-
-			SerializationUtils.ReadExactly(stream, new Span<byte>(_actualBufferPtr, _actualEventSize));
-
-			_eventSet.SetActual(tick, localOrder, _actualBuffer[0]);
-		}
-
-		public unsafe void ReadFullSync(Stream stream)
-		{
-			var eventsCount = SerializationUtils.ReadShort(stream);
-
-			for (var i = 0; i < eventsCount; i++)
-			{
-				ReadOne(stream);
-			}
+			stream.ReadExactly(new Span<byte>(_dataBufferPtr, _dataSize));
+			return _dataBuffer[0];
 		}
 	}
 }
