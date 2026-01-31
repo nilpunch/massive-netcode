@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Massive.Serialization;
 
@@ -20,25 +21,29 @@ namespace Massive.Netcode
 
 		public Session Session { get; }
 
-		public TickSync TickSync { get; }
-
 		public List<Connection> Connections { get; set; }
 
 		public Server(SessionConfig sessionConfig)
 		{
 			Session = new Session(sessionConfig);
-			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
 
 			InputIdentifiers = new InputIdentifiers((int)MessageType.Count);
-			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers);
+			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers, AcceptFutureInputs);
 			WorldSerializer = new WorldSerializer();
+
+			bool AcceptFutureInputs(int tick)
+			{
+				return tick > Session.Loop.CurrentTick;
+			}
 		}
 
 		public void Update(double serverTime)
 		{
 			ReadMessages(serverTime);
 
-			Session.Loop.FastForwardToTick(TickSync.CalculateTargetTick(serverTime));
+			var targetTick = (int)Math.Floor(serverTime * Session.Config.TickRate);
+
+			Session.Loop.FastForwardToTick(targetTick);
 		}
 
 		private void ReadMessages(double serverTime)

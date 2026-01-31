@@ -18,6 +18,8 @@ namespace Massive.Netcode
 
 		public ChangeTracker ChangeTracker { get; }
 
+		public int PlayerInputChannel { get; set; } = -1;
+
 		public Session(IPredictionReceiver predictionReceiver = null) : this(new SessionConfig(), predictionReceiver)
 		{
 		}
