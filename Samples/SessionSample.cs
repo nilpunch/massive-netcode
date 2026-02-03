@@ -27,9 +27,9 @@ namespace Massive.Netcode.Samples
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
-		public void ConnectClient(int connectionTick, int localOrder)
+		public void ConnectClient(int connectionTick, int localOrder, int channel)
 		{
-			Session.Inputs.SetActualEventAt(connectionTick, localOrder, new PlayerSpawnEvent());
+			Session.Inputs.SetActualEventAt(connectionTick, localOrder, channel, new PlayerSpawnEvent());
 		}
 
 		public void ApplyPlayerInput(int inputChannel, int tick, PlayerShootingInput playerInput)
@@ -37,9 +37,9 @@ namespace Massive.Netcode.Samples
 			Session.Inputs.SetActualInputAt(tick, inputChannel, playerInput);
 		}
 
-		public void FinishSession(int finishTick, int localOrder)
+		public void FinishSession(int finishTick, int localOrder, int channel)
 		{
-			Session.Inputs.SetActualEventAt(finishTick, localOrder, new SessionFinishedEvent());
+			Session.Inputs.SetActualEventAt(finishTick, localOrder, channel, new SessionFinishedEvent());
 		}
 
 		public async void Run()
@@ -92,7 +92,7 @@ namespace Massive.Netcode.Samples
 		{
 			foreach (var spawnEnvent in Inputs.GetAllEvents<PlayerSpawnEvent>())
 			{
-				World.CreateEntity(new Player() { InputChannel = spawnEnvent.PlayerInputChannel });
+				World.CreateEntity(new Player() { InputChannel = spawnEnvent.Data.PlayerInputChannel });
 			}
 		}
 	}

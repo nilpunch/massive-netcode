@@ -14,7 +14,7 @@ namespace Massive.Netcode
 	{
 		public int SparseCount { get; private set; }
 
-		public T[] Events { get; private set; }
+		public Event<T>[] Events { get; private set; }
 		public int EventsCapacity { get; private set; }
 
 		public ulong[] AllMask { get; private set; }
@@ -26,7 +26,7 @@ namespace Massive.Netcode
 
 		public static AllEvents<T> Empty => new AllEvents<T>
 		{
-			Events = Array.Empty<T>(),
+			Events = Array.Empty<Event<T>>(),
 			AllMask = Array.Empty<ulong>(),
 			PredictionMask = Array.Empty<ulong>()
 		};
@@ -34,13 +34,13 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void EnsureInitialized()
 		{
-			Events ??= Array.Empty<T>();
+			Events ??= Array.Empty<Event<T>>();
 			AllMask ??= Array.Empty<ulong>();
 			PredictionMask ??= Array.Empty<ulong>();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public int AppendPrediction(T data)
+		public int AppendPrediction(int channel, T data)
 		{
 			var localOrder = SparseCount++;
 
@@ -52,21 +52,21 @@ namespace Massive.Netcode
 			AllMask[maskIndex] |= maskBit;
 			PredictionMask[maskIndex] |= maskBit;
 
-			Events[localOrder] = data;
+			Events[localOrder] = new Event<T>(channel, data);
 
 			return localOrder;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public int AppendActual(T data)
+		public int AppendActual(int channel, T data)
 		{
 			var localOrder = SparseCount++;
-			SetActual(localOrder, data);
+			SetActual(localOrder, channel, data);
 			return localOrder;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActual(int localOrder, T data)
+		public void SetActual(int localOrder, int channel, T data)
 		{
 			EnsureEventAt(localOrder);
 
@@ -93,7 +93,8 @@ namespace Massive.Netcode
 				var latestPredictionIndex = (latestPredictionMaskIndex << 6) + MathUtils.MSB(AllMask[latestPredictionMaskIndex]);
 
 				// Move head prediction further.
-				AppendPrediction(Events[latestPredictionIndex]);
+				var headEvent = Events[latestPredictionIndex];
+				AppendPrediction(headEvent.Channel, headEvent.Data);
 
 				for (var i = latestPredictionIndex - 1; i >= 0; i--)
 				{
@@ -111,7 +112,7 @@ namespace Massive.Netcode
 				SparseCount = MathUtils.Max(SparseCount, localOrder + 1);
 			}
 
-			Events[localOrder] = data;
+			Events[localOrder] = new Event<T>(channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

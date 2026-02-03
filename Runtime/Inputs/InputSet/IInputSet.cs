@@ -13,10 +13,12 @@ namespace Massive.Netcode
 
 		void Reset(int startTick);
 
-		void Read(int tick, Stream stream);
-		void Write(int tick, int channel, Stream stream);
-		void WriteAll(int tick, Stream stream);
+		void ReadData(int tick, int channel, Stream stream);
+		void ReadInput(int tick, int channel, Stream stream);
+		void WriteData(int tick, int channel, Stream stream);
+		void WriteInput(int tick, int channel, Stream stream);
+		void SkipData(Stream stream);
 
-		void Skip(Stream stream);
+		int GetUsedChannels(int tick);
 	}
 }

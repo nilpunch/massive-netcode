@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.Net.Sockets;
 using Massive.Serialization;
 
 namespace Massive.Netcode
@@ -16,9 +15,9 @@ namespace Massive.Netcode
 
 		public TickSync TickSync { get; }
 
-		public Stream Incoming { get; private set; }
+		public NetworkStream Incoming { get; private set; }
 
-		public Stream Outgoing { get; private set; }
+		public NetworkStream Outgoing { get; private set; }
 
 		public int Channel { get; private set; }
 
@@ -41,9 +40,9 @@ namespace Massive.Netcode
 
 		private void ReadMessages(double clientTime)
 		{
-			while (Incoming.CanRead)
+			while (Incoming.DataAvailable)
 			{
-				var messageId = Incoming.Read1Byte();
+				var messageId = InputSerializer.ReadMessageId(Incoming);
 
 				switch (messageId)
 				{
@@ -61,16 +60,17 @@ namespace Massive.Netcode
 					{
 						var serverTick = Incoming.ReadInt();
 						Session.Reset(serverTick);
-
 						WorldSerializer.Deserialize(Session.World, Incoming);
 						Incoming.ReadAllocator(Session.Systems.Allocator);
-						InputSerializer.ReadMany(Incoming);
+						InputSerializer.ClientReadMany(Incoming);
 						break;
 					}
 
 					default:
 					{
-						InputSerializer.Read(messageId, Incoming);
+						var tick = Incoming.ReadInt();
+						var channel = Incoming.ReadShort();
+						InputSerializer.ClientReadOne(messageId, tick, channel, Incoming);
 						break;
 					}
 				}
@@ -79,12 +79,12 @@ namespace Massive.Netcode
 
 		public void OnInputPredicted(IInputSet inputSet, int tick, int channel)
 		{
-			inputSet.Write(tick, channel, Outgoing);
+			InputSerializer.ClientWriteOne(inputSet, tick, channel, Outgoing);
 		}
 
 		public void OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
 		{
-			eventSet.Write(tick, localOrder, Outgoing);
+			InputSerializer.ClientWriteOne(eventSet, tick, localOrder, Outgoing);
 		}
 	}
 }

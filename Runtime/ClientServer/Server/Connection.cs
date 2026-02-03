@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using System.Net.Sockets;
 
 namespace Massive.Netcode
 {
-	public struct Connection
+	public class Connection
 	{
-		public Stream Incoming;
-		public Stream Outgoing;
+		public NetworkStream Incoming;
+		public NetworkStream Outgoing;
 		public int Channel;
+		public bool IsBad;
 	}
 }

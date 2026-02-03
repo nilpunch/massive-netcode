@@ -5,9 +5,8 @@ namespace Massive.Netcode
 {
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public struct AllEventsEnumerator<T> where T : IEvent
+	public struct LocalOrdersEnumerator
 	{
-		private readonly AllEvents<T> _allEvents;
 		private ulong[] _allBits;
 		private int _allBitsLength;
 		private int _bitsIndex;
@@ -18,11 +17,10 @@ namespace Massive.Netcode
 		private int _bitsOffset;
 		private int _bit;
 
-		public AllEventsEnumerator(AllEvents<T> allEvents)
+		public LocalOrdersEnumerator(ulong[] mask, int maskLength)
 		{
-			_allEvents = allEvents;
-			_allBitsLength = allEvents.MaskLength;
-			_allBits = allEvents.AllMask;
+			_allBitsLength = maskLength;
+			_allBits = mask;
 
 			_deBruijn = MathUtils.DeBruijn;
 
@@ -42,10 +40,10 @@ namespace Massive.Netcode
 			}
 		}
 
-		public Event<T> Current
+		public int Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => _allEvents.Events[_bit + _bitsOffset];
+			get => _bit + _bitsOffset;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,6 +69,11 @@ namespace Massive.Netcode
 			}
 
 			return false;
+		}
+
+		public LocalOrdersEnumerator GetEnumerator()
+		{
+			return this;
 		}
 	}
 }

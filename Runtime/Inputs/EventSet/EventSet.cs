@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using Massive.Serialization;
 using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
@@ -39,27 +38,36 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActual(int tick, int localOrder, T data)
+		public void SetActual(int tick, int localOrder, int channel, T data)
 		{
 			PopulateUpTo(tick);
 
-			_events[tick].SetActual(localOrder, data);
+			_events[tick].SetActual(localOrder, channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendActual(int tick, T data)
+		public void AppendActual(int tick, int channel, T data)
 		{
-			var localOrder = _events[tick].AppendActual(data);
+			_events[tick].AppendActual(channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendPrediction(int tick, T data)
+		int IEventSet.AppendActualDefault(int tick, int channel)
 		{
-			var localOrder = _events[tick].AppendPrediction(data);
+			var localOrder = _events[tick].AppendActual(channel, default);
+
+			_globalChangeTracker.NotifyChange(tick);
+
+			return localOrder;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void AppendPrediction(int tick, int channel, T data)
+		{
+			var localOrder = _events[tick].AppendPrediction(channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
 			_predictionReceiver?.OnEventPredicted(this, tick, localOrder);
@@ -115,67 +123,37 @@ namespace Massive.Netcode
 			_events.Reset(startTick);
 		}
 
-		public void Read(int tick, Stream stream)
+		public void ReadData(int tick, int localOrder, int channel, Stream stream)
 		{
-			var encoded = stream.ReadShort();
-
 			PopulateUpTo(tick);
 
-			if (encoded >= 0)
-			{
-				var localOrder = encoded;
-
-				_events[tick].SetActual(localOrder, Serializer.Read(stream));
-			}
-			else
-			{
-				var eventsCount = ~encoded;
-
-				ref var events = ref _events[tick];
-				events.Clear();
-
-				for (var i = 0; i < eventsCount; i++)
-				{
-					events.AppendActual(Serializer.Read(stream));
-				}
-			}
+			_events[tick].SetActual(localOrder, channel, Serializer.Read(stream));
 		}
 
-		public void Write(int tick, int localOrder, Stream stream)
+		public void WriteData(int tick, int localOrder, Stream stream)
 		{
-			stream.WriteShort((short)localOrder);
-			Serializer.Write(_events[tick].Events[localOrder], stream);
+			Serializer.Write(_events[tick].Events[localOrder].Data, stream);
 		}
 
-		public void WriteAll(int tick, Stream stream)
+		public void SkipData(Stream stream)
+		{
+			Serializer.Read(stream);
+		}
+
+		public int GetEventsCount(int tick)
+		{
+			return _events[tick].DenseCount();
+		}
+
+		public int GetEventChannel(int tick, int localOrder)
+		{
+			return _events[tick].Events[localOrder].Channel;
+		}
+
+		public LocalOrdersEnumerator GetLocalOrders(int tick)
 		{
 			ref var events = ref _events[tick];
-
-			stream.WriteShort((short)~events.DenseCount());
-
-			foreach (var data in events)
-			{
-				Serializer.Write(data, stream);
-			}
-		}
-
-		public void Skip(Stream stream)
-		{
-			var encoded = stream.ReadShort();
-
-			if (encoded >= 0)
-			{
-				Serializer.Read(stream);
-			}
-			else
-			{
-				var eventsCount = ~encoded;
-
-				for (var i = 0; i < eventsCount; i++)
-				{
-					Serializer.Read(stream);
-				}
-			}
+			return new LocalOrdersEnumerator(events.AllMask, events.MaskLength);
 		}
 	}
 }

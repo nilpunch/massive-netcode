@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
@@ -14,8 +14,8 @@ namespace Massive.Netcode
 		private IInputSet[] _inputsLookup = Array.Empty<IInputSet>();
 		private int _lookupCapacity;
 
-		public FastList<IEventSet> EventSets { get; } = new FastList<IEventSet>();
-		public FastList<IInputSet> InputSets { get; } = new FastList<IInputSet>();
+		public List<IEventSet> EventSets { get; } = new List<IEventSet>();
+		public List<IInputSet> InputSets { get; } = new List<IInputSet>();
 
 		private int CurrentTick { get; set; }
 
@@ -86,39 +86,39 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActualEvent<T>(int localOrder, T data) where T : IEvent
+		public void SetActualEvent<T>(int localOrder, int channel, T data) where T : IEvent
 		{
-			SetActualEventAt(CurrentTick, localOrder, data);
+			SetActualEventAt(CurrentTick, localOrder, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActualEventAt<T>(int tick, int localOrder, T data) where T : IEvent
+		public void SetActualEventAt<T>(int tick, int localOrder, int channel, T data) where T : IEvent
 		{
-			GetEventSet<T>().SetActual(tick, localOrder, data);
+			GetEventSet<T>().SetActual(tick, localOrder, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendActualEvent<T>(T data) where T : IEvent
+		public void AppendActualEvent<T>(int channel, T data) where T : IEvent
 		{
-			AppendActualEventAt(CurrentTick, data);
+			AppendActualEventAt(CurrentTick, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendActualEventAt<T>(int tick, T data) where T : IEvent
+		public void AppendActualEventAt<T>(int tick, int channel, T data) where T : IEvent
 		{
-			GetEventSet<T>().AppendActual(tick, data);
+			GetEventSet<T>().AppendActual(tick, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendPredictionEvent<T>(T data) where T : IEvent
+		public void AppendPredictionEvent<T>(int channel, T data) where T : IEvent
 		{
-			AppendPredictionEventAt(CurrentTick, data);
+			AppendPredictionEventAt(CurrentTick, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendPredictionEventAt<T>(int tick, T data) where T : IEvent
+		public void AppendPredictionEventAt<T>(int tick, int channel, T data) where T : IEvent
 		{
-			GetEventSet<T>().AppendPrediction(tick, data);
+			GetEventSet<T>().AppendPrediction(tick, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

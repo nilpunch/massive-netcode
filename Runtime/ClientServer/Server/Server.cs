@@ -6,6 +6,8 @@ namespace Massive.Netcode
 {
 	public class Server
 	{
+		private int TicksAcceptWindow { get; }
+
 		private InputSerializer InputSerializer { get; }
 
 		public InputIdentifiers InputIdentifiers { get; }
@@ -20,17 +22,13 @@ namespace Massive.Netcode
 
 		public Server(SessionConfig sessionConfig, double ticksAcceptWindowSeconds = 2f)
 		{
+			TicksAcceptWindow = (int)(sessionConfig.TickRate * ticksAcceptWindowSeconds);
+
 			Session = new Session(sessionConfig, resimulate: false);
 
-			var ticksAcceptWindow = (int)(sessionConfig.TickRate * ticksAcceptWindowSeconds);
 			InputIdentifiers = new InputIdentifiers();
-			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers, AcceptOnlyRelevantInputs);
+			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers);
 			WorldSerializer = new WorldSerializer();
-
-			bool AcceptOnlyRelevantInputs(int tick)
-			{
-				return tick > Session.Loop.CurrentTick && tick < Session.Loop.CurrentTick + ticksAcceptWindow;
-			}
 		}
 
 		public void Update(double serverTime)
@@ -45,7 +43,7 @@ namespace Massive.Netcode
 			{
 				foreach (var connection in Connections)
 				{
-					InputSerializer.WriteMany(Session.Loop.CurrentTick, connection.Outgoing);
+					InputSerializer.ServerWriteMany(Session.Loop.CurrentTick, connection.Outgoing);
 				}
 			}
 
@@ -56,9 +54,9 @@ namespace Massive.Netcode
 		{
 			foreach (var connection in Connections)
 			{
-				while (connection.Incoming.CanRead)
+				while (!connection.IsBad && connection.Incoming.DataAvailable)
 				{
-					var messageId = connection.Incoming.Read1Byte();
+					var messageId = InputSerializer.ReadMessageId(connection.Incoming);
 
 					switch (messageId)
 					{
@@ -71,31 +69,47 @@ namespace Massive.Netcode
 								ServerReceiveTime = serverTime
 							};
 
-							connection.Outgoing.Write1Byte((int)MessageType.Pong);
+							InputSerializer.WriteMessageId((int)MessageType.Pong, connection.Outgoing);
 							PongMessage.Write(pongMessage, connection.Outgoing);
-							break;
-						}
-
-						case (int)MessageType.FullSync:
-						{
-							connection.Outgoing.Write1Byte((int)MessageType.FullSync);
-
-							connection.Outgoing.WriteInt(Session.Loop.CurrentTick);
-							WorldSerializer.Serialize(Session.World, connection.Outgoing);
-							connection.Outgoing.WriteAllocator(Session.Systems.Allocator);
-							InputSerializer.WriteMany(Session.Loop.CurrentTick, connection.Outgoing);
 							break;
 						}
 
 						default:
 						{
-							// Need to add old input discaring.
-							InputSerializer.Read(messageId, connection.Incoming);
+							if (!InputIdentifiers.IsRegistered(messageId))
+							{
+								connection.IsBad = true;
+								continue;
+							}
+
+							var tick = connection.Incoming.ReadInt();
+							if (CanAcceptTick(tick))
+							{
+								InputSerializer.ServerReadOne(messageId, tick, connection.Channel, connection.Incoming);
+							}
+							else
+							{
+								InputSerializer.ServerSkipOne(messageId, connection.Incoming);
+							}
 							break;
 						}
 					}
 				}
 			}
+		}
+
+		public void SendFullSync(Connection connection)
+		{
+			InputSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
+			connection.Outgoing.WriteInt(Session.Loop.CurrentTick);
+			WorldSerializer.Serialize(Session.World, connection.Outgoing);
+			connection.Outgoing.WriteAllocator(Session.Systems.Allocator);
+			InputSerializer.ServerWriteMany(Session.Loop.CurrentTick, connection.Outgoing);
+		}
+
+		private bool CanAcceptTick(int tick)
+		{
+			return tick > Session.Loop.CurrentTick && tick < Session.Loop.CurrentTick + TicksAcceptWindow;
 		}
 	}
 }

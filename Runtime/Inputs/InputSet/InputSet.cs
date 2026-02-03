@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using Massive.Serialization;
 using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
@@ -102,7 +101,9 @@ namespace Massive.Netcode
 		public void Reset(int startTick)
 		{
 			_inputs.Reset(startTick);
-			_inputs.Append().EnsureInitialized();
+			ref var inputs = ref _inputs.Append();
+			inputs.EnsureInitialized();
+			inputs.Clear();
 		}
 
 		public void PopulateUpTo(int tick)
@@ -136,68 +137,41 @@ namespace Massive.Netcode
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);
 		}
 
-		public void Read(int tick, Stream stream)
+		public void ReadData(int tick, int channel, Stream stream)
 		{
-			var encoded = stream.ReadShort();
-
 			PopulateUpTo(tick);
 
-			if (encoded >= 0)
-			{
-				var channel = encoded;
-
-				_inputs[tick].SetActual(channel, Serializer.ReadData(stream));
-			}
-			else
-			{
-				var channelsCount = ~encoded;
-
-				ref var inputs = ref _inputs[tick];
-				inputs.Clear();
-				inputs.EnsureInputForChannel(channelsCount - 1);
-
-				for (var channel = 0; channel < channelsCount; channel++)
-				{
-					inputs.Inputs[channel] = Serializer.ReadInput(stream);
-				}
-			}
+			_inputs[tick].SetActual(channel, Serializer.ReadData(stream));
 		}
 
-		public void Write(int tick, int channel, Stream stream)
+		public void ReadInput(int tick, int channel, Stream stream)
 		{
-			stream.WriteShort((short)channel);
+			PopulateUpTo(tick);
+
+			ref var inputs = ref _inputs[tick];
+
+			inputs.EnsureChannel(channel);
+			inputs.Inputs[channel] = Serializer.ReadInput(stream);
+		}
+
+		public void WriteData(int tick, int channel, Stream stream)
+		{
 			Serializer.WriteData(_inputs[tick].Get(channel).LastFreshInput, stream);
 		}
 
-		public void WriteAll(int tick, Stream stream)
+		public void WriteInput(int tick, int channel, Stream stream)
 		{
-			ref var inputs = ref _inputs[tick];
-
-			stream.WriteShort((short)~inputs.UsedChannels);
-
-			for (var channel = 0; channel < inputs.UsedChannels; channel++)
-			{
-				Serializer.WriteInput(_inputs[tick].Get(channel), stream);
-			}
+			Serializer.WriteInput(_inputs[tick].Inputs[channel], stream);
 		}
 
-		public void Skip(Stream stream)
+		public void SkipData(Stream stream)
 		{
-			var encoded = stream.ReadShort();
+			Serializer.ReadData(stream);
+		}
 
-			if (encoded >= 0)
-			{
-				Serializer.ReadData(stream);
-			}
-			else
-			{
-				var channelsCount = ~encoded;
-
-				for (var channel = 0; channel < channelsCount; channel++)
-				{
-					Serializer.ReadInput(stream);
-				}
-			}
+		public int GetUsedChannels(int tick)
+		{
+			return _inputs[tick].UsedChannels;
 		}
 	}
 }
