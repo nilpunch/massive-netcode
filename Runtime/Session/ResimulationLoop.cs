@@ -2,7 +2,7 @@
 
 namespace Massive.Netcode
 {
-	public class ResimulationLoop
+	public class ResimulationLoop : ISimulationLoop
 	{
 		private readonly IMassive _massive;
 		private readonly ISimulation _simulation;
@@ -30,7 +30,7 @@ namespace Massive.Netcode
 		{
 			if (targetTick < 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target frame should not be negative!");
+				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target tick should not be negative.");
 			}
 
 			var earliestTick = Math.Min(targetTick, _changeTracker.EarliestChangedTick);
@@ -42,7 +42,7 @@ namespace Massive.Netcode
 
 			if (framesToRollback > _massive.CanRollbackFrames)
 			{
-				throw new InvalidOperationException("Can't rollback this far!");
+				throw new InvalidOperationException("Can't rollback this far.");
 			}
 
 			_massive.Rollback(framesToRollback);
@@ -65,23 +65,6 @@ namespace Massive.Netcode
 			_inputs.DiscardUpTo(targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick);
 
 			_changeTracker.ConfirmChangesUpTo(targetTick);
-		}
-
-		public bool CanFastForwardToTick(int targetTick)
-		{
-			if (targetTick < 0)
-			{
-				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target frame should not be negative!");
-			}
-
-			var earliestTick = Math.Min(targetTick, _changeTracker.EarliestChangedTick);
-			var ticksToRollback = Math.Max(CurrentTick - earliestTick, 0);
-
-			var currentFrame = CurrentTick / _saveEachNthTick;
-			var targetFrame = (CurrentTick - ticksToRollback) / _saveEachNthTick;
-			var framesToRollback = currentFrame - targetFrame;
-
-			return framesToRollback <= _massive.CanRollbackFrames;
 		}
 	}
 }

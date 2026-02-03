@@ -14,17 +14,15 @@ namespace Massive.Netcode
 
 		public Inputs Inputs { get; }
 
-		public ResimulationLoop Loop { get; }
+		public ISimulationLoop Loop { get; }
 
 		public ChangeTracker ChangeTracker { get; }
-
-		public int PlayerInputChannel { get; set; } = -1;
 
 		public Session(IPredictionReceiver predictionReceiver = null) : this(new SessionConfig(), predictionReceiver)
 		{
 		}
 
-		public Session(SessionConfig config, IPredictionReceiver predictionReceiver = null)
+		public Session(SessionConfig config, IPredictionReceiver predictionReceiver = null, bool resimulate = true)
 		{
 			Config = config;
 			World = new MassiveWorld(config.WorldConfig);
@@ -35,7 +33,14 @@ namespace Massive.Netcode
 			Inputs = new Inputs(ChangeTracker, predictionReceiver);
 			Simulations.Add(Inputs);
 
-			Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, config.SaveEachNthTick);
+			if (resimulate)
+			{
+				Loop = new ResimulationLoop(World, Simulations, Inputs, ChangeTracker, config.SaveEachNthTick);
+			}
+			else
+			{
+				Loop = new ForwardOnlyLoop(Simulations, Inputs, ChangeTracker);
+			}
 			World.FrameSaved += Systems.SaveFrame;
 			World.Rollbacked += Systems.Rollback;
 		}

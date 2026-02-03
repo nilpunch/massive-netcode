@@ -20,6 +20,8 @@ namespace Massive.Netcode
 
 		public Stream Outgoing { get; private set; }
 
+		public int Channel { get; private set; }
+
 		public Client(SessionConfig sessionConfig)
 		{
 			Session = new Session(sessionConfig);

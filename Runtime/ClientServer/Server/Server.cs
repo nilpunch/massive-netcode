@@ -1,16 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using Massive.Serialization;
 
 namespace Massive.Netcode
 {
-	public struct Connection
-	{
-		public Stream Incoming;
-		public Stream Outgoing;
-	}
-
 	public class Server
 	{
 		private InputSerializer InputSerializer { get; }
@@ -21,19 +14,22 @@ namespace Massive.Netcode
 
 		public Session Session { get; }
 
-		public List<Connection> Connections { get; set; }
+		public List<Connection> Connections { get; } = new List<Connection>();
 
-		public Server(SessionConfig sessionConfig)
+		public int LastSendedTick { get; set; }
+
+		public Server(SessionConfig sessionConfig, double ticksAcceptWindowSeconds = 2f)
 		{
-			Session = new Session(sessionConfig);
+			Session = new Session(sessionConfig, resimulate: false);
 
+			var ticksAcceptWindow = (int)(sessionConfig.TickRate * ticksAcceptWindowSeconds);
 			InputIdentifiers = new InputIdentifiers();
-			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers, AcceptFutureInputs);
+			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers, AcceptOnlyRelevantInputs);
 			WorldSerializer = new WorldSerializer();
 
-			bool AcceptFutureInputs(int tick)
+			bool AcceptOnlyRelevantInputs(int tick)
 			{
-				return tick > Session.Loop.CurrentTick;
+				return tick > Session.Loop.CurrentTick && tick < Session.Loop.CurrentTick + ticksAcceptWindow;
 			}
 		}
 
@@ -44,6 +40,16 @@ namespace Massive.Netcode
 			var targetTick = (int)Math.Floor(serverTime * Session.Config.TickRate);
 
 			Session.Loop.FastForwardToTick(targetTick);
+
+			for (var tick = LastSendedTick; tick <= targetTick; tick++)
+			{
+				foreach (var connection in Connections)
+				{
+					InputSerializer.WriteMany(Session.Loop.CurrentTick, connection.Outgoing);
+				}
+			}
+
+			LastSendedTick = targetTick;
 		}
 
 		private void ReadMessages(double serverTime)
