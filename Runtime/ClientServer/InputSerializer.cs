@@ -65,9 +65,8 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ClientReadMany(Stream stream)
+		public void ClientReadMany(int tick, Stream stream)
 		{
-			var tick = stream.ReadInt();
 			var eventSetsCount = ReadMessageId(stream);
 
 			for (var i = 0; i < eventSetsCount; i++)
@@ -101,33 +100,8 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ServerWriteAllFresh(int tick, Stream stream)
-		{
-			foreach (var eventSet in _inputs.EventSets)
-			{
-				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
-				{
-					ServerWriteOne(eventSet, tick, localOrder, stream);
-				}
-			}
-
-			foreach (var inputSet in _inputs.InputSets)
-			{
-				var usedChannels = inputSet.GetUsedChannels(tick);
-
-				for (var channel = 0; channel < usedChannels; channel++)
-				{
-					if (inputSet.IsFresh(tick, channel))
-					{
-						ServerWriteOne(inputSet, tick, channel, stream);
-					}
-				}
-			}
-		}
-		
 		public void ServerWriteMany(int tick, Stream stream)
 		{
-			stream.WriteInt(tick);
 			WriteMessageId(_inputs.EventSets.Count, stream);
 
 			foreach (var eventSet in _inputs.EventSets)
@@ -161,6 +135,30 @@ namespace Massive.Netcode
 				for (var channel = 0; channel < usedChannels; channel++)
 				{
 					inputSet.WriteInput(tick, channel, stream);
+				}
+			}
+		}
+
+		public void ServerWriteAllFresh(int tick, Stream stream)
+		{
+			foreach (var eventSet in _inputs.EventSets)
+			{
+				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
+				{
+					ServerWriteOne(eventSet, tick, localOrder, stream);
+				}
+			}
+
+			foreach (var inputSet in _inputs.InputSets)
+			{
+				var usedChannels = inputSet.GetUsedChannels(tick);
+
+				for (var channel = 0; channel < usedChannels; channel++)
+				{
+					if (inputSet.IsFresh(tick, channel))
+					{
+						ServerWriteOne(inputSet, tick, channel, stream);
+					}
 				}
 			}
 		}

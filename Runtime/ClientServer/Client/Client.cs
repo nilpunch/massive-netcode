@@ -62,7 +62,7 @@ namespace Massive.Netcode
 						Session.Reset(serverTick);
 						WorldSerializer.Deserialize(Session.World, Incoming);
 						Incoming.ReadAllocator(Session.Systems.Allocator);
-						InputSerializer.ClientReadMany(Incoming);
+						InputSerializer.ClientReadMany(serverTick, Incoming);
 
 						TickSync.Reset();
 						TickSync.ApproveSimulationTick(serverTick);
