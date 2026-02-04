@@ -22,11 +22,17 @@ namespace Massive.Netcode
 			_inputs.Append().EnsureInitialized();
 			Serializer = serializer ?? new UnmanagedInputSerializer<T>();
 			InputType = typeof(T);
+			DataSize = Serializer.DataSize;
+			InputSize = Serializer.InputSize;
 		}
 
 		public IInputSerializer<T> Serializer { get; }
 
 		public Type InputType { get; }
+
+		public int DataSize { get; }
+
+		public int InputSize { get; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllInputs<T> GetInputs(int tick)

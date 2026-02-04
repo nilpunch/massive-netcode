@@ -20,11 +20,14 @@ namespace Massive.Netcode
 			_events = new CyclicList<AllEvents<T>>(startTick);
 			Serializer = serializer ?? new UnmanagedEventSerializer<T>();
 			EventType = typeof(T);
+			EventDataSize = Serializer.DataSize;
 		}
 
 		public IEventSerializer<T> Serializer { get; }
 
 		public Type EventType { get; }
+
+		public int EventDataSize { get; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllEvents<T> GetAllEvents(int tick)

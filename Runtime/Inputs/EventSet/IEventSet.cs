@@ -6,6 +6,7 @@ namespace Massive.Netcode
 	public interface IEventSet
 	{
 		Type EventType { get; }
+		int EventDataSize { get; }
 
 		void PopulateUpTo(int tick);
 		void DiscardUpTo(int tick);

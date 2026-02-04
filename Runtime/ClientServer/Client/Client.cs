@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	public class Client : IPredictionReceiver
 	{
-		private InputSerializer InputSerializer { get; }
+		private ClientSerializer MessageSerializer { get; }
 
 		public InputIdentifiers InputIdentifiers { get; }
 
@@ -15,11 +15,7 @@ namespace Massive.Netcode
 
 		public TickSync TickSync { get; }
 
-		public NetworkStream Incoming { get; private set; }
-
-		public NetworkStream Outgoing { get; private set; }
-
-		public int Channel { get; private set; }
+		public Connection Connection { get; private set; }
 
 		public Client(SessionConfig sessionConfig)
 		{
@@ -27,7 +23,7 @@ namespace Massive.Netcode
 			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
 
 			InputIdentifiers = new InputIdentifiers();
-			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers);
+			MessageSerializer = new ClientSerializer(Session.Inputs, InputIdentifiers);
 			WorldSerializer = new WorldSerializer();
 		}
 
@@ -40,15 +36,31 @@ namespace Massive.Netcode
 
 		private void ReadMessages(double clientTime)
 		{
-			while (Incoming.DataAvailable)
+			Connection.PopulateIncoming();
+
+			while (!Connection.IsBad && Connection.HasUnreadPayload)
 			{
-				var messageId = InputSerializer.ReadMessageId(Incoming);
+				var messageId = MessageSerializer.ReadMessageId(Connection.Incoming);
+
+				if (messageId == (int)MessageType.Ping
+					|| !InputIdentifiers.IsRegistered(messageId))
+				{
+					Connection.IsBad = true;
+					break;
+				}
+
+				var messageSize = MessageSerializer.GetMessageSize(messageId, Connection.Incoming);
+				if (Connection.IncomingPayloadLength < messageSize)
+				{
+					MessageSerializer.UndoMessageIdRead(Connection.Incoming);
+					break;
+				}
 
 				switch (messageId)
 				{
 					case (int)MessageType.Pong:
 					{
-						var pongMessage = PongMessage.Read(Incoming);
+						var pongMessage = PongMessage.Read(Connection.Incoming);
 						var rtt = clientTime - pongMessage.ClientPingSendTime;
 						var serverTime = pongMessage.ServerReceiveTime + rtt * 0.5;
 						TickSync.UpdateTimeSync(serverTime, clientTime);
@@ -58,11 +70,11 @@ namespace Massive.Netcode
 
 					case (int)MessageType.FullSync:
 					{
-						var serverTick = Incoming.ReadInt();
+						var serverTick = Connection.Incoming.ReadInt();
 						Session.Reset(serverTick);
-						WorldSerializer.Deserialize(Session.World, Incoming);
-						Incoming.ReadAllocator(Session.Systems.Allocator);
-						InputSerializer.ClientReadMany(serverTick, Incoming);
+						WorldSerializer.Deserialize(Session.World, Connection.Incoming);
+						Connection.Incoming.ReadAllocator(Session.Systems.Allocator);
+						MessageSerializer.ClientReadMany(serverTick, Connection.Incoming);
 
 						TickSync.Reset();
 						TickSync.ApproveSimulationTick(serverTick);
@@ -71,30 +83,32 @@ namespace Massive.Netcode
 
 					case (int)MessageType.Approve:
 					{
-						var serverTick = Incoming.ReadInt();
+						var serverTick = Connection.Incoming.ReadInt();
 						TickSync.ApproveSimulationTick(serverTick);
 						break;
 					}
 
 					default:
 					{
-						var tick = Incoming.ReadInt();
-						var channel = Incoming.ReadShort();
-						InputSerializer.ClientReadOne(messageId, tick, channel, Incoming);
+						var tick = Connection.Incoming.ReadInt();
+						var channel = Connection.Incoming.ReadShort();
+						MessageSerializer.ClientReadOne(messageId, tick, channel, Connection.Incoming);
 						break;
 					}
 				}
 			}
+
+			Connection.CompactIncoming();
 		}
 
 		public void OnInputPredicted(IInputSet inputSet, int tick, int channel)
 		{
-			InputSerializer.ClientWriteOne(inputSet, tick, channel, Outgoing);
+			MessageSerializer.ClientWriteOne(inputSet, tick, channel, Connection.Outgoing);
 		}
 
 		public void OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
 		{
-			InputSerializer.ClientWriteOne(eventSet, tick, localOrder, Outgoing);
+			MessageSerializer.ClientWriteOne(eventSet, tick, localOrder, Connection.Outgoing);
 		}
 	}
 }

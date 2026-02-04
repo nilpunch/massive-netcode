@@ -25,6 +25,8 @@ namespace Massive.Netcode
 			_dataBufferHandle.Free();
 		}
 
+		public int DataSize => _dataSize;
+
 		public void Write(T data, Stream stream)
 		{
 			_dataBuffer[0] = data;

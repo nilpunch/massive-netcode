@@ -2,7 +2,7 @@
 
 namespace Massive.Netcode
 {
-	public partial class InputSerializer
+	public partial class MessageSerializer
 	{
 		private IInputSet[] _inputLookupById = Array.Empty<IInputSet>();
 		private IEventSet[] _eventLookupById = Array.Empty<IEventSet>();

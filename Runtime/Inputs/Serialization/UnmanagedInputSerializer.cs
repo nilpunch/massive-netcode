@@ -36,6 +36,10 @@ namespace Massive.Netcode
 			_inputBufferHandle.Free();
 		}
 
+		public int DataSize => _dataSize;
+
+		public int InputSize => _inputSize;
+
 		public void WriteData(T data, Stream stream)
 		{
 			_dataBuffer[0] = data;

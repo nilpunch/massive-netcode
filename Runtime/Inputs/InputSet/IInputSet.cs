@@ -6,6 +6,8 @@ namespace Massive.Netcode
 	public interface IInputSet
 	{
 		Type InputType { get; }
+		int DataSize { get; }
+		int InputSize { get; }
 
 		void PopulateUpTo(int tick);
 		void DiscardUpTo(int tick);

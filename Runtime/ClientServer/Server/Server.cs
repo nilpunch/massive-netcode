@@ -8,7 +8,7 @@ namespace Massive.Netcode
 	{
 		private int TicksAcceptWindow { get; }
 
-		private InputSerializer InputSerializer { get; }
+		private ServerSerializer MessageSerializer { get; }
 
 		public InputIdentifiers InputIdentifiers { get; }
 
@@ -27,7 +27,7 @@ namespace Massive.Netcode
 			Session = new Session(sessionConfig, resimulate: false);
 
 			InputIdentifiers = new InputIdentifiers();
-			InputSerializer = new InputSerializer(Session.Inputs, InputIdentifiers);
+			MessageSerializer = new ServerSerializer(Session.Inputs, InputIdentifiers);
 			WorldSerializer = new WorldSerializer();
 		}
 
@@ -48,13 +48,13 @@ namespace Massive.Netcode
 			{
 				foreach (var connection in Connections)
 				{
-					InputSerializer.ServerWriteAllFresh(LastSendedTick, connection.Outgoing);
+					MessageSerializer.ServerWriteAllFresh(LastSendedTick, connection.Outgoing);
 				}
 			}
 
 			foreach (var connection in Connections)
 			{
-				InputSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
+				MessageSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
 				ApproveMessage.Write(new ApproveMessage() { Tick = targetTick }, connection.Outgoing);
 			}
 		}
@@ -63,9 +63,25 @@ namespace Massive.Netcode
 		{
 			foreach (var connection in Connections)
 			{
-				while (!connection.IsBad && connection.Incoming.DataAvailable)
+				connection.PopulateIncoming();
+
+				while (!connection.IsBad && connection.HasUnreadPayload)
 				{
-					var messageId = InputSerializer.ReadMessageId(connection.Incoming);
+					var messageId = MessageSerializer.ReadMessageId(connection.Incoming);
+
+					if (!(messageId == (int)MessageType.Ping
+						|| InputIdentifiers.IsRegistered(messageId)))
+					{
+						connection.IsBad = true;
+						break;
+					}
+
+					var messageSize = MessageSerializer.GetMessageSize(messageId, connection.Incoming);
+					if (connection.IncomingPayloadLength < messageSize)
+					{
+						MessageSerializer.UndoMessageIdRead(connection.Incoming);
+						break;
+					}
 
 					switch (messageId)
 					{
@@ -78,42 +94,38 @@ namespace Massive.Netcode
 								ServerReceiveTime = serverTime
 							};
 
-							InputSerializer.WriteMessageId((int)MessageType.Pong, connection.Outgoing);
+							MessageSerializer.WriteMessageId((int)MessageType.Pong, connection.Outgoing);
 							PongMessage.Write(pongMessage, connection.Outgoing);
 							break;
 						}
 
 						default:
 						{
-							if (!InputIdentifiers.IsRegistered(messageId))
-							{
-								connection.IsBad = true;
-								continue;
-							}
-
 							var tick = connection.Incoming.ReadInt();
 							if (CanAcceptTick(tick))
 							{
-								InputSerializer.ServerReadOne(messageId, tick, connection.Channel, connection.Incoming);
+								MessageSerializer.ServerReadOne(messageId, tick, connection.Channel, connection.Incoming);
 							}
 							else
 							{
-								InputSerializer.ServerSkipOne(messageId, connection.Incoming);
+								MessageSerializer.ServerSkipOne(messageId, connection.Incoming);
 							}
 							break;
 						}
 					}
 				}
+
+				connection.CompactIncoming();
 			}
 		}
 
 		public void SendFullSync(Connection connection)
 		{
-			InputSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
+			MessageSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
 			connection.Outgoing.WriteInt(Session.Loop.CurrentTick);
 			WorldSerializer.Serialize(Session.World, connection.Outgoing);
 			connection.Outgoing.WriteAllocator(Session.Systems.Allocator);
-			InputSerializer.ServerWriteMany(Session.Loop.CurrentTick, connection.Outgoing);
+			MessageSerializer.ServerWriteMany(Session.Loop.CurrentTick, connection.Outgoing);
 		}
 
 		private bool CanAcceptTick(int tick)
