@@ -5,6 +5,7 @@
 		Ping,
 		Pong,
 		FullSync,
+		Approve,
 
 		Count,
 	}

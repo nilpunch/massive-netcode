@@ -150,7 +150,7 @@ namespace Massive.Netcode
 			return _events[tick].Events[localOrder].Channel;
 		}
 
-		public LocalOrdersEnumerator GetLocalOrders(int tick)
+		public LocalOrdersEnumerator GetEventsLocalOrders(int tick)
 		{
 			ref var events = ref _events[tick];
 			return new LocalOrdersEnumerator(events.AllMask, events.MaskLength);

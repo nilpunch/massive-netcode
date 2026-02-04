@@ -173,5 +173,10 @@ namespace Massive.Netcode
 		{
 			return _inputs[tick].UsedChannels;
 		}
+
+		public bool IsFresh(int tick, int channel)
+		{
+			return _inputs[tick].Inputs[channel].IsFresh();
+		}
 	}
 }

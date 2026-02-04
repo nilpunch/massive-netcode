@@ -39,15 +39,24 @@ namespace Massive.Netcode
 
 			Session.Loop.FastForwardToTick(targetTick);
 
-			for (var tick = LastSendedTick; tick <= targetTick; tick++)
+			if (LastSendedTick > targetTick)
+			{
+				return;
+			}
+
+			for (; LastSendedTick <= targetTick; LastSendedTick++)
 			{
 				foreach (var connection in Connections)
 				{
-					InputSerializer.ServerWriteMany(Session.Loop.CurrentTick, connection.Outgoing);
+					InputSerializer.ServerWriteAllFresh(LastSendedTick, connection.Outgoing);
 				}
 			}
 
-			LastSendedTick = targetTick;
+			foreach (var connection in Connections)
+			{
+				InputSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
+				ApproveMessage.Write(new ApproveMessage() { Tick = targetTick }, connection.Outgoing);
+			}
 		}
 
 		private void ReadMessages(double serverTime)

@@ -20,5 +20,6 @@ namespace Massive.Netcode
 		void SkipData(Stream stream);
 
 		int GetUsedChannels(int tick);
+		bool IsFresh(int tick, int channel);
 	}
 }

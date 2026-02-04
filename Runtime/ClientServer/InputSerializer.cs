@@ -101,6 +101,30 @@ namespace Massive.Netcode
 			}
 		}
 
+		public void ServerWriteAllFresh(int tick, Stream stream)
+		{
+			foreach (var eventSet in _inputs.EventSets)
+			{
+				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
+				{
+					ServerWriteOne(eventSet, tick, localOrder, stream);
+				}
+			}
+
+			foreach (var inputSet in _inputs.InputSets)
+			{
+				var usedChannels = inputSet.GetUsedChannels(tick);
+
+				for (var channel = 0; channel < usedChannels; channel++)
+				{
+					if (inputSet.IsFresh(tick, channel))
+					{
+						ServerWriteOne(inputSet, tick, channel, stream);
+					}
+				}
+			}
+		}
+		
 		public void ServerWriteMany(int tick, Stream stream)
 		{
 			stream.WriteInt(tick);
@@ -114,7 +138,7 @@ namespace Massive.Netcode
 				var eventsCount = eventSet.GetEventsCount(tick);
 				stream.WriteShort((short)eventsCount);
 
-				foreach (var localOrder in eventSet.GetLocalOrders(tick))
+				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
 				{
 					var channel = eventSet.GetEventChannel(tick, localOrder);
 
@@ -141,15 +165,26 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ClientWriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
+		public void ServerWriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
 
 			WriteMessageId(messageId, stream);
 			stream.WriteInt(tick);
+			stream.WriteShort((short)channel);
 			inputSet.WriteData(tick, channel, stream);
+		}
 
-			// Don't writing channel because server already know it.
+		public void ServerWriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
+		{
+			var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
+			var channel = eventSet.GetEventChannel(tick, localOrder);
+
+			WriteMessageId(messageId, stream);
+			stream.WriteInt(tick);
+			stream.WriteShort((short)channel);
+			stream.WriteShort((short)localOrder);
+			eventSet.WriteData(tick, localOrder, stream);
 		}
 
 		public void ClientWriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
@@ -159,6 +194,18 @@ namespace Massive.Netcode
 			WriteMessageId(messageId, stream);
 			stream.WriteInt(tick);
 			eventSet.WriteData(tick, localOrder, stream);
+
+			// Don't writing channel because server already know it.
+			// Don't writing localOrder because server will append this event and use its own ordering.
+		}
+
+		public void ClientWriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
+		{
+			var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
+
+			WriteMessageId(messageId, stream);
+			stream.WriteInt(tick);
+			inputSet.WriteData(tick, channel, stream);
 
 			// Don't writing channel because server already know it.
 		}

@@ -63,6 +63,16 @@ namespace Massive.Netcode
 						WorldSerializer.Deserialize(Session.World, Incoming);
 						Incoming.ReadAllocator(Session.Systems.Allocator);
 						InputSerializer.ClientReadMany(Incoming);
+
+						TickSync.Reset();
+						TickSync.ApproveSimulationTick(serverTick);
+						break;
+					}
+
+					case (int)MessageType.Approve:
+					{
+						var serverTick = Incoming.ReadInt();
+						TickSync.ApproveSimulationTick(serverTick);
 						break;
 					}
 

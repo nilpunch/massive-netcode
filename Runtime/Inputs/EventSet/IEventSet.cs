@@ -22,6 +22,6 @@ namespace Massive.Netcode
 
 		int GetEventsCount(int tick);
 		int GetEventChannel(int tick, int localOrder);
-		LocalOrdersEnumerator GetLocalOrders(int tick);
+		LocalOrdersEnumerator GetEventsLocalOrders(int tick);
 	}
 }
