@@ -29,6 +29,10 @@ namespace Massive.Netcode
 			TcpClient = new TcpClient();
 			TcpClient.NoDelay = true;
 			TcpClient.Connect(endPoint);
+
+			Outgoing = TcpClient.GetStream();
+			Incoming.SetLength(0);
+			Incoming.Position = 0;
 		}
 
 		public override void Disconnect()

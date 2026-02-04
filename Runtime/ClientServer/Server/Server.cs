@@ -7,6 +7,8 @@ namespace Massive.Netcode
 {
 	public class Server
 	{
+		private const int MaxMessagesPerClient = 50;
+
 		private MemoryStream Buffer { get; } = new MemoryStream();
 
 		private int TicksAcceptWindow { get; }
@@ -88,7 +90,8 @@ namespace Massive.Netcode
 			{
 				connection.PopulateIncoming();
 
-				while (connection.IsConnected && connection.HasUnreadPayload)
+				var messagesRead = 0;
+				while (connection.IsConnected && connection.HasUnreadPayload && messagesRead < MaxMessagesPerClient)
 				{
 					var messageId = MessageSerializer.ReadMessageId(connection.Incoming);
 
@@ -136,9 +139,16 @@ namespace Massive.Netcode
 							break;
 						}
 					}
+
+					messagesRead += 1;
 				}
 
 				connection.CompactIncoming();
+
+				if (messagesRead >= MaxMessagesPerClient)
+				{
+					connection.Disconnect();
+				}
 			}
 		}
 
