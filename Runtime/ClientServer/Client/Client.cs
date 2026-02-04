@@ -1,5 +1,4 @@
-﻿using System.Net.Sockets;
-using Massive.Serialization;
+﻿using Massive.Serialization;
 
 namespace Massive.Netcode
 {
@@ -15,10 +14,17 @@ namespace Massive.Netcode
 
 		public TickSync TickSync { get; }
 
-		public Connection Connection { get; private set; }
+		public Connection Connection { get; }
 
-		public Client(SessionConfig sessionConfig)
+		private double PingDelaySeconds { get; }
+
+		private double LastPingTime { get; set; } = -1;
+
+		public Client(SessionConfig sessionConfig, Connection connection, double pingDelaySeconds = 1f)
 		{
+			Connection = connection;
+			PingDelaySeconds = pingDelaySeconds;
+
 			Session = new Session(sessionConfig);
 			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
 
@@ -29,8 +35,17 @@ namespace Massive.Netcode
 
 		public void Update(double clientTime)
 		{
-			// TODO: Accept server connection.
-			// TODO: Accept channel.
+			if (!Connection.IsConnected)
+			{
+				return;
+			}
+
+			if (clientTime - LastPingTime >= 0.5f)
+			{
+				LastPingTime = clientTime;
+				MessageSerializer.WriteMessageId((int)MessageType.Pong, Connection.Outgoing);
+				PingMessage.Write(new PingMessage() { ClientPingSendTime = clientTime }, Connection.Outgoing);
+			}
 
 			ReadMessages(clientTime);
 
@@ -41,14 +56,14 @@ namespace Massive.Netcode
 		{
 			Connection.PopulateIncoming();
 
-			while (!Connection.IsBad && Connection.HasUnreadPayload)
+			while (Connection.IsConnected && Connection.HasUnreadPayload)
 			{
 				var messageId = MessageSerializer.ReadMessageId(Connection.Incoming);
 
 				if (messageId == (int)MessageType.Ping
 					|| !InputIdentifiers.IsRegistered(messageId))
 				{
-					Connection.IsBad = true;
+					Connection.Disconnect();
 					break;
 				}
 
@@ -73,21 +88,26 @@ namespace Massive.Netcode
 
 					case (int)MessageType.FullSync:
 					{
+						Connection.Incoming.ReadInt(); // Payload length.
+
+						var channel = Connection.Incoming.ReadInt();
 						var serverTick = Connection.Incoming.ReadInt();
 						Session.Reset(serverTick);
 						WorldSerializer.Deserialize(Session.World, Connection.Incoming);
 						Connection.Incoming.ReadAllocator(Session.Systems.Allocator);
-						MessageSerializer.ClientReadMany(serverTick, Connection.Incoming);
+						MessageSerializer.ReadMany(serverTick, Connection.Incoming);
 
 						TickSync.Reset();
 						TickSync.ApproveSimulationTick(serverTick);
+						LastPingTime = -1;
+						Connection.Channel = channel;
 						break;
 					}
 
 					case (int)MessageType.Approve:
 					{
-						var serverTick = Connection.Incoming.ReadInt();
-						TickSync.ApproveSimulationTick(serverTick);
+						var approveMessage = ApproveMessage.Read(Connection.Incoming);
+						TickSync.ApproveSimulationTick(approveMessage.ServerTick);
 						break;
 					}
 
@@ -95,7 +115,7 @@ namespace Massive.Netcode
 					{
 						var tick = Connection.Incoming.ReadInt();
 						var channel = Connection.Incoming.ReadShort();
-						MessageSerializer.ClientReadOne(messageId, tick, channel, Connection.Incoming);
+						MessageSerializer.ReadOne(messageId, tick, channel, Connection.Incoming);
 						break;
 					}
 				}
@@ -106,12 +126,12 @@ namespace Massive.Netcode
 
 		public void OnInputPredicted(IInputSet inputSet, int tick, int channel)
 		{
-			MessageSerializer.ClientWriteOne(inputSet, tick, channel, Connection.Outgoing);
+			MessageSerializer.WriteOne(inputSet, tick, channel, Connection.Outgoing);
 		}
 
 		public void OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
 		{
-			MessageSerializer.ClientWriteOne(eventSet, tick, localOrder, Connection.Outgoing);
+			MessageSerializer.WriteOne(eventSet, tick, localOrder, Connection.Outgoing);
 		}
 	}
 }

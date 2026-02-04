@@ -5,6 +5,8 @@ namespace Massive.Netcode
 {
 	public struct PingMessage
 	{
+		public static readonly int Size = ReflectionUtils.SizeOfUnmanaged(typeof(PingMessage));
+
 		public double ClientPingSendTime;
 
 		public static PingMessage Read(Stream stream)

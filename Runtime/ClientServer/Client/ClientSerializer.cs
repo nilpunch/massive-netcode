@@ -16,31 +16,26 @@ namespace Massive.Netcode
 		{
 			switch (messageId)
 			{
-				case (int)MessageType.Ping:
-				{
-					return 8;
-				}
-
 				case (int)MessageType.Pong:
 				{
-					return 16;
+					return PongMessage.Size;
 				}
 
 				case (int)MessageType.FullSync:
 				{
 					var payloadLength = stream.Length - stream.Position;
-					if (payloadLength < 4)
+					if (payloadLength < sizeof(int))
 					{
 						return int.MaxValue;
 					}
 					var messageSize = stream.ReadInt();
-					stream.Position -= 4;
-					return messageSize;
+					stream.Position -= sizeof(int);
+					return messageSize + sizeof(int);
 				}
 
 				case (int)MessageType.Approve:
 				{
-					return 4;
+					return ApproveMessage.Size;
 				}
 
 				default:
@@ -57,7 +52,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ClientReadOne(int messageId, int tick, int channel, Stream stream)
+		public void ReadOne(int messageId, int tick, int channel, Stream stream)
 		{
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
@@ -70,7 +65,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ClientReadMany(int tick, Stream stream)
+		public void ReadMany(int tick, Stream stream)
 		{
 			stream.ReadInt(); // Skip length.
 
@@ -107,7 +102,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ClientWriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
+		public void WriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
 
@@ -115,11 +110,11 @@ namespace Massive.Netcode
 			stream.WriteInt(tick);
 			eventSet.WriteData(tick, localOrder, stream);
 
-			// Don't writing channel because server already know it.
+			// Don't writing channel because server already knows it.
 			// Don't writing localOrder because server will append this event and use its own ordering.
 		}
 
-		public void ClientWriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
+		public void WriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
 
@@ -127,7 +122,7 @@ namespace Massive.Netcode
 			stream.WriteInt(tick);
 			inputSet.WriteData(tick, channel, stream);
 
-			// Don't writing channel because server already know it.
+			// Don't writing channel because server already knows it.
 		}
 	}
 }

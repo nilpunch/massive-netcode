@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Massive.Serialization;
 
 namespace Massive.Netcode
 {
 	public class Server
 	{
+		private MemoryStream Buffer { get; } = new MemoryStream();
+
 		private int TicksAcceptWindow { get; }
 
 		private ServerSerializer MessageSerializer { get; }
@@ -16,12 +19,16 @@ namespace Massive.Netcode
 
 		public Session Session { get; }
 
+		public IConnectionListener ConnectionListener { get; }
+
 		public List<Connection> Connections { get; } = new List<Connection>();
 
 		public int LastSendedTick { get; set; }
 
-		public Server(SessionConfig sessionConfig, double ticksAcceptWindowSeconds = 2f)
+		public Server(SessionConfig sessionConfig, IConnectionListener connectionListener, double ticksAcceptWindowSeconds = 2f)
 		{
+			ConnectionListener = connectionListener;
+
 			TicksAcceptWindow = (int)(sessionConfig.TickRate * ticksAcceptWindowSeconds);
 
 			Session = new Session(sessionConfig, resimulate: false);
@@ -33,7 +40,21 @@ namespace Massive.Netcode
 
 		public void Update(double serverTime)
 		{
-			// TODO: Accept new connections.
+			while (ConnectionListener.TryAccept(out var connection))
+			{
+				Connections.Add(connection);
+				SendFullSync(connection, Connections.Count); // Channel 0 will be reserved.
+			}
+
+			for (var i = Connections.Count - 1; i >= 0; i--)
+			{
+				var connection = Connections[i];
+				if (!connection.IsConnected)
+				{
+					Connections.RemoveAt(i);
+					ConnectionListener.ReturnToPool(connection);
+				}
+			}
 
 			ReadMessages(serverTime);
 
@@ -50,14 +71,14 @@ namespace Massive.Netcode
 			{
 				foreach (var connection in Connections)
 				{
-					MessageSerializer.ServerWriteAllFresh(LastSendedTick, connection.Outgoing);
+					MessageSerializer.WriteAllFresh(LastSendedTick, connection.Outgoing);
 				}
 			}
 
 			foreach (var connection in Connections)
 			{
 				MessageSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
-				ApproveMessage.Write(new ApproveMessage() { Tick = targetTick }, connection.Outgoing);
+				ApproveMessage.Write(new ApproveMessage() { ServerTick = targetTick }, connection.Outgoing);
 			}
 		}
 
@@ -67,18 +88,18 @@ namespace Massive.Netcode
 			{
 				connection.PopulateIncoming();
 
-				while (!connection.IsBad && connection.HasUnreadPayload)
+				while (connection.IsConnected && connection.HasUnreadPayload)
 				{
 					var messageId = MessageSerializer.ReadMessageId(connection.Incoming);
 
 					if (!(messageId == (int)MessageType.Ping
 						|| InputIdentifiers.IsRegistered(messageId)))
 					{
-						connection.IsBad = true;
+						connection.Disconnect();
 						break;
 					}
 
-					var messageSize = MessageSerializer.GetMessageSize(messageId, connection.Incoming);
+					var messageSize = MessageSerializer.GetMessageSize(messageId);
 					if (connection.IncomingPayloadLength < messageSize)
 					{
 						MessageSerializer.UndoMessageIdRead(connection.Incoming);
@@ -106,11 +127,11 @@ namespace Massive.Netcode
 							var tick = connection.Incoming.ReadInt();
 							if (CanAcceptTick(tick))
 							{
-								MessageSerializer.ServerReadOne(messageId, tick, connection.Channel, connection.Incoming);
+								MessageSerializer.ReadOne(messageId, tick, connection.Channel, connection.Incoming);
 							}
 							else
 							{
-								MessageSerializer.ServerSkipOne(messageId, connection.Incoming);
+								MessageSerializer.SkipOne(messageId, connection.Incoming);
 							}
 							break;
 						}
@@ -121,13 +142,17 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void SendFullSync(Connection connection)
+		public void SendFullSync(Connection connection, int channel)
 		{
-			MessageSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
-			connection.Outgoing.WriteInt(Session.Loop.CurrentTick);
-			WorldSerializer.Serialize(Session.World, connection.Outgoing);
-			connection.Outgoing.WriteAllocator(Session.Systems.Allocator);
-			MessageSerializer.ServerWriteMany(Session.Loop.CurrentTick, connection.Outgoing);
+			MessageSerializer.WriteMessageId((int)MessageType.FullSync, Buffer);
+			Buffer.WriteInt(channel);
+			Buffer.WriteInt(Session.Loop.CurrentTick);
+			WorldSerializer.Serialize(Session.World, Buffer);
+			Buffer.WriteAllocator(Session.Systems.Allocator);
+			MessageSerializer.WriteMany(Session.Loop.CurrentTick, Buffer);
+
+			connection.Outgoing.WriteInt((int)Buffer.Length);
+			connection.Outgoing.Write(Buffer.GetBuffer(), 0, (int)Buffer.Length);
 		}
 
 		private bool CanAcceptTick(int tick)

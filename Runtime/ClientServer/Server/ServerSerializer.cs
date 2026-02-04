@@ -12,35 +12,13 @@ namespace Massive.Netcode
 		/// <summary>
 		/// Returns int.MaxValue if size not available.
 		/// </summary>
-		public int GetMessageSize(int messageId, Stream stream)
+		public int GetMessageSize(int messageId)
 		{
 			switch (messageId)
 			{
 				case (int)MessageType.Ping:
 				{
-					return 8;
-				}
-
-				case (int)MessageType.Pong:
-				{
-					return 16;
-				}
-
-				case (int)MessageType.FullSync:
-				{
-					var payloadLength = stream.Length - stream.Position;
-					if (payloadLength < 4)
-					{
-						return int.MaxValue;
-					}
-					var messageSize = stream.ReadInt();
-					stream.Position -= 4;
-					return messageSize;
-				}
-
-				case (int)MessageType.Approve:
-				{
-					return 4;
+					return PingMessage.Size;
 				}
 
 				default:
@@ -57,7 +35,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ServerReadOne(int messageId, int tick, int channel, Stream stream)
+		public void ReadOne(int messageId, int tick, int channel, Stream stream)
 		{
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
@@ -72,7 +50,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ServerSkipOne(int messageId, Stream stream)
+		public void SkipOne(int messageId, Stream stream)
 		{
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
@@ -84,58 +62,52 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ServerWriteMany(int tick, Stream stream)
+		public void WriteMany(int tick, Stream stream)
 		{
-			_buffer.Position = 0;
-			_buffer.SetLength(0);
-
-			WriteMessageId(_inputs.EventSets.Count, _buffer);
+			WriteMessageId(_inputs.EventSets.Count, stream);
 
 			foreach (var eventSet in _inputs.EventSets)
 			{
 				var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
-				WriteMessageId(messageId, _buffer);
+				WriteMessageId(messageId, stream);
 
 				var eventsCount = eventSet.GetEventsCount(tick);
-				_buffer.WriteShort((short)eventsCount);
+				stream.WriteShort((short)eventsCount);
 
 				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
 				{
 					var channel = eventSet.GetEventChannel(tick, localOrder);
 
-					_buffer.WriteShort((short)localOrder);
-					_buffer.WriteShort((short)channel);
-					eventSet.WriteData(tick, localOrder, _buffer);
+					stream.WriteShort((short)localOrder);
+					stream.WriteShort((short)channel);
+					eventSet.WriteData(tick, localOrder, stream);
 				}
 			}
 
-			WriteMessageId(_inputs.InputSets.Count, _buffer);
+			WriteMessageId(_inputs.InputSets.Count, stream);
 
 			foreach (var inputSet in _inputs.InputSets)
 			{
 				var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
-				WriteMessageId(messageId, _buffer);
+				WriteMessageId(messageId, stream);
 
 				var usedChannels = inputSet.GetUsedChannels(tick);
-				_buffer.WriteShort((short)usedChannels);
+				stream.WriteShort((short)usedChannels);
 
 				for (var channel = 0; channel < usedChannels; channel++)
 				{
-					inputSet.WriteInput(tick, channel, _buffer);
+					inputSet.WriteInput(tick, channel, stream);
 				}
 			}
-
-			stream.WriteInt((int)_buffer.Length);
-			stream.Write(_buffer.GetBuffer(), 0, (int)_buffer.Length);
 		}
 
-		public void ServerWriteAllFresh(int tick, Stream stream)
+		public void WriteAllFresh(int tick, Stream stream)
 		{
 			foreach (var eventSet in _inputs.EventSets)
 			{
 				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
 				{
-					ServerWriteOne(eventSet, tick, localOrder, stream);
+					WriteOne(eventSet, tick, localOrder, stream);
 				}
 			}
 
@@ -147,13 +119,13 @@ namespace Massive.Netcode
 				{
 					if (inputSet.IsFresh(tick, channel))
 					{
-						ServerWriteOne(inputSet, tick, channel, stream);
+						WriteOne(inputSet, tick, channel, stream);
 					}
 				}
 			}
 		}
 
-		public void ServerWriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
+		public void WriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
 
@@ -163,7 +135,7 @@ namespace Massive.Netcode
 			inputSet.WriteData(tick, channel, stream);
 		}
 
-		public void ServerWriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
+		public void WriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
 			var channel = eventSet.GetEventChannel(tick, localOrder);

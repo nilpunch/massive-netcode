@@ -1,19 +1,20 @@
-﻿using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 
 namespace Massive.Netcode
 {
-	public class Connection
+	public abstract class Connection
 	{
-		private static readonly Stack<Connection> _pool = new Stack<Connection>();
-		private static readonly byte[] _copyBuffer = new byte[4096];
-		private const int _shiftBytesThreshold = 1024 * 8;
+		private static readonly byte[] CopyBuffer = new byte[4096];
+		private static readonly int ShiftBytesThreshold = 1024 * 8;
 
-		public NetworkStream Outgoing;
-		public readonly MemoryStream Incoming = new MemoryStream();
-		public int Channel;
-		public bool IsBad;
+		public NetworkStream Outgoing { get; protected set; }
+		public MemoryStream Incoming { get; } = new MemoryStream();
+
+		public int Channel { get; set; }
+
+		public abstract bool IsConnected { get; }
 
 		public bool HasUnreadPayload => IncomingPayloadLength > 0;
 
@@ -21,7 +22,7 @@ namespace Massive.Netcode
 
 		public void PopulateIncoming()
 		{
-			if (IsBad)
+			if (!IsConnected)
 			{
 				return;
 			}
@@ -30,19 +31,19 @@ namespace Massive.Netcode
 			{
 				while (Outgoing.DataAvailable)
 				{
-					var read = Outgoing.Read(_copyBuffer, 0, _copyBuffer.Length);
+					var read = Outgoing.Read(CopyBuffer, 0, CopyBuffer.Length);
 					if (read > 0)
 					{
 						var currentReadPos = Incoming.Position;
 
 						Incoming.Seek(0, SeekOrigin.End);
-						Incoming.Write(_copyBuffer, 0, read);
+						Incoming.Write(CopyBuffer, 0, read);
 
 						Incoming.Position = currentReadPos;
 					}
 				}
 			}
-			catch (IOException) { IsBad = true; }
+			catch (IOException) { Disconnect(); }
 		}
 
 		public void CompactIncoming()
@@ -54,7 +55,7 @@ namespace Massive.Netcode
 				Incoming.SetLength(0);
 				Incoming.Position = 0;
 			}
-			else if (Incoming.Position > _shiftBytesThreshold)
+			else if (Incoming.Position > ShiftBytesThreshold)
 			{
 				var array = Incoming.GetBuffer();
 				System.Buffer.BlockCopy(array, (int)Incoming.Position, array, 0, unreadCount);
@@ -64,20 +65,8 @@ namespace Massive.Netcode
 			}
 		}
 
-		public static Connection Rent(NetworkStream networkStream)
-		{
-			var connection = _pool.Count > 0 ? _pool.Pop() : new Connection();
+		public abstract void Connect(IPEndPoint endPoint);
 
-			connection.Outgoing = networkStream;
-			connection.Incoming.SetLength(0);
-			connection.Incoming.Position = 0;
-
-			return connection;
-		}
-
-		public static void Return(Connection connection)
-		{
-			_pool.Push(connection);
-		}
+		public abstract void Disconnect();
 	}
 }

@@ -9,8 +9,6 @@ namespace Massive.Netcode
 
 		protected readonly Inputs _inputs;
 
-		protected readonly MemoryStream _buffer = new MemoryStream(2048);
-
 		public MessageSerializer(Inputs inputs, InputIdentifiers inputIdentifiers)
 		{
 			_inputIdentifiers = inputIdentifiers;
