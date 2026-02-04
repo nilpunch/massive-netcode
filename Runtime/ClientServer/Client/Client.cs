@@ -29,6 +29,9 @@ namespace Massive.Netcode
 
 		public void Update(double clientTime)
 		{
+			// TODO: Accept server connection.
+			// TODO: Accept channel.
+
 			ReadMessages(clientTime);
 
 			Session.Loop.FastForwardToTick(TickSync.CalculateTargetTick(clientTime));

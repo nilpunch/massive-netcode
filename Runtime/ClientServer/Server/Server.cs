@@ -33,6 +33,8 @@ namespace Massive.Netcode
 
 		public void Update(double serverTime)
 		{
+			// TODO: Accept new connections.
+
 			ReadMessages(serverTime);
 
 			var targetTick = (int)Math.Floor(serverTime * Session.Config.TickRate);
