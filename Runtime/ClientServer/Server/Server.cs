@@ -153,6 +153,9 @@ namespace Massive.Netcode
 
 			connection.Outgoing.WriteInt((int)Buffer.Length);
 			connection.Outgoing.Write(Buffer.GetBuffer(), 0, (int)Buffer.Length);
+
+			Buffer.Position = 0;
+			Buffer.SetLength(0);
 		}
 
 		private bool CanAcceptTick(int tick)
