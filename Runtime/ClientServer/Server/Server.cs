@@ -49,6 +49,7 @@ namespace Massive.Netcode
 				connection.Channel = Connections.Count;
 				Connections.Add(connection);
 				SendFullSync(connection);
+				connection.FlushOutgoing();
 			}
 
 			for (var i = Connections.Count - 1; i >= 0; i--)
@@ -81,7 +82,7 @@ namespace Massive.Netcode
 
 				foreach (var connection in Connections)
 				{
-					MessageSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
+					MessageSerializer.WriteMessageId(MessageType.Approve, connection.Outgoing);
 					ApproveMessage.Write(new ApproveMessage() { ServerTick = targetTick }, connection.Outgoing);
 				}
 			}
@@ -128,7 +129,7 @@ namespace Massive.Netcode
 								ServerReceiveTime = serverTime
 							};
 
-							MessageSerializer.WriteMessageId((int)MessageType.Pong, connection.Outgoing);
+							MessageSerializer.WriteMessageId(MessageType.Pong, connection.Outgoing);
 							PongMessage.Write(pongMessage, connection.Outgoing);
 							break;
 						}
@@ -168,7 +169,7 @@ namespace Massive.Netcode
 			Buffer.WriteAllocator(Session.Systems.Allocator);
 			MessageSerializer.WriteFullSyncInputs(Session.Loop.CurrentTick, Buffer);
 
-			MessageSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
+			MessageSerializer.WriteMessageId(MessageType.FullSync, connection.Outgoing);
 			connection.Outgoing.WriteInt((int)Buffer.Length);
 			connection.Outgoing.Write(Buffer.GetBuffer(), 0, (int)Buffer.Length);
 

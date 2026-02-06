@@ -50,7 +50,7 @@ namespace Massive.Netcode
 			if (Synced && clientTime - LastPingTime >= 0.5f)
 			{
 				LastPingTime = clientTime;
-				MessageSerializer.WriteMessageId((int)MessageType.Ping, Connection.Outgoing);
+				MessageSerializer.WriteMessageId(MessageType.Ping, Connection.Outgoing);
 				PingMessage.Write(new PingMessage() { ClientPingSendTime = clientTime }, Connection.Outgoing);
 			}
 
