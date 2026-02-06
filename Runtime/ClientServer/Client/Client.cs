@@ -47,16 +47,18 @@ namespace Massive.Netcode
 
 			ReadMessages(clientTime);
 
-			if (!Synced)
-			{
-				return;
-			}
-
-			if (clientTime - LastPingTime >= 0.5f)
+			if (Synced && clientTime - LastPingTime >= 0.5f)
 			{
 				LastPingTime = clientTime;
 				MessageSerializer.WriteMessageId((int)MessageType.Ping, Connection.Outgoing);
 				PingMessage.Write(new PingMessage() { ClientPingSendTime = clientTime }, Connection.Outgoing);
+			}
+
+			Connection.FlushOutgoing();
+
+			if (!Synced)
+			{
+				return;
 			}
 
 			Session.Loop.FastForwardToTick(TickSync.CalculateTargetTick(clientTime));
@@ -98,20 +100,19 @@ namespace Massive.Netcode
 
 					case (int)MessageType.FullSync:
 					{
-						Connection.Incoming.ReadInt(); // Payload length.
+						Connection.Incoming.ReadInt(); // Skip payload length.
 
-						var channel = Connection.Incoming.ReadInt();
+						Connection.Channel = Connection.Incoming.ReadInt();
 						var serverTick = Connection.Incoming.ReadInt();
 						Session.Reset(serverTick);
 						WorldSerializer.Deserialize(Session.World, Connection.Incoming);
 						Connection.Incoming.ReadAllocator(Session.Systems.Allocator);
-						MessageSerializer.ReadMany(serverTick, Connection.Incoming);
+						MessageSerializer.ReadFullSyncInputs(serverTick, Connection.Incoming);
 
 						Session.World.SaveFrame();
 						TickSync.Reset();
 						TickSync.ApproveSimulationTick(serverTick);
 						LastPingTime = -1;
-						Connection.Channel = channel;
 						Synced = true;
 						break;
 					}
@@ -119,17 +120,17 @@ namespace Massive.Netcode
 					case (int)MessageType.Approve:
 					{
 						var approveMessage = ApproveMessage.Read(Connection.Incoming);
-						var lastApprovedTick = TickSync.ApprovedSimulationTick;
-						TickSync.ApproveSimulationTick(approveMessage.ServerTick);
 
 						foreach (var inputSet in Session.Inputs.InputSets)
 						{
-							inputSet.ClearPrediction(lastApprovedTick, TickSync.ApprovedSimulationTick);
+							inputSet.ClearPrediction(TickSync.ApprovedSimulationTick, approveMessage.ServerTick);
 						}
 						foreach (var eventSet in Session.Inputs.EventSets)
 						{
-							eventSet.ClearPrediction(lastApprovedTick, TickSync.ApprovedSimulationTick);
+							eventSet.ClearPrediction(TickSync.ApprovedSimulationTick, approveMessage.ServerTick);
 						}
+
+						TickSync.ApproveSimulationTick(approveMessage.ServerTick);
 						break;
 					}
 
@@ -137,7 +138,7 @@ namespace Massive.Netcode
 					{
 						var tick = Connection.Incoming.ReadInt();
 						var channel = Connection.Incoming.ReadShort();
-						MessageSerializer.ReadOne(messageId, tick, channel, Connection.Incoming);
+						MessageSerializer.ReadOneInput(messageId, tick, channel, Connection.Incoming);
 						break;
 					}
 				}
@@ -148,12 +149,12 @@ namespace Massive.Netcode
 
 		public void OnInputPredicted(IInputSet inputSet, int tick, int channel)
 		{
-			MessageSerializer.WriteOne(inputSet, tick, channel, Connection.Outgoing);
+			MessageSerializer.WriteOneInput(inputSet, tick, channel, Connection.Outgoing);
 		}
 
 		public void OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
 		{
-			MessageSerializer.WriteOne(eventSet, tick, localOrder, Connection.Outgoing);
+			MessageSerializer.WriteOneInput(eventSet, tick, localOrder, Connection.Outgoing);
 		}
 	}
 }

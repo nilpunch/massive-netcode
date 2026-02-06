@@ -47,8 +47,8 @@ namespace Massive.Netcode
 			while (ConnectionListener.TryAccept(out var connection))
 			{
 				connection.Channel = Connections.Count;
-				SendFullSync(connection, connection.Channel);
 				Connections.Add(connection);
+				SendFullSync(connection);
 			}
 
 			for (var i = Connections.Count - 1; i >= 0; i--)
@@ -67,25 +67,28 @@ namespace Massive.Netcode
 
 			Session.Loop.FastForwardToTick(targetTick);
 
-			if (LastSendedTick > targetTick)
+			if (LastSendedTick <= targetTick)
 			{
-				return;
-			}
+				for (; LastSendedTick <= targetTick; LastSendedTick++)
+				{
+					foreach (var connection in Connections)
+					{
+						MessageSerializer.WriteAllFreshInputs(LastSendedTick, connection.Outgoing);
+					}
+				}
 
-			for (; LastSendedTick <= targetTick; LastSendedTick++)
-			{
+				Session.Inputs.DiscardUpTo(targetTick);
+
 				foreach (var connection in Connections)
 				{
-					MessageSerializer.WriteAllFresh(LastSendedTick, connection.Outgoing);
+					MessageSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
+					ApproveMessage.Write(new ApproveMessage() { ServerTick = targetTick }, connection.Outgoing);
 				}
 			}
 
-			Session.Inputs.DiscardUpTo(targetTick);
-
 			foreach (var connection in Connections)
 			{
-				MessageSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
-				ApproveMessage.Write(new ApproveMessage() { ServerTick = targetTick }, connection.Outgoing);
+				connection.FlushOutgoing();
 			}
 		}
 
@@ -135,11 +138,11 @@ namespace Massive.Netcode
 							var tick = connection.Incoming.ReadInt();
 							if (CanAcceptTick(tick))
 							{
-								MessageSerializer.ReadOne(messageId, tick, connection.Channel, connection.Incoming);
+								MessageSerializer.ReadOneInput(messageId, tick, connection.Channel, connection.Incoming);
 							}
 							else
 							{
-								MessageSerializer.SkipOne(messageId, connection.Incoming);
+								MessageSerializer.SkipOneInput(messageId, connection.Incoming);
 							}
 							break;
 						}
@@ -157,16 +160,15 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void SendFullSync(Connection connection, int channel)
+		public void SendFullSync(Connection connection)
 		{
-			MessageSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
-
-			Buffer.WriteInt(channel);
+			Buffer.WriteInt(connection.Channel);
 			Buffer.WriteInt(Session.Loop.CurrentTick);
 			WorldSerializer.Serialize(Session.World, Buffer);
 			Buffer.WriteAllocator(Session.Systems.Allocator);
-			MessageSerializer.WriteMany(Session.Loop.CurrentTick, Buffer);
+			MessageSerializer.WriteFullSyncInputs(Session.Loop.CurrentTick, Buffer);
 
+			MessageSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
 			connection.Outgoing.WriteInt((int)Buffer.Length);
 			connection.Outgoing.Write(Buffer.GetBuffer(), 0, (int)Buffer.Length);
 

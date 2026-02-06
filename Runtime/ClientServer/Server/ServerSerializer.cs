@@ -35,7 +35,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ReadOne(int messageId, int tick, int channel, Stream stream)
+		public void ReadOneInput(int messageId, int tick, int channel, Stream stream)
 		{
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
@@ -50,7 +50,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void SkipOne(int messageId, Stream stream)
+		public void SkipOneInput(int messageId, Stream stream)
 		{
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
@@ -62,7 +62,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void WriteMany(int tick, Stream stream)
+		public void WriteFullSyncInputs(int tick, Stream stream)
 		{
 			WriteMessageId(_inputs.EventSets.Count, stream);
 
@@ -101,13 +101,13 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void WriteAllFresh(int tick, Stream stream)
+		public void WriteAllFreshInputs(int tick, Stream stream)
 		{
 			foreach (var eventSet in _inputs.EventSets)
 			{
 				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
 				{
-					WriteOne(eventSet, tick, localOrder, stream);
+					WriteOneInput(eventSet, tick, localOrder, stream);
 				}
 			}
 
@@ -119,13 +119,13 @@ namespace Massive.Netcode
 				{
 					if (inputSet.IsFresh(tick, channel))
 					{
-						WriteOne(inputSet, tick, channel, stream);
+						WriteOneInput(inputSet, tick, channel, stream);
 					}
 				}
 			}
 		}
 
-		public void WriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
+		public void WriteOneInput(IInputSet inputSet, int tick, int channel, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
 
@@ -135,7 +135,7 @@ namespace Massive.Netcode
 			inputSet.WriteData(tick, channel, stream);
 		}
 
-		public void WriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
+		public void WriteOneInput(IEventSet eventSet, int tick, int localOrder, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
 			var channel = eventSet.GetEventChannel(tick, localOrder);

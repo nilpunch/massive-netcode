@@ -12,9 +12,11 @@ namespace Massive.Netcode
 		public void Init(TcpClient tcpClient)
 		{
 			TcpClient = tcpClient;
-			Outgoing = tcpClient.GetStream();
+			Stream = tcpClient.GetStream();
 			Incoming.SetLength(0);
 			Incoming.Position = 0;
+			Outgoing.SetLength(0);
+			Outgoing.Position = 0;
 		}
 
 		public override void Connect(IPEndPoint endPoint)
@@ -30,9 +32,13 @@ namespace Massive.Netcode
 			TcpClient.NoDelay = true;
 			TcpClient.Connect(endPoint);
 
-			Outgoing = TcpClient.GetStream();
+			Stream = TcpClient.GetStream();
+
 			Incoming.SetLength(0);
 			Incoming.Position = 0;
+
+			Outgoing.SetLength(0);
+			Outgoing.Position = 0;
 		}
 
 		public override void Disconnect()

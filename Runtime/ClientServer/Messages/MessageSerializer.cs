@@ -20,6 +20,11 @@ namespace Massive.Netcode
 			stream.Write1Byte((byte)messageId);
 		}
 
+		public void WriteMessageId(MessageType messageType, Stream stream)
+		{
+			stream.Write1Byte((byte)messageType);
+		}
+
 		public void UndoMessageIdRead(Stream stream)
 		{
 			stream.Position -= 1;

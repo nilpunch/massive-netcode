@@ -9,8 +9,9 @@ namespace Massive.Netcode
 		private static readonly byte[] CopyBuffer = new byte[4096];
 		private static readonly int ShiftBytesThreshold = 1024 * 8;
 
-		public NetworkStream Outgoing { get; protected set; }
+		public NetworkStream Stream { get; protected set; }
 		public MemoryStream Incoming { get; } = new MemoryStream();
+		public MemoryStream Outgoing { get; } = new MemoryStream();
 
 		public int Channel { get; set; }
 
@@ -29,9 +30,9 @@ namespace Massive.Netcode
 
 			try
 			{
-				while (Outgoing.DataAvailable)
+				while (Stream.DataAvailable)
 				{
-					var read = Outgoing.Read(CopyBuffer, 0, CopyBuffer.Length);
+					var read = Stream.Read(CopyBuffer, 0, CopyBuffer.Length);
 					if (read > 0)
 					{
 						var currentReadPos = Incoming.Position;
@@ -63,6 +64,23 @@ namespace Massive.Netcode
 				Incoming.SetLength(unreadCount);
 				Incoming.Position = 0;
 			}
+		}
+
+		public void FlushOutgoing()
+		{
+			if (!IsConnected)
+			{
+				return;
+			}
+
+			try
+			{
+				Stream.Write(Outgoing.GetBuffer(), 0, (int)Outgoing.Length);
+			}
+			catch (IOException) { Disconnect(); }
+
+			Outgoing.SetLength(0);
+			Outgoing.Position = 0;
 		}
 
 		public abstract void Connect(IPEndPoint endPoint);

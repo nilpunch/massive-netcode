@@ -52,7 +52,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ReadOne(int messageId, int tick, int channel, Stream stream)
+		public void ReadOneInput(int messageId, int tick, int channel, Stream stream)
 		{
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
@@ -65,7 +65,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void ReadMany(int tick, Stream stream)
+		public void ReadFullSyncInputs(int tick, Stream stream)
 		{
 			var eventSetsCount = ReadMessageId(stream);
 
@@ -100,7 +100,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void WriteOne(IEventSet eventSet, int tick, int localOrder, Stream stream)
+		public void WriteOneInput(IEventSet eventSet, int tick, int localOrder, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
 
@@ -112,7 +112,7 @@ namespace Massive.Netcode
 			// Don't writing localOrder because server will append this event and use its own ordering.
 		}
 
-		public void WriteOne(IInputSet inputSet, int tick, int channel, Stream stream)
+		public void WriteOneInput(IInputSet inputSet, int tick, int channel, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetInputId(inputSet.InputType);
 
