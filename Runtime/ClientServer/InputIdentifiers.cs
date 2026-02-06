@@ -32,12 +32,12 @@ namespace Massive.Netcode
 			var assemblyTypes = assembly.GetTypes();
 
 			var inputTypes = assemblyTypes
-				.Where(t => typeof(IInput).IsAssignableFrom(t))
+				.Where(IsInputType)
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
 			var eventTypes = assemblyTypes
-				.Where(t => typeof(IEvent).IsAssignableFrom(t))
+				.Where(IsEventType)
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
@@ -58,13 +58,13 @@ namespace Massive.Netcode
 
 			var inputTypes = assemblies
 				.SelectMany(assembly => assembly.GetTypes())
-				.Where(t => typeof(IInput).IsAssignableFrom(t))
+				.Where(IsInputType)
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
 			var eventTypes = assemblies
 				.SelectMany(assembly => assembly.GetTypes())
-				.Where(t => typeof(IEvent).IsAssignableFrom(t))
+				.Where(IsEventType)
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
@@ -77,6 +77,16 @@ namespace Massive.Netcode
 			{
 				RegisterEvent(eventType);
 			}
+		}
+
+		private static bool IsInputType(Type type)
+		{
+			return typeof(IInput).IsAssignableFrom(type) && (type.IsValueType || type.IsClass) && !type.IsGenericTypeDefinition;
+		}
+
+		private static bool IsEventType(Type type)
+		{
+			return typeof(IEvent).IsAssignableFrom(type) && (type.IsValueType || type.IsClass) && !type.IsGenericTypeDefinition;
 		}
 
 		public void RegisterInput<T>()
