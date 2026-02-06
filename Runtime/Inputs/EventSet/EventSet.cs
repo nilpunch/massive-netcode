@@ -106,6 +106,15 @@ namespace Massive.Netcode
 			_globalChangeTracker.NotifyChange(tick);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ClearPrediction(int startTick, int endTick)
+		{
+			for (var tick = startTick; tick <= endTick; tick++)
+			{
+				ClearPrediction(tick);
+			}
+		}
+
 		public void PopulateUpTo(int tick)
 		{
 			for (var i = _events.TailIndex; i <= tick; i++)

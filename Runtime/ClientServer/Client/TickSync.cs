@@ -41,7 +41,7 @@ namespace Massive.Netcode
 		{
 			var elapsed = clientTime - TimeSyncClientTime;
 			var serverTime = TimeSyncServerTime + elapsed;
-			return (int)Math.Floor(serverTime * _tickRate);
+			return MathUtils.Max(0, (int)Math.Floor(serverTime * _tickRate));
 		}
 
 		/// <summary>

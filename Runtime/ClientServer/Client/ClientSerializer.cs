@@ -67,8 +67,6 @@ namespace Massive.Netcode
 
 		public void ReadMany(int tick, Stream stream)
 		{
-			stream.ReadInt(); // Skip length.
-
 			var eventSetsCount = ReadMessageId(stream);
 
 			for (var i = 0; i < eventSetsCount; i++)

@@ -20,12 +20,16 @@ namespace Massive.Netcode
 
 		private double LastPingTime { get; set; } = -1;
 
+		public int ApprovedTick => TickSync.ApprovedSimulationTick;
+
+		public bool Synced { get; private set; }
+
 		public Client(SessionConfig sessionConfig, Connection connection, double pingDelaySeconds = 1f)
 		{
 			Connection = connection;
 			PingDelaySeconds = pingDelaySeconds;
 
-			Session = new Session(sessionConfig);
+			Session = new Session(sessionConfig, this);
 			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
 
 			InputIdentifiers = new InputIdentifiers();
@@ -37,17 +41,23 @@ namespace Massive.Netcode
 		{
 			if (!Connection.IsConnected)
 			{
+				Synced = false;
+				return;
+			}
+
+			ReadMessages(clientTime);
+
+			if (!Synced)
+			{
 				return;
 			}
 
 			if (clientTime - LastPingTime >= 0.5f)
 			{
 				LastPingTime = clientTime;
-				MessageSerializer.WriteMessageId((int)MessageType.Pong, Connection.Outgoing);
+				MessageSerializer.WriteMessageId((int)MessageType.Ping, Connection.Outgoing);
 				PingMessage.Write(new PingMessage() { ClientPingSendTime = clientTime }, Connection.Outgoing);
 			}
-
-			ReadMessages(clientTime);
 
 			Session.Loop.FastForwardToTick(TickSync.CalculateTargetTick(clientTime));
 		}
@@ -61,7 +71,7 @@ namespace Massive.Netcode
 				var messageId = MessageSerializer.ReadMessageId(Connection.Incoming);
 
 				if (messageId == (int)MessageType.Ping
-					|| !InputIdentifiers.IsRegistered(messageId))
+					|| messageId >= (int)MessageType.Count && !InputIdentifiers.IsRegistered(messageId))
 				{
 					Connection.Disconnect();
 					break;
@@ -97,17 +107,29 @@ namespace Massive.Netcode
 						Connection.Incoming.ReadAllocator(Session.Systems.Allocator);
 						MessageSerializer.ReadMany(serverTick, Connection.Incoming);
 
+						Session.World.SaveFrame();
 						TickSync.Reset();
 						TickSync.ApproveSimulationTick(serverTick);
 						LastPingTime = -1;
 						Connection.Channel = channel;
+						Synced = true;
 						break;
 					}
 
 					case (int)MessageType.Approve:
 					{
 						var approveMessage = ApproveMessage.Read(Connection.Incoming);
+						var lastApprovedTick = TickSync.ApprovedSimulationTick;
 						TickSync.ApproveSimulationTick(approveMessage.ServerTick);
+
+						foreach (var inputSet in Session.Inputs.InputSets)
+						{
+							inputSet.ClearPrediction(lastApprovedTick, TickSync.ApprovedSimulationTick);
+						}
+						foreach (var eventSet in Session.Inputs.EventSets)
+						{
+							eventSet.ClearPrediction(lastApprovedTick, TickSync.ApprovedSimulationTick);
+						}
 						break;
 					}
 

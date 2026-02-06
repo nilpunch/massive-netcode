@@ -29,11 +29,6 @@ namespace Massive.Netcode
 				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target tick should not be less than current.");
 			}
 
-			if (targetTick == CurrentTick)
-			{
-				return;
-			}
-
 			_inputs.Reevaluate();
 			_inputs.PopulateUpTo(targetTick);
 
@@ -42,8 +37,6 @@ namespace Massive.Netcode
 				_simulation.Update(CurrentTick);
 				CurrentTick += 1;
 			}
-
-			_inputs.DiscardUpTo(targetTick - 1);
 
 			_changeTracker.ConfirmChangesUpTo(targetTick);
 		}

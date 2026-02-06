@@ -20,6 +20,7 @@ namespace Massive.Netcode
 			_predictionReceiver = predictionReceiver;
 			_inputs = new CyclicList<AllInputs<T>>(startTick);
 			_inputs.Append().EnsureInitialized();
+			_localChangeTracker.ConfirmChangesUpTo(startTick);
 			Serializer = serializer ?? new UnmanagedInputSerializer<T>();
 			InputType = typeof(T);
 			DataSize = Serializer.DataSize;
@@ -83,14 +84,12 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void ClearPrediction(int startTick, int endTick)
 		{
-			PopulateUpTo(endTick);
-
 			if (startTick < _inputs.HeadIndex)
 			{
 				startTick = _inputs.HeadIndex;
 			}
 
-			if (endTick >= _inputs.TailIndex)
+			if (endTick > _inputs.TailIndex - 1)
 			{
 				endTick = _inputs.TailIndex - 1;
 			}
@@ -110,6 +109,8 @@ namespace Massive.Netcode
 			ref var inputs = ref _inputs.Append();
 			inputs.EnsureInitialized();
 			inputs.Clear();
+			_localChangeTracker.NotifyChange(0);
+			_localChangeTracker.ConfirmChangesUpTo(startTick);
 		}
 
 		public void PopulateUpTo(int tick)
@@ -131,6 +132,7 @@ namespace Massive.Netcode
 			}
 
 			_inputs.RemoveUpTo(tick);
+			_localChangeTracker.ConfirmChangesUpTo(tick);
 		}
 
 		public void Reevaluate()

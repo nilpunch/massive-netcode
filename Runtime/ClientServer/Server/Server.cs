@@ -42,10 +42,13 @@ namespace Massive.Netcode
 
 		public void Update(double serverTime)
 		{
+			Session.Inputs.PopulateUpTo(Session.Loop.CurrentTick);
+
 			while (ConnectionListener.TryAccept(out var connection))
 			{
+				connection.Channel = Connections.Count;
+				SendFullSync(connection, connection.Channel);
 				Connections.Add(connection);
-				SendFullSync(connection, Connections.Count); // Channel 0 will be reserved.
 			}
 
 			for (var i = Connections.Count - 1; i >= 0; i--)
@@ -77,6 +80,8 @@ namespace Massive.Netcode
 				}
 			}
 
+			Session.Inputs.DiscardUpTo(targetTick);
+
 			foreach (var connection in Connections)
 			{
 				MessageSerializer.WriteMessageId((int)MessageType.Approve, connection.Outgoing);
@@ -96,7 +101,7 @@ namespace Massive.Netcode
 					var messageId = MessageSerializer.ReadMessageId(connection.Incoming);
 
 					if (!(messageId == (int)MessageType.Ping
-						|| InputIdentifiers.IsRegistered(messageId)))
+						|| messageId >= (int)MessageType.Count && InputIdentifiers.IsRegistered(messageId)))
 					{
 						connection.Disconnect();
 						break;
@@ -154,7 +159,8 @@ namespace Massive.Netcode
 
 		public void SendFullSync(Connection connection, int channel)
 		{
-			MessageSerializer.WriteMessageId((int)MessageType.FullSync, Buffer);
+			MessageSerializer.WriteMessageId((int)MessageType.FullSync, connection.Outgoing);
+
 			Buffer.WriteInt(channel);
 			Buffer.WriteInt(Session.Loop.CurrentTick);
 			WorldSerializer.Serialize(Session.World, Buffer);
@@ -170,7 +176,7 @@ namespace Massive.Netcode
 
 		private bool CanAcceptTick(int tick)
 		{
-			return tick > Session.Loop.CurrentTick && tick < Session.Loop.CurrentTick + TicksAcceptWindow;
+			return tick >= Session.Loop.CurrentTick && tick <= Session.Loop.CurrentTick + TicksAcceptWindow;
 		}
 	}
 }

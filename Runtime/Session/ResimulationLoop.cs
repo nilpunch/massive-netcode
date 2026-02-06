@@ -1,4 +1,5 @@
 ﻿using System;
+using Godot;
 
 namespace Massive.Netcode
 {
@@ -20,15 +21,17 @@ namespace Massive.Netcode
 		}
 
 		public int CurrentTick { get; private set; }
+		public int StartTick { get; private set; }
 
 		public void Reset(int startTick)
 		{
+			StartTick = startTick;
 			CurrentTick = startTick;
 		}
 
 		public void FastForwardToTick(int targetTick)
 		{
-			if (targetTick < 0)
+			if (targetTick < StartTick)
 			{
 				throw new ArgumentOutOfRangeException(nameof(targetTick), "Target tick should not be negative.");
 			}
@@ -37,16 +40,16 @@ namespace Massive.Netcode
 			var ticksToRollback = Math.Max(CurrentTick - earliestTick, 0);
 
 			var currentFrame = CurrentTick / _saveEachNthTick;
-			var targetFrame = (CurrentTick - ticksToRollback) / _saveEachNthTick;
+			var targetFrame = Math.Max(StartTick, CurrentTick - ticksToRollback) / _saveEachNthTick;
 			var framesToRollback = currentFrame - targetFrame;
 
 			if (framesToRollback > _massive.CanRollbackFrames)
 			{
-				throw new InvalidOperationException("Can't rollback this far.");
+				throw new InvalidOperationException($"Can't rollback this far. CanRollbackFrames: {_massive.CanRollbackFrames}, Actual: {framesToRollback}");
 			}
 
 			_massive.Rollback(framesToRollback);
-			CurrentTick = (currentFrame - framesToRollback) * _saveEachNthTick;
+			CurrentTick = Math.Max(StartTick, (currentFrame - framesToRollback) * _saveEachNthTick);
 
 			_inputs.Reevaluate();
 			_inputs.PopulateUpTo(targetTick);
@@ -62,7 +65,7 @@ namespace Massive.Netcode
 				}
 			}
 
-			_inputs.DiscardUpTo(targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick);
+			_inputs.DiscardUpTo(Math.Min(StartTick, targetTick - (_massive.CanRollbackFrames + 1) * _saveEachNthTick));
 
 			_changeTracker.ConfirmChangesUpTo(targetTick);
 		}

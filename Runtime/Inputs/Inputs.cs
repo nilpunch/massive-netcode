@@ -7,6 +7,7 @@ namespace Massive.Netcode
 	public class Inputs : IInputs, ISimulation
 	{
 		private int _startTick;
+		private int _populateUpToTick;
 		private readonly ChangeTracker _changeTracker;
 		private readonly IPredictionReceiver _predictionReceiver;
 
@@ -141,6 +142,7 @@ namespace Massive.Netcode
 		public void Reset(int startTick)
 		{
 			_startTick = startTick;
+			_populateUpToTick = startTick;
 			CurrentTick = _startTick;
 
 			for (var i = 0; i < InputSets.Count; i++)
@@ -155,6 +157,8 @@ namespace Massive.Netcode
 
 		public void PopulateUpTo(int tick)
 		{
+			_populateUpToTick = tick;
+
 			for (var i = 0; i < InputSets.Count; i++)
 			{
 				InputSets[i].PopulateUpTo(tick);
@@ -201,6 +205,7 @@ namespace Massive.Netcode
 			}
 
 			var eventSet = new EventSet<T>(_changeTracker, _startTick, _predictionReceiver, new UnmanagedEventSerializer<T>());
+			eventSet.PopulateUpTo(_populateUpToTick);
 			_eventsLookup[info.Index] = eventSet;
 			EventSets.Add(eventSet);
 
@@ -240,6 +245,7 @@ namespace Massive.Netcode
 			}
 
 			var inputSet = new InputSet<T>(_changeTracker, _startTick, _predictionReceiver, new UnmanagedInputSerializer<T>());
+			inputSet.PopulateUpTo(_populateUpToTick);
 			_inputsLookup[info.Index] = inputSet;
 			InputSets.Add(inputSet);
 

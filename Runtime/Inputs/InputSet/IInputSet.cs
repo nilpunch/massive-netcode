@@ -9,6 +9,7 @@ namespace Massive.Netcode
 		int DataSize { get; }
 		int InputSize { get; }
 
+		void ClearPrediction(int startTick, int endTick);
 		void PopulateUpTo(int tick);
 		void DiscardUpTo(int tick);
 		void Reevaluate();

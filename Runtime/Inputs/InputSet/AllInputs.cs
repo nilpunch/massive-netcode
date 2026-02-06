@@ -45,7 +45,7 @@ namespace Massive.Netcode
 		{
 			EnsureChannel(channel);
 
-			if (Inputs[channel].IsActual)
+			if (Inputs[channel].IsFresh() && Inputs[channel].IsActual)
 			{
 				throw new InvalidOperationException($"You are trying to override actual input at channel {channel}.");
 			}
@@ -81,7 +81,7 @@ namespace Massive.Netcode
 
 			for (var i = 0; i < UsedChannels; i++)
 			{
-				if (!Inputs[i].IsActual)
+				if (Inputs[i].IsFresh() && !Inputs[i].IsActual)
 				{
 					Inputs[i] = staleInput;
 				}

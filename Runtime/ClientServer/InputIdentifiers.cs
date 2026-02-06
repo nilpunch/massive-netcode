@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,13 +14,17 @@ namespace Massive.Netcode
 		private readonly Dictionary<Type, int> _idsByEvents = new Dictionary<Type, int>();
 
 		private readonly List<bool> _isEvent = new List<bool>();
-
-		public List<Type> RegisteredTypes { get; } = new List<Type>();
+		private readonly List<Type> _registeredTypes = new List<Type>();
 
 		public InputIdentifiers(int startId = (int)MessageType.Count)
 		{
 			_startId = startId;
 			_usedIds = startId;
+			for (var i = 0; i < startId; i++)
+			{
+				_isEvent.Add(false);
+				_registeredTypes.Add(default);
+			}
 		}
 
 		public void RegisterAutomatically(Assembly assembly)
@@ -50,15 +54,15 @@ namespace Massive.Netcode
 
 		public void RegisterAutomaticallyFromAllAssemblies()
 		{
-			var asemblies = AppDomain.CurrentDomain.GetAssemblies();
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-			var inputTypes = asemblies
+			var inputTypes = assemblies
 				.SelectMany(assembly => assembly.GetTypes())
 				.Where(t => typeof(IInput).IsAssignableFrom(t))
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
 
-			var eventTypes = asemblies
+			var eventTypes = assemblies
 				.SelectMany(assembly => assembly.GetTypes())
 				.Where(t => typeof(IEvent).IsAssignableFrom(t))
 				.OrderBy(type => type.GetFullGenericName())
@@ -107,7 +111,7 @@ namespace Massive.Netcode
 				throw new InvalidOperationException($"Input with id: {inputId} is not registered.");
 			}
 
-			return RegisteredTypes[inputId];
+			return _registeredTypes[inputId];
 		}
 
 		public int GetEventId(Type type)
@@ -136,7 +140,7 @@ namespace Massive.Netcode
 			{
 				throw new Exception($"Duplicate event type registration. Type: {type.GetFullGenericName()}");
 			}
-			RegisteredTypes.Add(type);
+			_registeredTypes.Add(type);
 			_isEvent.Add(true);
 			_usedIds++;
 		}
@@ -147,7 +151,7 @@ namespace Massive.Netcode
 			{
 				throw new Exception($"Duplicate input type registration. Type: {type.GetFullGenericName()}");
 			}
-			RegisteredTypes.Add(type);
+			_registeredTypes.Add(type);
 			_isEvent.Add(false);
 			_usedIds++;
 		}
