@@ -49,7 +49,6 @@ namespace Massive.Netcode
 				connection.Channel = Connections.Count;
 				Connections.Add(connection);
 				SendFullSync(connection);
-				connection.FlushOutgoing();
 			}
 
 			for (var i = Connections.Count - 1; i >= 0; i--)

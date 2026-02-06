@@ -16,7 +16,7 @@ namespace Massive.Netcode
 
 		public Connection Connection { get; }
 
-		private double PingDelaySeconds { get; }
+		private double PingIntervalSeconds { get; }
 
 		private double LastPingTime { get; set; } = -1;
 
@@ -24,10 +24,10 @@ namespace Massive.Netcode
 
 		public bool Synced { get; private set; }
 
-		public Client(SessionConfig sessionConfig, Connection connection, double pingDelaySeconds = 1f)
+		public Client(SessionConfig sessionConfig, Connection connection, double pingIntervalSeconds = 0.5f)
 		{
 			Connection = connection;
-			PingDelaySeconds = pingDelaySeconds;
+			PingIntervalSeconds = pingIntervalSeconds;
 
 			Session = new Session(sessionConfig, this);
 			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
@@ -47,7 +47,7 @@ namespace Massive.Netcode
 
 			ReadMessages(clientTime);
 
-			if (Synced && clientTime - LastPingTime >= 0.5f)
+			if (Synced && clientTime - LastPingTime >= PingIntervalSeconds)
 			{
 				LastPingTime = clientTime;
 				MessageSerializer.WriteMessageId(MessageType.Ping, Connection.Outgoing);
