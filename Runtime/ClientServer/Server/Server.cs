@@ -24,8 +24,8 @@ namespace Massive.Netcode
 		public IConnectionListener ConnectionListener { get; }
 
 		public List<Connection> Connections { get; } = new List<Connection>();
-
-		public int LastSentTick { get; set; }
+		public List<Connection> NewConnections { get; } = new List<Connection>();
+		public int UsedChannels { get; private set; }
 
 		public Server(SessionConfig sessionConfig, IConnectionListener connectionListener, double ticksAcceptWindowSeconds = 2f)
 		{
@@ -42,15 +42,7 @@ namespace Massive.Netcode
 
 		public void Update(double serverTime)
 		{
-			Session.Inputs.PopulateUpTo(Session.Loop.CurrentTick + 1);
-
-			while (ConnectionListener.TryAccept(out var connection))
-			{
-				connection.Channel = Connections.Count;
-				Connections.Add(connection);
-				SendFullSync(connection);
-				Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick + 1, connection.Channel, new PlayerConnectedEvent());
-			}
+			Session.Inputs.PopulateUpTo(Session.Loop.CurrentTick);
 
 			for (var i = Connections.Count - 1; i >= 0; i--)
 			{
@@ -59,32 +51,55 @@ namespace Massive.Netcode
 				{
 					Connections.RemoveAt(i);
 					ConnectionListener.ReturnToPool(connection);
-					Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick + 1, connection.Channel, new PlayerDisconnectedEvent());
+					Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerDisconnectedEvent());
 				}
+			}
+
+			while (ConnectionListener.TryAccept(out var connection))
+			{
+				connection.Channel = UsedChannels++;
+				Connections.Add(connection);
+				Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerConnectedEvent());
+				NewConnections.Add(connection);
 			}
 
 			ReadMessages(serverTime);
 
+			var lastTick = Session.Loop.CurrentTick;
 			var targetTick = (int)Math.Floor(serverTime * Session.Config.TickRate);
+
+			var simulatingNewTick = targetTick > lastTick;
+			if (simulatingNewTick)
+			{
+				foreach (var newConnection in NewConnections)
+				{
+					if (newConnection.IsConnected)
+					{
+						SendFullSync(newConnection);
+					}
+				}
+				NewConnections.Clear();
+			}
 
 			Session.Loop.FastForwardToTick(targetTick);
 
-			if (LastSentTick <= targetTick)
+			if (simulatingNewTick)
 			{
-				for (; LastSentTick <= targetTick; LastSentTick++)
+				for (var tick = lastTick; tick < targetTick; tick++)
 				{
 					foreach (var connection in Connections)
 					{
-						MessageSerializer.WriteAllFreshInputs(LastSentTick, connection.Outgoing);
+						MessageSerializer.WriteAllFreshInputs(tick, connection.Outgoing);
 					}
 				}
 
 				Session.Inputs.DiscardUpTo(targetTick);
 
+				// Approve previous tick.
 				foreach (var connection in Connections)
 				{
 					MessageSerializer.WriteMessageId(MessageType.Approve, connection.Outgoing);
-					ApproveMessage.Write(new ApproveMessage() { ServerTick = targetTick }, connection.Outgoing);
+					ApproveMessage.Write(new ApproveMessage() { ServerTick = targetTick - 1 }, connection.Outgoing);
 				}
 			}
 

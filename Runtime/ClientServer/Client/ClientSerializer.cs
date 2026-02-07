@@ -65,6 +65,19 @@ namespace Massive.Netcode
 			}
 		}
 
+		public void SkipOneInput(int messageId, Stream stream)
+		{
+			if (_inputIdentifiers.IsEvent(messageId))
+			{
+				stream.ReadShort();
+				GetEventSet(messageId).SkipData(stream);
+			}
+			else
+			{
+				GetInputSet(messageId).SkipData(stream);
+			}
+		}
+
 		public void ReadFullSyncInputs(int tick, Stream stream)
 		{
 			var eventSetsCount = ReadMessageId(stream);
