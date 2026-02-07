@@ -90,7 +90,7 @@ namespace Massive.Netcode
 
 			foreach (var connection in Connections)
 			{
-				connection.FlushOutgoing();
+				connection.PushOutgoing();
 			}
 		}
 
@@ -98,7 +98,7 @@ namespace Massive.Netcode
 		{
 			foreach (var connection in Connections)
 			{
-				connection.PopulateIncoming();
+				connection.PollIncoming();
 
 				var messagesRead = 0;
 				while (connection.IsConnected && connection.HasUnreadPayload && messagesRead < MaxMessagesPerClient)

@@ -58,7 +58,7 @@ namespace Massive.Netcode
 				PingMessage.Write(new PingMessage() { ClientPingSendTime = clientTime }, Connection.Outgoing);
 			}
 
-			Connection.FlushOutgoing();
+			Connection.PushOutgoing();
 
 			if (!Synced)
 			{
@@ -70,7 +70,7 @@ namespace Massive.Netcode
 
 		private void ReadMessages(double clientTime)
 		{
-			Connection.PopulateIncoming();
+			Connection.PollIncoming();
 
 			while (Connection.IsConnected && Connection.HasUnreadPayload)
 			{
