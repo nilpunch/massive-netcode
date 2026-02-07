@@ -21,12 +21,8 @@ namespace Massive.Netcode
 
 		public override void Connect(IPEndPoint endPoint)
 		{
-			if (TcpClient != null && TcpClient.Connected)
-			{
-				return;
-			}
-
 			TcpClient?.Close();
+			TcpClient?.Dispose();
 
 			TcpClient = new TcpClient();
 			TcpClient.NoDelay = true;
@@ -44,6 +40,8 @@ namespace Massive.Netcode
 		public override void Disconnect()
 		{
 			TcpClient?.Close();
+			TcpClient?.Dispose();
+			TcpClient = null;
 		}
 	}
 }

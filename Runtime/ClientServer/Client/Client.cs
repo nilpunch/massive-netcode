@@ -20,8 +20,6 @@ namespace Massive.Netcode
 
 		private double LastPingTime { get; set; } = -1;
 
-		public int ApprovedTick => TickSync.ApprovedSimulationTick;
-
 		public bool Synced { get; private set; }
 
 		public Client(SessionConfig sessionConfig, Connection connection, double pingIntervalSeconds = 0.5f)
@@ -35,6 +33,12 @@ namespace Massive.Netcode
 			InputIdentifiers = new InputIdentifiers();
 			MessageSerializer = new ClientSerializer(Session.Inputs, InputIdentifiers);
 			WorldSerializer = new WorldSerializer();
+		}
+
+		public int InputPredictionTick(double clientTime)
+		{
+			// +1 because we don't want to override actual received input.
+			return MathUtils.Max(TickSync.ApprovedSimulationTick + 1, TickSync.CalculateTargetTick(clientTime));
 		}
 
 		public void Update(double clientTime)
@@ -147,12 +151,12 @@ namespace Massive.Netcode
 			Connection.CompactIncoming();
 		}
 
-		public void OnInputPredicted(IInputSet inputSet, int tick, int channel)
+		void IPredictionReceiver.OnInputPredicted(IInputSet inputSet, int tick, int channel)
 		{
 			MessageSerializer.WriteOneInput(inputSet, tick, channel, Connection.Outgoing);
 		}
 
-		public void OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
+		void IPredictionReceiver.OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
 		{
 			MessageSerializer.WriteOneInput(eventSet, tick, localOrder, Connection.Outgoing);
 		}

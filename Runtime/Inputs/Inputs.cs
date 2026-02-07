@@ -226,7 +226,7 @@ namespace Massive.Netcode
 				}
 			}
 
-			var createMethod = typeof(Sets).GetMethod(nameof(GetEventSet));
+			var createMethod = typeof(Inputs).GetMethod(nameof(GetEventSet));
 			var genericMethod = createMethod?.MakeGenericMethod(inputType);
 			return (IEventSet)genericMethod?.Invoke(this, new object[] { });
 		}
@@ -266,7 +266,7 @@ namespace Massive.Netcode
 				}
 			}
 
-			var createMethod = typeof(Sets).GetMethod(nameof(GetInputSet));
+			var createMethod = typeof(Inputs).GetMethod(nameof(GetInputSet));
 			var genericMethod = createMethod?.MakeGenericMethod(inputType);
 			return (IInputSet)genericMethod?.Invoke(this, new object[] { });
 		}

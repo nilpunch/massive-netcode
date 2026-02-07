@@ -25,7 +25,7 @@ namespace Massive.Netcode
 
 		public List<Connection> Connections { get; } = new List<Connection>();
 
-		public int LastSendedTick { get; set; }
+		public int LastSentTick { get; set; }
 
 		public Server(SessionConfig sessionConfig, IConnectionListener connectionListener, double ticksAcceptWindowSeconds = 2f)
 		{
@@ -42,13 +42,14 @@ namespace Massive.Netcode
 
 		public void Update(double serverTime)
 		{
-			Session.Inputs.PopulateUpTo(Session.Loop.CurrentTick);
+			Session.Inputs.PopulateUpTo(Session.Loop.CurrentTick + 1);
 
 			while (ConnectionListener.TryAccept(out var connection))
 			{
 				connection.Channel = Connections.Count;
 				Connections.Add(connection);
 				SendFullSync(connection);
+				Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick + 1, connection.Channel, new PlayerConnectedEvent());
 			}
 
 			for (var i = Connections.Count - 1; i >= 0; i--)
@@ -58,6 +59,7 @@ namespace Massive.Netcode
 				{
 					Connections.RemoveAt(i);
 					ConnectionListener.ReturnToPool(connection);
+					Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick + 1, connection.Channel, new PlayerDisconnectedEvent());
 				}
 			}
 
@@ -67,13 +69,13 @@ namespace Massive.Netcode
 
 			Session.Loop.FastForwardToTick(targetTick);
 
-			if (LastSendedTick <= targetTick)
+			if (LastSentTick <= targetTick)
 			{
-				for (; LastSendedTick <= targetTick; LastSendedTick++)
+				for (; LastSentTick <= targetTick; LastSentTick++)
 				{
 					foreach (var connection in Connections)
 					{
-						MessageSerializer.WriteAllFreshInputs(LastSendedTick, connection.Outgoing);
+						MessageSerializer.WriteAllFreshInputs(LastSentTick, connection.Outgoing);
 					}
 				}
 
@@ -160,7 +162,7 @@ namespace Massive.Netcode
 			}
 		}
 
-		public void SendFullSync(Connection connection)
+		private void SendFullSync(Connection connection)
 		{
 			Buffer.WriteInt(connection.Channel);
 			Buffer.WriteInt(Session.Loop.CurrentTick);

@@ -1,6 +1,8 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Massive.Netcode
 {
@@ -44,7 +46,7 @@ namespace Massive.Netcode
 					}
 				}
 			}
-			catch (IOException) { Disconnect(); }
+			catch (Exception) { Disconnect(); }
 		}
 
 		public void CompactIncoming()
@@ -68,6 +70,9 @@ namespace Massive.Netcode
 
 		public void FlushOutgoing()
 		{
+			// FlushOutgoingSlow();
+			// return;
+			
 			if (!IsConnected)
 			{
 				return;
@@ -77,10 +82,31 @@ namespace Massive.Netcode
 			{
 				Stream.Write(Outgoing.GetBuffer(), 0, (int)Outgoing.Length);
 			}
-			catch (IOException) { Disconnect(); }
+			catch (Exception) { Disconnect(); }
 
 			Outgoing.SetLength(0);
 			Outgoing.Position = 0;
+		}
+		
+		public async void FlushOutgoingSlow(int delayMs = 30)
+		{
+			if (!IsConnected)
+			{
+				return;
+			}
+
+			var payload = new byte[Outgoing.Length];
+			Array.Copy(Outgoing.GetBuffer(), payload, (int)Outgoing.Length);
+			Outgoing.SetLength(0);
+			Outgoing.Position = 0;
+
+			await Task.Delay(delayMs);
+
+			try
+			{
+				Stream.Write(payload, 0, payload.Length);
+			}
+			catch (Exception) { Disconnect(); }
 		}
 
 		public abstract void Connect(IPEndPoint endPoint);
