@@ -164,7 +164,7 @@ namespace Massive.Netcode
 			}
 			_registeredTypes.Add(type);
 			_isEvent.Add(true);
-			_isAuthoritive.Add(type.IsDefined(typeof(IAuthoritive)));
+			_isAuthoritive.Add(type.IsDefined(typeof(AuthoritiveAttribute)));
 			_usedIds++;
 		}
 
@@ -176,7 +176,7 @@ namespace Massive.Netcode
 			}
 			_registeredTypes.Add(type);
 			_isEvent.Add(false);
-			_isAuthoritive.Add(type.IsDefined(typeof(IAuthoritive)));
+			_isAuthoritive.Add(type.IsDefined(typeof(AuthoritiveAttribute)));
 			_usedIds++;
 		}
 	}
