@@ -120,7 +120,7 @@ namespace Massive.Netcode
 				{
 					var messageId = MessageSerializer.ReadMessageId(connection.Incoming);
 
-					if (IsAppropriateClientMessage(messageId))
+					if (!IsAppropriateClientMessage(messageId))
 					{
 						connection.Disconnect();
 						break;
