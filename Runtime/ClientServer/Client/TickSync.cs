@@ -4,9 +4,9 @@ namespace Massive.Netcode
 {
 	public class TickSync
 	{
-		private readonly int _tickRate;
-		private readonly int _maxRollbackTicks;
-		private readonly int _safetyBufferTicks;
+		public int TickRate { get; }
+		public int MaxRollbackTicks { get; }
+		public int SafetyBufferTicks { get; }
 
 		public int ApprovedSimulationTick { get; private set; }
 
@@ -17,12 +17,14 @@ namespace Massive.Netcode
 
 		public TickSync(int tickRate, int maxRollbackTicks, int safetyBufferTicks = 2)
 		{
-			_tickRate = tickRate;
-			_maxRollbackTicks = maxRollbackTicks;
-			_safetyBufferTicks = safetyBufferTicks;
+			TickRate = tickRate;
+			MaxRollbackTicks = maxRollbackTicks;
+			SafetyBufferTicks = safetyBufferTicks;
 
 			PredictionLeadTicks = safetyBufferTicks;
 		}
+
+		private int MaxPredictionTick => ApprovedSimulationTick + PredictionLeadTicks;
 
 		/// <summary>
 		/// Computes the client simulation target tick.
@@ -30,8 +32,8 @@ namespace Massive.Netcode
 		/// </summary>
 		public int CalculateTargetTick(double clientTime)
 		{
-			var desired = EstimateServerTick(clientTime) + PredictionLeadTicks;
-			return MathUtils.Min(desired, ApprovedSimulationTick + _maxRollbackTicks);
+			var targetTick = EstimateServerTick(clientTime) + PredictionLeadTicks;
+			return MathUtils.Max(ApprovedSimulationTick, MathUtils.Min(targetTick, MaxPredictionTick));
 		}
 
 		/// <summary>
@@ -41,7 +43,7 @@ namespace Massive.Netcode
 		{
 			var elapsed = clientTime - TimeSyncClientTime;
 			var serverTime = TimeSyncServerTime + elapsed;
-			return MathUtils.Max(ApprovedSimulationTick, (int)Math.Floor(serverTime * _tickRate));
+			return (int)Math.Floor(serverTime * TickRate);
 		}
 
 		/// <summary>
@@ -80,25 +82,25 @@ namespace Massive.Netcode
 		{
 			if (rttEstimate > 0)
 			{
-				var oneWayTicks = (int)Math.Round(rttEstimate * 0.5 * _tickRate);
+				var oneWayTicks = (int)Math.Round(rttEstimate * 0.5 * TickRate);
 				PredictionLeadTicks = MathUtils.Min(
-					oneWayTicks + _safetyBufferTicks,
-					_maxRollbackTicks);
+					oneWayTicks + SafetyBufferTicks,
+					MaxRollbackTicks);
 			}
 		}
 
 		/// <summary>
 		/// Returns normalized interpolation within the current tick [0..1].
 		/// </summary>
-		public float CalculateInterpolation(float clientTime)
+		public float CalculateInterpolation(double clientTime)
 		{
-			var serverTickStartTime = EstimateServerTick(clientTime) / (float)_tickRate;
+			var serverTickStartTime = EstimateServerTick(clientTime) / TickRate;
 
-			var simulationDeltaTime = 1f / _tickRate;
+			var simulationDeltaTime = 1f / TickRate;
 
 			var interpolation = (clientTime - serverTickStartTime) / simulationDeltaTime;
 
-			var interpolation01 = interpolation < 0f ? 0f : interpolation > 1f ? 1f : interpolation;
+			var interpolation01 = interpolation < 0f ? 0f : interpolation > 1f ? 1f : (float)interpolation;
 
 			return interpolation01;
 		}
@@ -108,7 +110,7 @@ namespace Massive.Netcode
 			ApprovedSimulationTick = 0;
 			TimeSyncServerTime = 0f;
 			TimeSyncClientTime = 0f;
-			PredictionLeadTicks = _safetyBufferTicks;
+			PredictionLeadTicks = SafetyBufferTicks;
 		}
 	}
 }

@@ -14,6 +14,7 @@ namespace Massive.Netcode
 		private readonly Dictionary<Type, int> _idsByEvents = new Dictionary<Type, int>();
 
 		private readonly List<bool> _isEvent = new List<bool>();
+		private readonly List<bool> _isAuthoritive = new List<bool>();
 		private readonly List<Type> _registeredTypes = new List<Type>();
 
 		public InputIdentifiers(int startId = (int)MessageType.Count)
@@ -23,6 +24,7 @@ namespace Massive.Netcode
 			for (var i = 0; i < startId; i++)
 			{
 				_isEvent.Add(false);
+				_isAuthoritive.Add(false);
 				_registeredTypes.Add(default);
 			}
 		}
@@ -81,12 +83,12 @@ namespace Massive.Netcode
 
 		private static bool IsInputType(Type type)
 		{
-			return typeof(IInput).IsAssignableFrom(type) && (type.IsValueType || type.IsClass) && !type.IsGenericTypeDefinition;
+			return typeof(IInput).IsAssignableFrom(type) && (type.IsValueType || type.IsClass && !type.IsAbstract) && !type.IsGenericTypeDefinition;
 		}
 
 		private static bool IsEventType(Type type)
 		{
-			return typeof(IEvent).IsAssignableFrom(type) && (type.IsValueType || type.IsClass) && !type.IsGenericTypeDefinition;
+			return typeof(IEvent).IsAssignableFrom(type) && (type.IsValueType || type.IsClass && !type.IsAbstract) && !type.IsGenericTypeDefinition;
 		}
 
 		public void RegisterInput<T>()
@@ -112,6 +114,16 @@ namespace Massive.Netcode
 			}
 
 			return _isEvent[inputId];
+		}
+
+		public bool IsAuthoritive(int inputId)
+		{
+			if (!IsRegistered(inputId))
+			{
+				throw new InvalidOperationException($"Input with id: {inputId} is not registered.");
+			}
+
+			return _isAuthoritive[inputId];
 		}
 
 		public Type GetTypeById(int inputId)
@@ -152,6 +164,7 @@ namespace Massive.Netcode
 			}
 			_registeredTypes.Add(type);
 			_isEvent.Add(true);
+			_isAuthoritive.Add(type.IsDefined(typeof(IAuthoritive)));
 			_usedIds++;
 		}
 
@@ -163,6 +176,7 @@ namespace Massive.Netcode
 			}
 			_registeredTypes.Add(type);
 			_isEvent.Add(false);
+			_isAuthoritive.Add(type.IsDefined(typeof(IAuthoritive)));
 			_usedIds++;
 		}
 	}

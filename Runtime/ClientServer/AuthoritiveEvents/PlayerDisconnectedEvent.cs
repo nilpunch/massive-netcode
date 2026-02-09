@@ -2,7 +2,7 @@
 
 namespace Massive.Netcode
 {
-	public struct PlayerConnectedEvent : IEvent
+	public struct PlayerDisconnectedEvent : IEvent, IAuthoritive
 	{
 		public Guid PlayerGuid;
 	}

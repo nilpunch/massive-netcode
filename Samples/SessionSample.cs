@@ -79,13 +79,6 @@ namespace Massive.Netcode.Samples
 		}
 	}
 
-	public interface IUpdate : ISystemMethod<IUpdate>
-	{
-		void Update();
-
-		void ISystemMethod<IUpdate>.Run() => Update();
-	}
-
 	public class SpawnPlayers : NetSystem, IUpdate
 	{
 		public void Update()
