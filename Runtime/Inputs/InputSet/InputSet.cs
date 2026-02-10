@@ -150,10 +150,7 @@ namespace Massive.Netcode
 		{
 			PopulateUpTo(tick);
 
-			ref var inputs = ref _inputs[tick];
-
-			inputs.EnsureChannel(channel);
-			inputs.Inputs[channel] = Serializer.ReadFullInput(stream);
+			_inputs[tick].SetFullInput(channel, Serializer.ReadFullInput(stream));
 		}
 
 		public void Write(int tick, int channel, Stream stream)
@@ -176,9 +173,19 @@ namespace Massive.Netcode
 			return _inputs[tick].UsedChannels;
 		}
 
+		public int GetFreshInputsCount(int tick)
+		{
+			return _inputs[tick].FreshInputsCount();
+		}
+
 		public bool IsFresh(int tick, int channel)
 		{
-			return _inputs[tick].Inputs[channel].IsFresh();
+			return _inputs[tick].Inputs[channel].IsFresh;
+		}
+
+		public MaskEnumerator GetFreshInputs(int tick)
+		{
+			return _inputs[tick].GetFreshInputs();
 		}
 	}
 }

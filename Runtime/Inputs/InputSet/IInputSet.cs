@@ -23,6 +23,8 @@ namespace Massive.Netcode
 		void Skip(Stream stream);
 
 		int GetUsedChannels(int tick);
+		int GetFreshInputsCount(int tick);
 		bool IsFresh(int tick, int channel);
+		MaskEnumerator GetFreshInputs(int tick);
 	}
 }

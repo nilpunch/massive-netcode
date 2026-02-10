@@ -14,10 +14,15 @@ namespace Massive.Netcode
 
 		public int InputsCapacity { get; private set; }
 
+		public ulong[] FreshMask { get; private set; }
+
+		public int FreshMaskLength => (UsedChannels + 63) >> 6;
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void EnsureInitialized()
 		{
 			Inputs ??= Array.Empty<Input<T>>();
+			FreshMask ??= Array.Empty<ulong>();
 			InputsCapacity = Inputs.Length;
 		}
 
@@ -38,6 +43,7 @@ namespace Massive.Netcode
 			EnsureChannel(channel);
 
 			Inputs[channel] = new Input<T>(input, 0, true);
+			FreshMask[channel >> 6] |= 1UL << (channel & 63);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -45,12 +51,29 @@ namespace Massive.Netcode
 		{
 			EnsureChannel(channel);
 
-			if (Inputs[channel].IsFresh() && Inputs[channel].IsApproved)
+			if (Inputs[channel].IsFresh && Inputs[channel].IsApproved)
 			{
 				throw new InvalidOperationException($"You are trying to override approved input at channel {channel}.");
 			}
 
 			Inputs[channel] = new Input<T>(input, 0, false);
+			FreshMask[channel >> 6] |= 1UL << (channel & 63);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void SetFullInput(int channel, Input<T> input)
+		{
+			EnsureChannel(channel);
+
+			Inputs[channel] = input;
+			if (input.IsFresh)
+			{
+				FreshMask[channel >> 6] |= 1UL << (channel & 63);
+			}
+			else
+			{
+				FreshMask[channel >> 6] &= ~(1UL << (channel & 63));
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,6 +94,14 @@ namespace Massive.Netcode
 		public void Clear()
 		{
 			Array.Fill(Inputs, Input<T>.Stale);
+
+			var freshMaskLength = FreshMaskLength;
+
+			for (var i = 0; i < freshMaskLength; i++)
+			{
+				FreshMask[i] = 0;
+			}
+
 			UsedChannels = 0;
 		}
 
@@ -79,11 +110,12 @@ namespace Massive.Netcode
 		{
 			var staleInput = Input<T>.Stale;
 
-			for (var i = 0; i < UsedChannels; i++)
+			foreach (var channel in GetFreshInputs())
 			{
-				if (Inputs[i].IsFresh() && !Inputs[i].IsApproved)
+				if (!Inputs[channel].IsApproved)
 				{
-					Inputs[i] = staleInput;
+					Inputs[channel] = staleInput;
+					FreshMask[channel >> 6] &= ~(1UL << (channel & 63));
 				}
 			}
 		}
@@ -109,6 +141,12 @@ namespace Massive.Netcode
 				Array.Fill(Inputs, Input<T>.Stale, InputsCapacity, capacity - InputsCapacity);
 			}
 			InputsCapacity = capacity;
+
+			var maskLength = (InputsCapacity + 63) >> 6;
+			if (maskLength > FreshMask.Length)
+			{
+				FreshMask = FreshMask.Resize(maskLength);
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -116,6 +154,10 @@ namespace Massive.Netcode
 		{
 			EnsureChannel(other.UsedChannels - 1);
 			Array.Copy(other.Inputs, Inputs, other.UsedChannels);
+			for (var i = 0; i < other.FreshMaskLength; i++)
+			{
+				FreshMask[i] = other.FreshMask[i];
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -134,11 +176,28 @@ namespace Massive.Netcode
 			EnsureChannel(other.UsedChannels - 1);
 			for (var i = 0; i < other.UsedChannels; i++)
 			{
-				if (Inputs[i].TicksPassed != 0)
+				if (!Inputs[i].IsFresh)
 				{
 					Inputs[i] = other.Inputs[i].Aged();
 				}
 			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public int FreshInputsCount()
+		{
+			var count = 0;
+			for (var i = 0; i < FreshMaskLength; i++)
+			{
+				count += MathUtils.PopCount(FreshMask[i]);
+			}
+			return count;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public MaskEnumerator GetFreshInputs()
+		{
+			return new MaskEnumerator(FreshMask, FreshMaskLength);
 		}
 	}
 }

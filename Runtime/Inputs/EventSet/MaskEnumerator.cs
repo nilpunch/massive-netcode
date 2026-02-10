@@ -3,13 +3,15 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
 {
+	/// <summary>
+	/// Returns filled indices.
+	/// </summary>
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-	public struct AllEventsEnumerator<T> where T : IEvent
+	public struct MaskEnumerator
 	{
-		private readonly AllEvents<T> _allEvents;
-		private ulong[] _allBits;
-		private int _allBitsLength;
+		private readonly ulong[] _allBits;
+		private readonly int _allBitsLength;
 		private int _bitsIndex;
 
 		private readonly byte[] _deBruijn;
@@ -18,11 +20,10 @@ namespace Massive.Netcode
 		private int _bitsOffset;
 		private int _bit;
 
-		public AllEventsEnumerator(AllEvents<T> allEvents)
+		public MaskEnumerator(ulong[] mask, int maskLength)
 		{
-			_allEvents = allEvents;
-			_allBitsLength = allEvents.MaskLength;
-			_allBits = allEvents.AllMask;
+			_allBitsLength = maskLength;
+			_allBits = mask;
 
 			_deBruijn = MathUtils.DeBruijn;
 
@@ -42,10 +43,10 @@ namespace Massive.Netcode
 			}
 		}
 
-		public Event<T> Current
+		public int Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => _allEvents.Events[_bit + _bitsOffset];
+			get => _bit + _bitsOffset;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,6 +72,11 @@ namespace Massive.Netcode
 			}
 
 			return false;
+		}
+
+		public MaskEnumerator GetEnumerator()
+		{
+			return this;
 		}
 	}
 }

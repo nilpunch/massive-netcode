@@ -17,6 +17,12 @@ namespace Massive.Netcode
 			IsApproved = isApproved;
 		}
 
+		public bool IsFresh
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => TicksPassed == 0;
+		}
+
 		public static readonly Input<TInput> Stale = new Input<TInput>(Default<TInput>.Value, int.MaxValue, false);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

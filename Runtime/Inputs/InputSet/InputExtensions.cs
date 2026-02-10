@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Massive.Netcode
@@ -10,10 +11,11 @@ namespace Massive.Netcode
 			return input.LastFreshInput;
 		}
 
+		[Obsolete("Use IsFresh property instead.")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool IsFresh<TInput>(this Input<TInput> input) where TInput : IInput
 		{
-			return input.TicksPassed == 0;
+			return input.IsFresh;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

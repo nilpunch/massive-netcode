@@ -162,10 +162,10 @@ namespace Massive.Netcode
 			return _events[tick].Events[order].Channel;
 		}
 
-		AllEventsEnumerator IEventSet.GetAllEvents(int tick)
+		MaskEnumerator IEventSet.GetAllEvents(int tick)
 		{
 			ref var events = ref _events[tick];
-			return new AllEventsEnumerator(events.AllMask, events.MaskLength);
+			return new MaskEnumerator(events.AllMask, events.MaskLength);
 		}
 	}
 }

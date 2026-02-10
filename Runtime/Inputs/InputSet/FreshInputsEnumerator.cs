@@ -25,7 +25,7 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool MoveNext()
 		{
-			while (++_index < _allInputs.UsedChannels && !_allInputs.Inputs[_index].IsFresh())
+			while (++_index < _allInputs.UsedChannels && !_allInputs.Inputs[_index].IsFresh)
 			{
 			}
 

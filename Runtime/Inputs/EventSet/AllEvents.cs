@@ -141,15 +141,14 @@ namespace Massive.Netcode
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int DenseCount()
 		{
 			var count = 0;
-
 			for (var i = 0; i < MaskLength; i++)
 			{
 				count += MathUtils.PopCount(AllMask[i]);
 			}
-
 			return count;
 		}
 

@@ -113,14 +113,9 @@ namespace Massive.Netcode
 
 			foreach (var inputSet in _inputs.InputSets)
 			{
-				var usedChannels = inputSet.GetUsedChannels(tick);
-
-				for (var channel = 0; channel < usedChannels; channel++)
+				foreach (var channel in inputSet.GetFreshInputs(tick))
 				{
-					if (inputSet.IsFresh(tick, channel))
-					{
-						WriteOneInput(inputSet, tick, channel, stream);
-					}
+					WriteOneInput(inputSet, tick, channel, stream);
 				}
 			}
 		}
