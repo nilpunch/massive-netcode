@@ -27,15 +27,15 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActualInput<T>(int channel, T input) where T : IInput
+		public void SetApprovedInput<T>(int channel, T input) where T : IInput
 		{
-			SetActualInputAt(CurrentTick, channel, input);
+			SetApprovedInputAt(CurrentTick, channel, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActualInputAt<T>(int tick, int channel, T input) where T : IInput
+		public void SetApprovedInputAt<T>(int tick, int channel, T input) where T : IInput
 		{
-			GetInputSet<T>().SetActual(tick, channel, input);
+			GetInputSet<T>().SetApproved(tick, channel, input);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,27 +87,27 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActualEvent<T>(int localOrder, int channel, T data) where T : IEvent
+		public void SetApprovedEvent<T>(int order, int channel, T data) where T : IEvent
 		{
-			SetActualEventAt(CurrentTick, localOrder, channel, data);
+			SetApprovedEventAt(CurrentTick, order, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActualEventAt<T>(int tick, int localOrder, int channel, T data) where T : IEvent
+		public void SetApprovedEventAt<T>(int tick, int order, int channel, T data) where T : IEvent
 		{
-			GetEventSet<T>().SetActual(tick, localOrder, channel, data);
+			GetEventSet<T>().SetApproved(tick, order, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendActualEvent<T>(int channel, T data) where T : IEvent
+		public void AppendApprovedEvent<T>(int channel, T data) where T : IEvent
 		{
-			AppendActualEventAt(CurrentTick, channel, data);
+			AppendApprovedEventAt(CurrentTick, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendActualEventAt<T>(int tick, int channel, T data) where T : IEvent
+		public void AppendApprovedEventAt<T>(int tick, int channel, T data) where T : IEvent
 		{
-			GetEventSet<T>().AppendActual(tick, channel, data);
+			GetEventSet<T>().AppendApproved(tick, channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

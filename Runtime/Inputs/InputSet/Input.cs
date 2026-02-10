@@ -8,13 +8,13 @@ namespace Massive.Netcode
 	{
 		public readonly TInput LastFreshInput;
 		public readonly int TicksPassed;
-		public readonly bool IsActual;
+		public readonly bool IsApproved;
 
-		public Input(TInput lastFreshInput, int ticksPassed, bool isActual)
+		public Input(TInput lastFreshInput, int ticksPassed, bool isApproved)
 		{
 			LastFreshInput = lastFreshInput;
 			TicksPassed = ticksPassed;
-			IsActual = isActual;
+			IsApproved = isApproved;
 		}
 
 		public static readonly Input<TInput> Stale = new Input<TInput>(Default<TInput>.Value, int.MaxValue, false);
@@ -23,7 +23,7 @@ namespace Massive.Netcode
 		public Input<TInput> Aged()
 		{
 			var clampedNextTick = MathUtils.SaturationAdd(TicksPassed, 1);
-			return new Input<TInput>(LastFreshInput, clampedNextTick, IsActual);
+			return new Input<TInput>(LastFreshInput, clampedNextTick, IsApproved);
 		}
 	}
 }

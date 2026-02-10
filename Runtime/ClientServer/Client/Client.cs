@@ -37,7 +37,7 @@ namespace Massive.Netcode
 
 		public int InputPredictionTick(double clientTime)
 		{
-			// +1 because we don't want to override actual received input.
+			// +1 because we don't want to override approved inputs.
 			return MathUtils.Max(TickSync.ApprovedSimulationTick + 1, TickSync.CalculateTargetTick(clientTime));
 		}
 
@@ -163,9 +163,9 @@ namespace Massive.Netcode
 			MessageSerializer.WriteOneInput(inputSet, tick, channel, Connection.Outgoing);
 		}
 
-		void IPredictionReceiver.OnEventPredicted(IEventSet eventSet, int tick, int localOrder)
+		void IPredictionReceiver.OnEventPredicted(IEventSet eventSet, int tick, int order)
 		{
-			MessageSerializer.WriteOneInput(eventSet, tick, localOrder, Connection.Outgoing);
+			MessageSerializer.WriteOneInput(eventSet, tick, order, Connection.Outgoing);
 		}
 
 		private bool CanAcceptTick(int tick)

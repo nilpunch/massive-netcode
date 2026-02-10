@@ -51,7 +51,7 @@ namespace Massive.Netcode
 				{
 					Connections.RemoveAt(i);
 					ConnectionListener.ReturnToPool(connection);
-					Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerDisconnectedEvent());
+					Session.Inputs.AppendApprovedEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerDisconnectedEvent());
 				}
 			}
 
@@ -59,7 +59,7 @@ namespace Massive.Netcode
 			{
 				connection.Channel = UsedChannels++;
 				Connections.Add(connection);
-				Session.Inputs.AppendActualEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerConnectedEvent());
+				Session.Inputs.AppendApprovedEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerConnectedEvent());
 				NewConnections.Add(connection);
 			}
 

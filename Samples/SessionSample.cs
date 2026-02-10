@@ -27,19 +27,19 @@ namespace Massive.Netcode.Samples
 		}
 
 		// Modify inputs via RPC or any other source, in any order, at any time.
-		public void ConnectClient(int connectionTick, int localOrder, int channel)
+		public void ConnectClient(int connectionTick, int order, int channel)
 		{
-			Session.Inputs.SetActualEventAt(connectionTick, localOrder, channel, new PlayerSpawnEvent());
+			Session.Inputs.SetApprovedEventAt(connectionTick, order, channel, new PlayerSpawnEvent());
 		}
 
 		public void ApplyPlayerInput(int inputChannel, int tick, PlayerShootingInput playerInput)
 		{
-			Session.Inputs.SetActualInputAt(tick, inputChannel, playerInput);
+			Session.Inputs.SetApprovedInputAt(tick, inputChannel, playerInput);
 		}
 
-		public void FinishSession(int finishTick, int localOrder, int channel)
+		public void FinishSession(int finishTick, int order, int channel)
 		{
-			Session.Inputs.SetActualEventAt(finishTick, localOrder, channel, new SessionFinishedEvent());
+			Session.Inputs.SetApprovedEventAt(finishTick, order, channel, new SessionFinishedEvent());
 		}
 
 		public async void Run()

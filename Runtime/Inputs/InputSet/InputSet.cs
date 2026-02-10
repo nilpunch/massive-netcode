@@ -42,11 +42,11 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActual(int tick, int channel, T input)
+		public void SetApproved(int tick, int channel, T input)
 		{
 			PopulateUpTo(tick);
 
-			_inputs[tick].SetActual(channel, input);
+			_inputs[tick].SetApproved(channel, input);
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
@@ -73,12 +73,6 @@ namespace Massive.Netcode
 
 			_localChangeTracker.NotifyChange(tick);
 			_globalChangeTracker.NotifyChange(tick);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ClearPrediction(int tick)
-		{
-			ClearPrediction(tick, tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -149,7 +143,7 @@ namespace Massive.Netcode
 		{
 			PopulateUpTo(tick);
 
-			_inputs[tick].SetActual(channel, Serializer.ReadData(stream));
+			_inputs[tick].SetApproved(channel, Serializer.ReadData(stream));
 		}
 
 		public void ReadInput(int tick, int channel, Stream stream)

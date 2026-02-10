@@ -33,7 +33,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActual(int channel, T input)
+		public void SetApproved(int channel, T input)
 		{
 			EnsureChannel(channel);
 
@@ -45,9 +45,9 @@ namespace Massive.Netcode
 		{
 			EnsureChannel(channel);
 
-			if (Inputs[channel].IsFresh() && Inputs[channel].IsActual)
+			if (Inputs[channel].IsFresh() && Inputs[channel].IsApproved)
 			{
-				throw new InvalidOperationException($"You are trying to override actual input at channel {channel}.");
+				throw new InvalidOperationException($"You are trying to override approved input at channel {channel}.");
 			}
 
 			Inputs[channel] = new Input<T>(input, 0, false);
@@ -81,7 +81,7 @@ namespace Massive.Netcode
 
 			for (var i = 0; i < UsedChannels; i++)
 			{
-				if (Inputs[i].IsFresh() && !Inputs[i].IsActual)
+				if (Inputs[i].IsFresh() && !Inputs[i].IsApproved)
 				{
 					Inputs[i] = staleInput;
 				}

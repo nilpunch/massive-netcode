@@ -40,9 +40,9 @@ namespace Massive.Netcode
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
 				var eventSet = GetEventSet(messageId);
-				var localOrder = eventSet.AppendActualDefault(tick, channel);
+				var order = eventSet.AppendApprovedDefault(tick, channel);
 
-				eventSet.ReadData(tick, localOrder, channel, stream);
+				eventSet.ReadData(tick, order, channel, stream);
 			}
 			else
 			{
@@ -74,13 +74,13 @@ namespace Massive.Netcode
 				var eventsCount = eventSet.GetEventsCount(tick);
 				stream.WriteShort((short)eventsCount);
 
-				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
+				foreach (var order in eventSet.GetAllEvents(tick))
 				{
-					var channel = eventSet.GetEventChannel(tick, localOrder);
+					var channel = eventSet.GetEventChannel(tick, order);
 
-					stream.WriteShort((short)localOrder);
+					stream.WriteShort((short)order);
 					stream.WriteShort((short)channel);
-					eventSet.WriteData(tick, localOrder, stream);
+					eventSet.WriteData(tick, order, stream);
 				}
 			}
 
@@ -105,9 +105,9 @@ namespace Massive.Netcode
 		{
 			foreach (var eventSet in _inputs.EventSets)
 			{
-				foreach (var localOrder in eventSet.GetEventsLocalOrders(tick))
+				foreach (var order in eventSet.GetAllEvents(tick))
 				{
-					WriteOneInput(eventSet, tick, localOrder, stream);
+					WriteOneInput(eventSet, tick, order, stream);
 				}
 			}
 
@@ -135,16 +135,16 @@ namespace Massive.Netcode
 			inputSet.WriteData(tick, channel, stream);
 		}
 
-		public void WriteOneInput(IEventSet eventSet, int tick, int localOrder, Stream stream)
+		public void WriteOneInput(IEventSet eventSet, int tick, int order, Stream stream)
 		{
 			var messageId = _inputIdentifiers.GetEventId(eventSet.EventType);
-			var channel = eventSet.GetEventChannel(tick, localOrder);
+			var channel = eventSet.GetEventChannel(tick, order);
 
 			WriteMessageId(messageId, stream);
 			stream.WriteInt(tick);
 			stream.WriteShort((short)channel);
-			stream.WriteShort((short)localOrder);
-			eventSet.WriteData(tick, localOrder, stream);
+			stream.WriteShort((short)order);
+			eventSet.WriteData(tick, order, stream);
 		}
 	}
 }

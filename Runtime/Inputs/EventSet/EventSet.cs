@@ -41,39 +41,39 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActual(int tick, int localOrder, int channel, T data)
+		public void SetApproved(int tick, int order, int channel, T data)
 		{
 			PopulateUpTo(tick);
 
-			_events[tick].SetActual(localOrder, channel, data);
+			_events[tick].SetApproved(order, channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void AppendActual(int tick, int channel, T data)
+		public void AppendApproved(int tick, int channel, T data)
 		{
-			_events[tick].AppendActual(channel, data);
+			_events[tick].AppendApproved(channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
 		}
 
-		int IEventSet.AppendActualDefault(int tick, int channel)
+		int IEventSet.AppendApprovedDefault(int tick, int channel)
 		{
-			var localOrder = _events[tick].AppendActual(channel, default);
+			var order = _events[tick].AppendApproved(channel, default);
 
 			_globalChangeTracker.NotifyChange(tick);
 
-			return localOrder;
+			return order;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void AppendPrediction(int tick, int channel, T data)
 		{
-			var localOrder = _events[tick].AppendPrediction(channel, data);
+			var order = _events[tick].AppendPrediction(channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
-			_predictionReceiver?.OnEventPredicted(this, tick, localOrder);
+			_predictionReceiver?.OnEventPredicted(this, tick, order);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,16 +135,16 @@ namespace Massive.Netcode
 			_events.Reset(startTick);
 		}
 
-		public void ReadData(int tick, int localOrder, int channel, Stream stream)
+		public void ReadData(int tick, int order, int channel, Stream stream)
 		{
 			PopulateUpTo(tick);
 
-			_events[tick].SetActual(localOrder, channel, Serializer.Read(stream));
+			_events[tick].SetApproved(order, channel, Serializer.Read(stream));
 		}
 
-		public void WriteData(int tick, int localOrder, Stream stream)
+		public void WriteData(int tick, int order, Stream stream)
 		{
-			Serializer.Write(_events[tick].Events[localOrder].Data, stream);
+			Serializer.Write(_events[tick].Events[order].Data, stream);
 		}
 
 		public void SkipData(Stream stream)
@@ -157,15 +157,15 @@ namespace Massive.Netcode
 			return _events[tick].DenseCount();
 		}
 
-		public int GetEventChannel(int tick, int localOrder)
+		public int GetEventChannel(int tick, int order)
 		{
-			return _events[tick].Events[localOrder].Channel;
+			return _events[tick].Events[order].Channel;
 		}
 
-		public LocalOrdersEnumerator GetEventsLocalOrders(int tick)
+		AllEventsEnumerator IEventSet.GetAllEvents(int tick)
 		{
 			ref var events = ref _events[tick];
-			return new LocalOrdersEnumerator(events.AllMask, events.MaskLength);
+			return new AllEventsEnumerator(events.AllMask, events.MaskLength);
 		}
 	}
 }

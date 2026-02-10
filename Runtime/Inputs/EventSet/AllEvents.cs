@@ -42,43 +42,43 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int AppendPrediction(int channel, T data)
 		{
-			var localOrder = SparseCount++;
+			var order = SparseCount++;
 
-			EnsureEventAt(localOrder);
+			EnsureEventAt(order);
 
-			var maskIndex = localOrder >> 6;
-			var maskBit = 1UL << (localOrder & 63);
+			var maskIndex = order >> 6;
+			var maskBit = 1UL << (order & 63);
 
 			AllMask[maskIndex] |= maskBit;
 			PredictionMask[maskIndex] |= maskBit;
 
-			Events[localOrder] = new Event<T>(channel, data);
+			Events[order] = new Event<T>(channel, data);
 
-			return localOrder;
+			return order;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public int AppendActual(int channel, T data)
+		public int AppendApproved(int channel, T data)
 		{
-			var localOrder = SparseCount++;
-			SetActual(localOrder, channel, data);
-			return localOrder;
+			var order = SparseCount++;
+			SetApproved(order, channel, data);
+			return order;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SetActual(int localOrder, int channel, T data)
+		public void SetApproved(int order, int channel, T data)
 		{
-			EnsureEventAt(localOrder);
+			EnsureEventAt(order);
 
-			var maskIndex = localOrder >> 6;
-			var maskBit = 1UL << (localOrder & 63);
+			var maskIndex = order >> 6;
+			var maskBit = 1UL << (order & 63);
 
 			var hasEvent = (AllMask[maskIndex] & maskBit) != 0;
 			var hasPrediction = (PredictionMask[maskIndex] & maskBit) != 0;
 
 			if (hasEvent && !hasPrediction)
 			{
-				throw new InvalidOperationException($"You are trying to override actual event with local order {localOrder}.");
+				throw new InvalidOperationException($"You are trying to override approved event with order {order}.");
 			}
 
 			AllMask[maskIndex] |= maskBit;
@@ -109,10 +109,10 @@ namespace Massive.Netcode
 			}
 			else
 			{
-				SparseCount = MathUtils.Max(SparseCount, localOrder + 1);
+				SparseCount = MathUtils.Max(SparseCount, order + 1);
 			}
 
-			Events[localOrder] = new Event<T>(channel, data);
+			Events[order] = new Event<T>(channel, data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
