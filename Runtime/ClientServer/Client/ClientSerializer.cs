@@ -57,11 +57,11 @@ namespace Massive.Netcode
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
 				var order = stream.ReadShort();
-				GetEventSet(messageId).ReadData(tick, order, channel, stream);
+				GetEventSet(messageId).ReadApproved(tick, order, channel, stream);
 			}
 			else
 			{
-				GetInputSet(messageId).ReadData(tick, channel, stream);
+				GetInputSet(messageId).ReadApproved(tick, channel, stream);
 			}
 		}
 
@@ -70,11 +70,11 @@ namespace Massive.Netcode
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
 				stream.ReadShort();
-				GetEventSet(messageId).SkipData(stream);
+				GetEventSet(messageId).Skip(stream);
 			}
 			else
 			{
-				GetInputSet(messageId).SkipData(stream);
+				GetInputSet(messageId).Skip(stream);
 			}
 		}
 
@@ -93,7 +93,7 @@ namespace Massive.Netcode
 				{
 					var order = stream.ReadShort();
 					var channel = stream.ReadShort();
-					eventSet.ReadData(tick, order, channel, stream);
+					eventSet.ReadApproved(tick, order, channel, stream);
 				}
 			}
 
@@ -108,7 +108,7 @@ namespace Massive.Netcode
 
 				for (var channel = 0; channel < usedChannels; channel++)
 				{
-					inputsSet.ReadInput(tick, channel, stream);
+					inputsSet.ReadFullInput(tick, channel, stream);
 				}
 			}
 		}
@@ -119,7 +119,7 @@ namespace Massive.Netcode
 
 			WriteMessageId(messageId, stream);
 			stream.WriteInt(tick);
-			eventSet.WriteData(tick, order, stream);
+			eventSet.Write(tick, order, stream);
 
 			// Don't writing channel because server already knows it.
 			// Don't writing order because server will append this event and use its own ordering.
@@ -131,7 +131,7 @@ namespace Massive.Netcode
 
 			WriteMessageId(messageId, stream);
 			stream.WriteInt(tick);
-			inputSet.WriteData(tick, channel, stream);
+			inputSet.Write(tick, channel, stream);
 
 			// Don't writing channel because server already knows it.
 		}

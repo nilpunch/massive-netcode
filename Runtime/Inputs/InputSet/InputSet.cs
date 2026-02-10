@@ -24,7 +24,7 @@ namespace Massive.Netcode
 			Serializer = serializer ?? new UnmanagedInputSerializer<T>();
 			InputType = typeof(T);
 			DataSize = Serializer.DataSize;
-			InputSize = Serializer.InputSize;
+			FullInputSize = Serializer.FullInputSize;
 		}
 
 		public IInputSerializer<T> Serializer { get; }
@@ -33,7 +33,7 @@ namespace Massive.Netcode
 
 		public int DataSize { get; }
 
-		public int InputSize { get; }
+		public int FullInputSize { get; }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public AllInputs<T> GetInputs(int tick)
@@ -139,36 +139,36 @@ namespace Massive.Netcode
 			_localChangeTracker.ConfirmChangesUpTo(_inputs.TailIndex);
 		}
 
-		public void ReadData(int tick, int channel, Stream stream)
+		public void ReadApproved(int tick, int channel, Stream stream)
 		{
 			PopulateUpTo(tick);
 
-			_inputs[tick].SetApproved(channel, Serializer.ReadData(stream));
+			_inputs[tick].SetApproved(channel, Serializer.Read(stream));
 		}
 
-		public void ReadInput(int tick, int channel, Stream stream)
+		public void ReadFullInput(int tick, int channel, Stream stream)
 		{
 			PopulateUpTo(tick);
 
 			ref var inputs = ref _inputs[tick];
 
 			inputs.EnsureChannel(channel);
-			inputs.Inputs[channel] = Serializer.ReadInput(stream);
+			inputs.Inputs[channel] = Serializer.ReadFullInput(stream);
 		}
 
-		public void WriteData(int tick, int channel, Stream stream)
+		public void Write(int tick, int channel, Stream stream)
 		{
-			Serializer.WriteData(_inputs[tick].Get(channel).LastFreshInput, stream);
+			Serializer.Write(_inputs[tick].Get(channel).LastFreshInput, stream);
 		}
 
-		public void WriteInput(int tick, int channel, Stream stream)
+		public void WriteFullInput(int tick, int channel, Stream stream)
 		{
-			Serializer.WriteInput(_inputs[tick].Inputs[channel], stream);
+			Serializer.WriteFullInput(_inputs[tick].Inputs[channel], stream);
 		}
 
-		public void SkipData(Stream stream)
+		public void Skip(Stream stream)
 		{
-			Serializer.ReadData(stream);
+			Serializer.Read(stream);
 		}
 
 		public int GetUsedChannels(int tick)

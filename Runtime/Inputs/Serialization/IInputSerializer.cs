@@ -5,12 +5,12 @@ namespace Massive.Netcode
 	public interface IInputSerializer<T> where T : IInput
 	{
 		int DataSize { get; }
-		int InputSize { get; }
+		int FullInputSize { get; }
 
-		void WriteData(T data, Stream stream);
-		void WriteInput(Input<T> data, Stream stream);
+		void Write(T data, Stream stream);
+		void WriteFullInput(Input<T> data, Stream stream);
 
-		T ReadData(Stream stream);
-		Input<T> ReadInput(Stream stream);
+		T Read(Stream stream);
+		Input<T> ReadFullInput(Stream stream);
 	}
 }

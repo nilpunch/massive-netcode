@@ -135,19 +135,19 @@ namespace Massive.Netcode
 			_events.Reset(startTick);
 		}
 
-		public void ReadData(int tick, int order, int channel, Stream stream)
+		public void ReadApproved(int tick, int order, int channel, Stream stream)
 		{
 			PopulateUpTo(tick);
 
 			_events[tick].SetApproved(order, channel, Serializer.Read(stream));
 		}
 
-		public void WriteData(int tick, int order, Stream stream)
+		public void Write(int tick, int order, Stream stream)
 		{
 			Serializer.Write(_events[tick].Events[order].Data, stream);
 		}
 
-		public void SkipData(Stream stream)
+		public void Skip(Stream stream)
 		{
 			Serializer.Read(stream);
 		}

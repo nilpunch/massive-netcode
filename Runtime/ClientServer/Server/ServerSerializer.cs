@@ -42,11 +42,11 @@ namespace Massive.Netcode
 				var eventSet = GetEventSet(messageId);
 				var order = eventSet.AppendApprovedDefault(tick, channel);
 
-				eventSet.ReadData(tick, order, channel, stream);
+				eventSet.ReadApproved(tick, order, channel, stream);
 			}
 			else
 			{
-				GetInputSet(messageId).ReadData(tick, channel, stream);
+				GetInputSet(messageId).ReadApproved(tick, channel, stream);
 			}
 		}
 
@@ -54,11 +54,11 @@ namespace Massive.Netcode
 		{
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
-				GetEventSet(messageId).SkipData(stream);
+				GetEventSet(messageId).Skip(stream);
 			}
 			else
 			{
-				GetInputSet(messageId).SkipData(stream);
+				GetInputSet(messageId).Skip(stream);
 			}
 		}
 
@@ -80,7 +80,7 @@ namespace Massive.Netcode
 
 					stream.WriteShort((short)order);
 					stream.WriteShort((short)channel);
-					eventSet.WriteData(tick, order, stream);
+					eventSet.Write(tick, order, stream);
 				}
 			}
 
@@ -96,7 +96,7 @@ namespace Massive.Netcode
 
 				for (var channel = 0; channel < usedChannels; channel++)
 				{
-					inputSet.WriteInput(tick, channel, stream);
+					inputSet.WriteFullInput(tick, channel, stream);
 				}
 			}
 		}
@@ -132,7 +132,7 @@ namespace Massive.Netcode
 			WriteMessageId(messageId, stream);
 			stream.WriteInt(tick);
 			stream.WriteShort((short)channel);
-			inputSet.WriteData(tick, channel, stream);
+			inputSet.Write(tick, channel, stream);
 		}
 
 		public void WriteOneInput(IEventSet eventSet, int tick, int order, Stream stream)
@@ -144,7 +144,7 @@ namespace Massive.Netcode
 			stream.WriteInt(tick);
 			stream.WriteShort((short)channel);
 			stream.WriteShort((short)order);
-			eventSet.WriteData(tick, order, stream);
+			eventSet.Write(tick, order, stream);
 		}
 	}
 }

@@ -18,9 +18,9 @@ namespace Massive.Netcode
 		/// Returns order of appened event.
 		/// </summary>
 		int AppendApprovedDefault(int tick, int channel);
-		void ReadData(int tick, int order, int channel, Stream stream);
-		void WriteData(int tick, int order, Stream stream);
-		void SkipData(Stream stream);
+		void ReadApproved(int tick, int order, int channel, Stream stream);
+		void Write(int tick, int order, Stream stream);
+		void Skip(Stream stream);
 
 		int GetEventsCount(int tick);
 		int GetEventChannel(int tick, int order);

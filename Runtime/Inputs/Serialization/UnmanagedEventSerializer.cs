@@ -8,9 +8,9 @@ namespace Massive.Netcode
 	public unsafe class UnmanagedEventSerializer<T> : IEventSerializer<T> where T : IEvent
 	{
 		private readonly int _dataSize;
-		private T[] _dataBuffer;
+		private readonly T[] _dataBuffer;
 		private GCHandle _dataBufferHandle;
-		private void* _dataBufferPtr;
+		private readonly void* _dataBufferPtr;
 
 		public UnmanagedEventSerializer()
 		{

@@ -7,7 +7,7 @@ namespace Massive.Netcode
 	{
 		Type InputType { get; }
 		int DataSize { get; }
-		int InputSize { get; }
+		int FullInputSize { get; }
 
 		void ClearPrediction(int startTick, int endTick);
 		void PopulateUpTo(int tick);
@@ -16,11 +16,11 @@ namespace Massive.Netcode
 
 		void Reset(int startTick);
 
-		void ReadData(int tick, int channel, Stream stream);
-		void ReadInput(int tick, int channel, Stream stream);
-		void WriteData(int tick, int channel, Stream stream);
-		void WriteInput(int tick, int channel, Stream stream);
-		void SkipData(Stream stream);
+		void ReadApproved(int tick, int channel, Stream stream);
+		void ReadFullInput(int tick, int channel, Stream stream);
+		void Write(int tick, int channel, Stream stream);
+		void WriteFullInput(int tick, int channel, Stream stream);
+		void Skip(Stream stream);
 
 		int GetUsedChannels(int tick);
 		bool IsFresh(int tick, int channel);
