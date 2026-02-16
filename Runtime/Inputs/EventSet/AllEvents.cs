@@ -61,7 +61,16 @@ namespace Massive.Netcode
 		public int AppendApproved(int channel, T data)
 		{
 			var order = SparseCount++;
-			SetApproved(order, channel, data);
+
+			EnsureEventAt(order);
+
+			var maskIndex = order >> 6;
+			var maskBit = 1UL << (order & 63);
+
+			AllMask[maskIndex] |= maskBit;
+
+			Events[order] = new Event<T>(channel, data);
+
 			return order;
 		}
 
