@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>library</OutputType>
+        <TargetFrameworks>net9.0;net8.0;net7.0;net6.0;netstandard2.1</TargetFrameworks>
+        <LangVersion>9</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Nullable>disable</Nullable>
+        <RootNamespace>Massive.Netcode</RootNamespace>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>0.3.0</Version>
+        <Title>Massive Netcode</Title>
+        <Authors>nilpunch</Authors>
+        <Description>Network tools for Massive ECS.</Description>
+        <Copyright>Copyright (c) 2026 Daniil Pankevich</Copyright>
+        <PackageLicenseUrl>https://github.com/nilpunch/massive-netcode/blob/master/LICENSE.md</PackageLicenseUrl>
+        <PackageTags>ecs; gamedev; unity; massive; netcode; server</PackageTags>
+        <RepositoryUrl>https://github.com/nilpunch/massive-netcode</RepositoryUrl>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="..\LICENSE" Pack="true" PackagePath=""/>
+        <Content Include="..\README.md" Pack="true" PackagePath=""/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="**\*.meta"/>
+        <None Remove="**\*.asmdef"/>
+        <None Remove="package.json"/>
+        <None Remove="LICENSE.meta"/>
+    </ItemGroup>
+
+</Project>

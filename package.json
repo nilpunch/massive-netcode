@@ -1,6 +1,6 @@
 {
   "name": "massive-netcode",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "displayName": "Massive ECS Netcode",
   "unity": "2021.2",
   "description": "Network tools for massive-ecs.",
