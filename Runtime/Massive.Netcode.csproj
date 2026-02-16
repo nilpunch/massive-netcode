@@ -13,7 +13,7 @@
         <Authors>nilpunch</Authors>
         <Description>Network tools for Massive ECS.</Description>
         <Copyright>Copyright (c) 2026 Daniil Pankevich</Copyright>
-        <PackageLicenseUrl>https://github.com/nilpunch/massive-netcode/blob/master/LICENSE.md</PackageLicenseUrl>
+        <PackageLicenseUrl>https://github.com/nilpunch/massive-netcode/blob/master/LICENSE</PackageLicenseUrl>
         <PackageTags>ecs; gamedev; unity; massive; netcode; server</PackageTags>
         <RepositoryUrl>https://github.com/nilpunch/massive-netcode</RepositoryUrl>
         <IncludeSymbols>true</IncludeSymbols>
