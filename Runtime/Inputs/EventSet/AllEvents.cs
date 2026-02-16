@@ -90,7 +90,7 @@ namespace Massive.Netcode
 				while (--latestPredictionMaskIndex >= 0 && PredictionMask[latestPredictionMaskIndex] == 0)
 				{
 				}
-				var latestPredictionIndex = (latestPredictionMaskIndex << 6) + MathUtils.MSB(AllMask[latestPredictionMaskIndex]);
+				var latestPredictionIndex = (latestPredictionMaskIndex << 6) + MathUtils.MSB(PredictionMask[latestPredictionMaskIndex]);
 
 				// Move head prediction further.
 				var headEvent = Events[latestPredictionIndex];
