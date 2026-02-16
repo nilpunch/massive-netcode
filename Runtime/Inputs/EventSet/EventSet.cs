@@ -145,6 +145,8 @@ namespace Massive.Netcode
 
 		public int GetNextAppendOrder(int tick)
 		{
+			PopulateUpTo(tick);
+
 			return _events[tick].SparseCount;
 		}
 
