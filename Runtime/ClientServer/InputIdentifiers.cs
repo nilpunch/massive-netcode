@@ -56,7 +56,9 @@ namespace Massive.Netcode
 
 		public void RegisterAutomaticallyFromAllAssemblies()
 		{
-			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+				.Where(assembly => !assembly.GetName().Name.StartsWith("System"))
+				.ToArray();
 
 			var inputTypes = assemblies
 				.SelectMany(assembly => assembly.GetTypes())
@@ -83,12 +85,12 @@ namespace Massive.Netcode
 
 		private static bool IsInputType(Type type)
 		{
-			return typeof(IInput).IsAssignableFrom(type) && (type.IsValueType || type.IsClass && !type.IsAbstract) && !type.IsGenericTypeDefinition;
+			return (type.IsValueType || type.IsClass && !type.IsAbstract) && !type.IsGenericTypeDefinition && typeof(IInput).IsAssignableFrom(type);
 		}
 
 		private static bool IsEventType(Type type)
 		{
-			return typeof(IEvent).IsAssignableFrom(type) && (type.IsValueType || type.IsClass && !type.IsAbstract) && !type.IsGenericTypeDefinition;
+			return (type.IsValueType || type.IsClass && !type.IsAbstract) && !type.IsGenericTypeDefinition && typeof(IEvent).IsAssignableFrom(type);
 		}
 
 		public void RegisterInput<T>()
