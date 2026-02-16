@@ -41,9 +41,17 @@ namespace Massive.Netcode
 		/// </summary>
 		public int EstimateServerTick(double clientTime)
 		{
-			var elapsed = clientTime - TimeSyncClientTime;
-			var serverTime = TimeSyncServerTime + elapsed;
+			var serverTime = EstimateServerTime(clientTime);
 			return (int)Math.Floor(serverTime * TickRate);
+		}
+
+		/// <summary>
+		/// Estimates the current server time from the time-sync anchor.
+		/// </summary>
+		public double EstimateServerTime(double clientTime)
+		{
+			var elapsed = clientTime - TimeSyncClientTime;
+			return TimeSyncServerTime + elapsed;
 		}
 
 		/// <summary>
@@ -94,15 +102,15 @@ namespace Massive.Netcode
 		/// </summary>
 		public float CalculateInterpolation(double clientTime)
 		{
-			var serverTickStartTime = EstimateServerTick(clientTime) / TickRate;
+			var serverTime = EstimateServerTime(clientTime);
 
 			var simulationDeltaTime = 1f / TickRate;
 
-			var interpolation = (clientTime - serverTickStartTime) / simulationDeltaTime;
+			var serverTickStartTime = Math.Floor(serverTime / simulationDeltaTime) * simulationDeltaTime;
 
-			var interpolation01 = interpolation < 0f ? 0f : interpolation > 1f ? 1f : (float)interpolation;
+			var interpolation = (serverTime - serverTickStartTime) / simulationDeltaTime;
 
-			return interpolation01;
+			return (float)Math.Clamp(interpolation, 0.0, 1.0);
 		}
 
 		public void Reset()
