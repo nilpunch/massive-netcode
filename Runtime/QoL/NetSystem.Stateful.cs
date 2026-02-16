@@ -12,7 +12,7 @@ namespace Massive.Netcode
 
 		public int Tick => Session.Loop.CurrentTick;
 
-		public MassiveWorld World => Session.World;
+		public World World => Session.World;
 
 		private Pointer<TState> StatePointer { get; set; }
 

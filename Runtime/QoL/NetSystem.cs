@@ -9,7 +9,7 @@
 
 		public int Tick => Session.Loop.CurrentTick;
 
-		public MassiveWorld World => Session.World;
+		public World World => Session.World;
 
 		void ISystem.Build(int id, Allocator _)
 		{
