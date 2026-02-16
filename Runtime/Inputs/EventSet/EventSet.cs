@@ -58,15 +58,6 @@ namespace Massive.Netcode
 			_globalChangeTracker.NotifyChange(tick);
 		}
 
-		int IEventSet.AppendApprovedDefault(int tick, int channel)
-		{
-			var order = _events[tick].AppendApproved(channel, default);
-
-			_globalChangeTracker.NotifyChange(tick);
-
-			return order;
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void AppendPrediction(int tick, int channel, T data)
 		{
@@ -150,6 +141,11 @@ namespace Massive.Netcode
 		public void Skip(Stream stream)
 		{
 			Serializer.Read(stream);
+		}
+
+		public int GetNextAppendOrder(int tick)
+		{
+			return _events[tick].SparseCount;
 		}
 
 		public int GetEventsCount(int tick)

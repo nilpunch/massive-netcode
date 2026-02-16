@@ -14,15 +14,11 @@ namespace Massive.Netcode
 
 		void Reset(int startTick);
 
-		/// <summary>
-		/// Returns order of appened event.
-		/// </summary>
-		int AppendApprovedDefault(int tick, int channel);
-
 		void ReadApproved(int tick, int order, int channel, Stream stream);
 		void Write(int tick, int order, Stream stream);
 		void Skip(Stream stream);
 
+		int GetNextAppendOrder(int tick);
 		int GetEventsCount(int tick);
 		int GetEventChannel(int tick, int order);
 		MaskEnumerator GetAllEvents(int tick);

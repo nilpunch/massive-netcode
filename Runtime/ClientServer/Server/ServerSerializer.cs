@@ -40,7 +40,7 @@ namespace Massive.Netcode
 			if (_inputIdentifiers.IsEvent(messageId))
 			{
 				var eventSet = GetEventSet(messageId);
-				var order = eventSet.AppendApprovedDefault(tick, channel);
+				var order = eventSet.GetNextAppendOrder(tick);
 
 				eventSet.ReadApproved(tick, order, channel, stream);
 			}
