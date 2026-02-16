@@ -82,7 +82,7 @@ namespace Massive.Netcode
 		{
 			if (rttEstimate > 0)
 			{
-				var oneWayTicks = (int)Math.Round(rttEstimate * 0.5 * TickRate);
+				var oneWayTicks = (int)Math.Ceiling((rttEstimate + 0.5f / TickRate) * 0.5 * TickRate);
 				PredictionLeadTicks = MathUtils.Min(
 					oneWayTicks + SafetyBufferTicks,
 					MaxRollbackTicks);
