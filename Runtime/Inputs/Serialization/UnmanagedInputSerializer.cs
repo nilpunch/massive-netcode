@@ -12,33 +12,22 @@ namespace Massive.Netcode
 		private GCHandle _dataBufferHandle;
 		private readonly void* _dataBufferPtr;
 
-		private readonly int _fullInputSize;
-		private readonly Input<T>[] _fullInputBuffer;
-		private GCHandle _fullInputBufferHandle;
-		private readonly void* _fullInputBufferPtr;
-
 		public UnmanagedInputSerializer()
 		{
 			_dataSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
 			_dataBuffer = new T[1];
 			_dataBufferHandle = GCHandle.Alloc(_dataBuffer, GCHandleType.Pinned);
 			_dataBufferPtr = _dataBufferHandle.AddrOfPinnedObject().ToPointer();
-
-			_fullInputSize = ReflectionUtils.SizeOfUnmanaged(typeof(Input<T>));
-			_fullInputBuffer = new Input<T>[1];
-			_fullInputBufferHandle = GCHandle.Alloc(_fullInputBuffer, GCHandleType.Pinned);
-			_fullInputBufferPtr = _fullInputBufferHandle.AddrOfPinnedObject().ToPointer();
 		}
 
 		~UnmanagedInputSerializer()
 		{
 			_dataBufferHandle.Free();
-			_fullInputBufferHandle.Free();
 		}
 
 		public int DataSize => _dataSize;
 
-		public int FullInputSize => _fullInputSize;
+		public int FullInputSize => _dataSize + sizeof(int);
 
 		public void Write(T data, Stream stream)
 		{
@@ -48,8 +37,9 @@ namespace Massive.Netcode
 
 		public void WriteFullInput(Input<T> data, Stream stream)
 		{
-			_fullInputBuffer[0] = data;
-			stream.Write(new Span<byte>(_fullInputBufferPtr, _fullInputSize));
+			_dataBuffer[0] = data.LastFreshInput;
+			stream.Write(new Span<byte>(_dataBufferPtr, _dataSize));
+			stream.WriteInt(data.TicksPassed);
 		}
 
 		public T Read(Stream stream)
@@ -60,8 +50,10 @@ namespace Massive.Netcode
 
 		public Input<T> ReadFullInput(Stream stream)
 		{
-			stream.ReadExactly(new Span<byte>(_fullInputBufferPtr, _fullInputSize));
-			return _fullInputBuffer[0];
+			stream.ReadExactly(new Span<byte>(_dataBufferPtr, _dataSize));
+			var lastFreshInput = _dataBuffer[0];
+			var ticksPassed = stream.ReadInt();
+			return new Input<T>(lastFreshInput, ticksPassed, true);
 		}
 	}
 }
