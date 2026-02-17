@@ -32,4 +32,9 @@
         <None Remove="LICENSE.meta"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\..\massive-ecs\Runtime\Massive.csproj" />
+        <ProjectReference Include="..\..\massive-serialization\Runtime\Massive.Serialization.csproj" />
+    </ItemGroup>
+
 </Project>
