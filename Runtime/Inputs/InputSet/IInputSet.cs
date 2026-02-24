@@ -9,7 +9,10 @@ namespace Massive.Netcode
 		int DataSize { get; }
 		int FullInputSize { get; }
 
-		void ClearPrediction(int startTick, int endTick);
+		/// <summary>
+		/// Returns the number of ticks that were cleared.
+		/// </summary>
+		int ClearPrediction(int startTick, int endTick);
 		void PopulateUpTo(int tick);
 		void DiscardUpTo(int tick);
 		void Reevaluate();

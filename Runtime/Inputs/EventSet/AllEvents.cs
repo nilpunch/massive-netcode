@@ -138,16 +138,24 @@ namespace Massive.Netcode
 			SparseCount = 0;
 		}
 
+		/// <summary>
+		/// Returns the number of cleared events.
+		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ClearPrediction()
+		public int ClearPrediction()
 		{
 			var usedMaskLength = MaskLength;
 
+			var clearedCount = 0;
 			for (var i = 0; i < usedMaskLength; i++)
 			{
-				AllMask[i] &= ~PredictionMask[i];
+				var predictionMask = PredictionMask[i];
+				AllMask[i] &= ~predictionMask;
+				clearedCount += MathUtils.PopCount(predictionMask);
 				PredictionMask[i] = 0;
 			}
+
+			return clearedCount;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

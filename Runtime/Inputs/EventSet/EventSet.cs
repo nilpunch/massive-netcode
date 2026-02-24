@@ -88,22 +88,34 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ClearPrediction(int tick)
+		public int ClearPrediction(int startTick, int endTick)
 		{
-			PopulateUpTo(tick);
+			if (startTick < _events.HeadIndex)
+			{
+				startTick = _events.HeadIndex;
+			}
 
-			_events[tick].ClearPrediction();
+			if (endTick > _events.TailIndex - 1)
+			{
+				endTick = _events.TailIndex - 1;
+			}
 
-			_globalChangeTracker.NotifyChange(tick);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ClearPrediction(int startTick, int endTick)
-		{
+			var clearedTicksCount = 0;
 			for (var tick = startTick; tick <= endTick; tick++)
 			{
-				ClearPrediction(tick);
+				var clearedCount = _events[tick].ClearPrediction();
+				if (clearedCount > 0)
+				{
+					clearedTicksCount++;
+				}
 			}
+
+			if (clearedTicksCount > 0)
+			{
+				_globalChangeTracker.NotifyChange(startTick);
+			}
+
+			return clearedTicksCount;
 		}
 
 		public void PopulateUpTo(int tick)

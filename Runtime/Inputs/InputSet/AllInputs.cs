@@ -105,19 +105,26 @@ namespace Massive.Netcode
 			UsedChannels = 0;
 		}
 
+		/// <summary>
+		/// Returns the number of cleared inputs.
+		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ClearPrediction()
+		public int ClearPrediction()
 		{
 			var staleInput = Input<T>.Stale;
 
+			var clearedCount = 0;
 			foreach (var channel in GetFreshInputs())
 			{
 				if (!Inputs[channel].IsApproved)
 				{
 					Inputs[channel] = staleInput;
 					FreshMask[channel >> 6] &= ~(1UL << (channel & 63));
+					clearedCount++;
 				}
 			}
+
+			return clearedCount;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

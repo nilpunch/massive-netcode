@@ -76,7 +76,7 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ClearPrediction(int startTick, int endTick)
+		public int ClearPrediction(int startTick, int endTick)
 		{
 			if (startTick < _inputs.HeadIndex)
 			{
@@ -88,13 +88,23 @@ namespace Massive.Netcode
 				endTick = _inputs.TailIndex - 1;
 			}
 
+			var clearedTicksCount = 0;
 			for (var currentTick = startTick; currentTick <= endTick; currentTick++)
 			{
-				_inputs[currentTick].ClearPrediction();
+				var clearedCount = _inputs[currentTick].ClearPrediction();
+				if (clearedCount > 0)
+				{
+					clearedTicksCount++;
+				}
 			}
 
-			_localChangeTracker.NotifyChange(startTick);
-			_globalChangeTracker.NotifyChange(startTick);
+			if (clearedTicksCount > 0)
+			{
+				_localChangeTracker.NotifyChange(startTick);
+				_globalChangeTracker.NotifyChange(startTick);
+			}
+
+			return clearedTicksCount;
 		}
 
 		public void Reset(int startTick)
