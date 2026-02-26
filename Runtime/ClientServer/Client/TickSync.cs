@@ -8,7 +8,7 @@ namespace Massive.Netcode
 		public int MaxRollbackTicks { get; }
 		public int SafetyBufferTicks { get; }
 
-		public int ApprovedSimulationTick { get; private set; }
+		public int ApprovedSimulationTick { get; private set; } = -1;
 
 		public double TimeSyncServerTime { get; private set; }
 		public double TimeSyncClientTime { get; private set; }
@@ -30,10 +30,10 @@ namespace Massive.Netcode
 		/// Computes the client simulation target tick.
 		/// Clamped to the allowed rollback window.
 		/// </summary>
-		public int CalculateTargetTick(double clientTime)
+		public virtual int CalculateTargetTick(double clientTime)
 		{
 			var targetTick = EstimateServerTick(clientTime) + PredictionLeadTicks;
-			return MathUtils.Max(ApprovedSimulationTick, MathUtils.Min(targetTick, MaxPredictionTick));
+			return MathUtils.Max(ApprovedSimulationTick + 1, MathUtils.Min(targetTick, MaxPredictionTick));
 		}
 
 		/// <summary>
@@ -90,7 +90,7 @@ namespace Massive.Netcode
 		{
 			if (rttEstimate > 0)
 			{
-				var oneWayTicks = (int)Math.Ceiling((rttEstimate + 0.5f / TickRate) * 0.5 * TickRate);
+				var oneWayTicks = (int)Math.Ceiling(rttEstimate * 0.5 * TickRate);
 				PredictionLeadTicks = MathUtils.Min(
 					oneWayTicks + SafetyBufferTicks,
 					MaxRollbackTicks);
@@ -115,7 +115,7 @@ namespace Massive.Netcode
 
 		public void Reset()
 		{
-			ApprovedSimulationTick = 0;
+			ApprovedSimulationTick = -1;
 			TimeSyncServerTime = 0f;
 			TimeSyncClientTime = 0f;
 			PredictionLeadTicks = SafetyBufferTicks;
