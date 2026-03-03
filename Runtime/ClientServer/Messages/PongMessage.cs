@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	public struct PongMessage
 	{
-		public static readonly int Size = ReflectionUtils.SizeOfUnmanaged(typeof(PongMessage));
+		public static readonly int Size = ReflectionUtils.SizeOfUnmanaged<PongMessage>();
 
 		public double ClientPingSendTime;
 		public double ServerReceiveTime;

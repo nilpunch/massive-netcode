@@ -14,6 +14,7 @@ namespace Massive.Netcode
 
 		public UnmanagedEventSerializer()
 		{
+			ReflectionUtils.PreserveSize<T>();
 			_dataSize = ReflectionUtils.SizeOfUnmanaged(typeof(T));
 			_dataBuffer = new T[1];
 			_dataBufferHandle = GCHandle.Alloc(_dataBuffer, GCHandleType.Pinned);
