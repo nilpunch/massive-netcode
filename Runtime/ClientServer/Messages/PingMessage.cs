@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	public struct PingMessage
 	{
-		public static readonly int Size = ReflectionUtils.SizeOfUnmanaged<PingMessage>();
+		public static readonly int Size = ReflectionUtils.SizeOf<PingMessage>();
 
 		public double ClientPingSendTime;
 

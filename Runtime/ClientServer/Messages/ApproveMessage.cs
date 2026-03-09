@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	public struct ApproveMessage
 	{
-		public static readonly int Size = ReflectionUtils.SizeOfUnmanaged<ApproveMessage>();
+		public static readonly int Size = ReflectionUtils.SizeOf<ApproveMessage>();
 
 		public int ServerTick;
 
