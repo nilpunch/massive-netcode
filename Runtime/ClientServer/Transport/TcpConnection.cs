@@ -10,6 +10,7 @@ namespace Massive.Netcode
 		private TcpClient TcpClient { get; set; }
 
 		public override bool IsConnected => TcpClient != null && TcpClient.Connected;
+
 		public NetworkStream Stream { get; protected set; }
 
 		public void Init(TcpClient tcpClient)
@@ -22,7 +23,7 @@ namespace Massive.Netcode
 			Outgoing.Position = 0;
 		}
 
-		public override void Connect(IPEndPoint endPoint)
+		public void Connect(IPEndPoint endPoint)
 		{
 			TcpClient?.Close();
 			TcpClient?.Dispose();

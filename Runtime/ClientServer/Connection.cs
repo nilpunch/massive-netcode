@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 
 namespace Massive.Netcode
 {
@@ -42,8 +41,6 @@ namespace Massive.Netcode
 				Incoming.Position = 0;
 			}
 		}
-
-		public abstract void Connect(IPEndPoint endPoint);
 
 		public abstract void Disconnect();
 	}
