@@ -53,6 +53,8 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void AppendApproved(int tick, int channel, T data)
 		{
+			PopulateUpTo(tick);
+
 			_events[tick].AppendApproved(channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
@@ -61,6 +63,8 @@ namespace Massive.Netcode
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void AppendPrediction(int tick, int channel, T data)
 		{
+			PopulateUpTo(tick);
+
 			var order = _events[tick].AppendPrediction(channel, data);
 
 			_globalChangeTracker.NotifyChange(tick);
@@ -143,6 +147,8 @@ namespace Massive.Netcode
 			PopulateUpTo(tick);
 
 			_events[tick].SetApproved(order, channel, Serializer.Read(stream));
+
+			_globalChangeTracker.NotifyChange(tick);
 		}
 
 		public void Write(int tick, int order, Stream stream)

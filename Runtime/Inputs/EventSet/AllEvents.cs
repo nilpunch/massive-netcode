@@ -4,10 +4,6 @@ using Unity.IL2CPP.CompilerServices;
 
 namespace Massive.Netcode
 {
-	/// <summary>
-	/// Abscence of ChannelId makes it feel bad.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
 	[Il2CppSetOption(Option.NullChecks, false)]
 	[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 	public struct AllEvents<T> where T : IEvent
@@ -68,6 +64,7 @@ namespace Massive.Netcode
 			var maskBit = 1UL << (order & 63);
 
 			AllMask[maskIndex] |= maskBit;
+			PredictionMask[maskIndex] &= ~maskBit;
 
 			Events[order] = new Event<T>(channel, data);
 
@@ -105,7 +102,7 @@ namespace Massive.Netcode
 				var headEvent = Events[latestPredictionIndex];
 				AppendPrediction(headEvent.Channel, headEvent.Data);
 
-				for (var i = latestPredictionIndex - 1; i >= 0; i--)
+				for (var i = latestPredictionIndex - 1; i >= order; i--)
 				{
 					if ((PredictionMask[i >> 6] & (1UL << (i & 63))) != 0)
 					{
@@ -169,9 +166,6 @@ namespace Massive.Netcode
 			return count;
 		}
 
-		/// <summary>
-		/// Ensures the packed array has sufficient capacity for the specified index.
-		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void EnsureEventAt(int index)
 		{
@@ -181,16 +175,12 @@ namespace Massive.Netcode
 			}
 		}
 
-		/// <summary>
-		/// Resizes the packed array to the specified capacity.
-		/// </summary>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void ResizeEvents(int capacity)
 		{
 			Events = Events.Resize(capacity);
 			EventsCapacity = capacity;
 
-			var maskLength = (EventsCapacity + 63) >> 6;
+			var maskLength = (capacity + 63) >> 6;
 			if (maskLength > AllMask.Length)
 			{
 				AllMask = AllMask.Resize(maskLength);

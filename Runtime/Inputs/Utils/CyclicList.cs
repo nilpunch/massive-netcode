@@ -96,11 +96,11 @@ namespace Massive.Netcode
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void EnsureCapacity(int capcity)
+		private void EnsureCapacity(int capacity)
 		{
-			if (CycleCapacity < capcity)
+			if (CycleCapacity < capacity)
 			{
-				Resize(MathUtils.RoundUpToPowerOfTwo(capcity + 1));
+				Resize(MathUtils.RoundUpToPowerOfTwo(capacity));
 			}
 		}
 

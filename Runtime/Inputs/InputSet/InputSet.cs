@@ -154,6 +154,9 @@ namespace Massive.Netcode
 			PopulateUpTo(tick);
 
 			_inputs[tick].SetApproved(channel, Serializer.Read(stream));
+
+			_localChangeTracker.NotifyChange(tick);
+			_globalChangeTracker.NotifyChange(tick);
 		}
 
 		public void ReadFullInput(int tick, int channel, Stream stream)
@@ -161,6 +164,9 @@ namespace Massive.Netcode
 			PopulateUpTo(tick);
 
 			_inputs[tick].SetFullInput(channel, Serializer.ReadFullInput(stream));
+
+			_localChangeTracker.NotifyChange(tick);
+			_globalChangeTracker.NotifyChange(tick);
 		}
 
 		public void Write(int tick, int channel, Stream stream)
