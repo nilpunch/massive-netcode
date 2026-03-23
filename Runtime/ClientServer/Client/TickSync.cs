@@ -4,27 +4,28 @@ namespace Massive.Netcode
 {
 	public class TickSync
 	{
-		public int TickRate { get; }
-		public int MaxRollbackTicks { get; }
+		public int TickRate { get; set; } = 60;
+		public int MaxRollbackTicks { get; set; } = 120;
 		public int SafetyBufferTicks { get; }
 
-		public int ApprovedSimulationTick { get; private set; } = -1;
+		/// <summary>
+		/// ApprovedSimulationTick + 1, basically this is the first tick that can be affected by prediction.
+		/// Guards against simulating a tick the server has already approved.
+		/// </summary>
+		public int MinPredictionTick { get; private set; }
 
 		public double TimeSyncServerTime { get; private set; }
 		public double TimeSyncClientTime { get; private set; }
 
-		public int PredictionLeadTicks { get; private set; }
+		public int PredictionLeadTicks { get; protected set; }
 
-		public TickSync(int tickRate, int maxRollbackTicks, int safetyBufferTicks = 2)
+		public TickSync(int safetyBufferTicks = 2)
 		{
-			TickRate = tickRate;
-			MaxRollbackTicks = maxRollbackTicks;
 			SafetyBufferTicks = safetyBufferTicks;
-
 			PredictionLeadTicks = safetyBufferTicks;
 		}
 
-		private int MaxPredictionTick => ApprovedSimulationTick + PredictionLeadTicks;
+		private int MaxPredictionTick => MinPredictionTick + MaxRollbackTicks - 1;
 
 		/// <summary>
 		/// Computes the client simulation target tick.
@@ -33,7 +34,7 @@ namespace Massive.Netcode
 		public virtual int CalculateTargetTick(double clientTime)
 		{
 			var targetTick = EstimateServerTick(clientTime) + PredictionLeadTicks;
-			return MathUtils.Max(ApprovedSimulationTick + 1, MathUtils.Min(targetTick, MaxPredictionTick));
+			return MathUtils.Max(MinPredictionTick, MathUtils.Min(targetTick, MaxPredictionTick));
 		}
 
 		/// <summary>
@@ -75,25 +76,23 @@ namespace Massive.Netcode
 		/// </summary>
 		public void ApproveSimulationTick(int tick)
 		{
-			if (tick <= ApprovedSimulationTick)
+			if (tick + 1 <= MinPredictionTick)
 			{
 				return;
 			}
 
-			ApprovedSimulationTick = tick;
+			MinPredictionTick = tick + 1;
 		}
 
 		/// <summary>
 		/// Updates prediction lead based on RTT.
 		/// </summary>
-		public void UpdateRTT(double rttEstimate)
+		public virtual void UpdateRTT(double rttEstimate)
 		{
 			if (rttEstimate > 0)
 			{
 				var oneWayTicks = (int)Math.Ceiling(rttEstimate * 0.5 * TickRate);
-				PredictionLeadTicks = MathUtils.Min(
-					oneWayTicks + SafetyBufferTicks,
-					MaxRollbackTicks);
+				PredictionLeadTicks = oneWayTicks + SafetyBufferTicks;
 			}
 		}
 
@@ -113,9 +112,9 @@ namespace Massive.Netcode
 			return (float)Math.Clamp(interpolation, 0.0, 1.0);
 		}
 
-		public void Reset()
+		public virtual void Reset()
 		{
-			ApprovedSimulationTick = -1;
+			MinPredictionTick = 0;
 			TimeSyncServerTime = 0f;
 			TimeSyncClientTime = 0f;
 			PredictionLeadTicks = SafetyBufferTicks;

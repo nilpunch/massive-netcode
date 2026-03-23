@@ -22,13 +22,15 @@ namespace Massive.Netcode
 
 		public bool Synced { get; private set; }
 
-		public Client(SessionConfig sessionConfig, Connection connection, double pingIntervalSeconds = 0.5f)
+		public Client(SessionConfig sessionConfig, Connection connection, double pingIntervalSeconds = 0.5f, TickSync tickSync = default)
 		{
 			Connection = connection;
 			PingIntervalSeconds = pingIntervalSeconds;
 
 			Session = new Session(sessionConfig, this);
-			TickSync = new TickSync(sessionConfig.TickRate, sessionConfig.RollbackTicksCapacity);
+			TickSync = tickSync ?? new AdaptiveTickSync();
+			TickSync.TickRate = sessionConfig.TickRate;
+			TickSync.MaxRollbackTicks = sessionConfig.RollbackTicksCapacity;
 
 			InputIdentifiers = new InputIdentifiers();
 			MessageSerializer = new ClientSerializer(Session.Inputs, InputIdentifiers);
@@ -37,8 +39,7 @@ namespace Massive.Netcode
 
 		public int InputPredictionTick(double clientTime)
 		{
-			// +1 because we don't want to override approved inputs.
-			return MathUtils.Max(TickSync.ApprovedSimulationTick + 1, TickSync.CalculateTargetTick(clientTime));
+			return TickSync.CalculateTargetTick(clientTime);
 		}
 
 		public void Update(double clientTime)
@@ -127,11 +128,11 @@ namespace Massive.Netcode
 
 						foreach (var inputSet in Session.Inputs.InputSets)
 						{
-							inputSet.ClearPrediction(TickSync.ApprovedSimulationTick, approveMessage.ServerTick);
+							inputSet.ClearPrediction(TickSync.MinPredictionTick, approveMessage.ServerTick);
 						}
 						foreach (var eventSet in Session.Inputs.EventSets)
 						{
-							eventSet.ClearPrediction(TickSync.ApprovedSimulationTick, approveMessage.ServerTick);
+							eventSet.ClearPrediction(TickSync.MinPredictionTick, approveMessage.ServerTick);
 						}
 
 						TickSync.ApproveSimulationTick(approveMessage.ServerTick);
@@ -170,7 +171,7 @@ namespace Massive.Netcode
 
 		private bool CanAcceptTick(int tick)
 		{
-			return tick > TickSync.ApprovedSimulationTick;
+			return tick >= TickSync.MinPredictionTick;
 		}
 	}
 }
