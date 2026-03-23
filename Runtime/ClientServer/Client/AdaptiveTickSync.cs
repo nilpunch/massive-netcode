@@ -9,50 +9,41 @@ namespace Massive.Netcode
 		/// <summary>
 		/// This is time to close 50% of the gap. 0.5 = snappy, 2.0 = sluggish.
 		/// </summary>
-		public double TargetTickSmoothingTime { get; }
+		public double SmoothingTime { get; }
 
 		public double SmoothedRtt { get; private set; }
-
-		/// <summary>
-		/// Current fractional simulation tick. Advances smoothly toward the RTT-derived target.
-		/// </summary>
-		public double SmoothedTargetTick { get; private set; }
+		public double SmoothedLeadTime { get; private set; }
 
 		private double _lastClientTime = -1;
 
 		public AdaptiveTickSync(
 			int safetyBufferTicks = 2,
-			double targetTickSmoothingTime = 0.5)
+			double smoothingTime = 0.5)
 			: base(safetyBufferTicks)
 		{
-			TargetTickSmoothingTime = targetTickSmoothingTime;
+			SmoothingTime = smoothingTime;
 		}
 
 		public override int CalculateTargetTick(double clientTime)
 		{
-			var hardTargetTick = base.CalculateTargetTick(clientTime);
-
-			if (_lastClientTime < 0 || SmoothedTargetTick <= 0)
+			if (_lastClientTime < 0)
 			{
-				SmoothedTargetTick = hardTargetTick;
-				_lastClientTime = clientTime;
-				return hardTargetTick;
+				SmoothedLeadTime = (double)PredictionLeadTicks / TickRate;
+			}
+			else
+			{
+				var dt = clientTime - _lastClientTime;
+				
+				var diff = (double)PredictionLeadTicks / TickRate - SmoothedLeadTime;
+				var lerpRate = 1.0 - Math.Pow(0.5, dt / SmoothingTime);
+				SmoothedLeadTime += diff * lerpRate;
 			}
 
-			var dt = clientTime - _lastClientTime;
 			_lastClientTime = clientTime;
 
-			var diff = hardTargetTick - SmoothedTargetTick;
-
-			var lerpRate = 1.0 - Math.Pow(0.5f, dt / TargetTickSmoothingTime);
-			SmoothedTargetTick += diff * lerpRate;
-
-			SmoothedTargetTick = Math.Clamp(
-				SmoothedTargetTick,
-				MinPredictionTick,
-				hardTargetTick);
-
-			return (int)Math.Floor(SmoothedTargetTick);
+			var serverTime = EstimateServerTime(clientTime) + SmoothedLeadTime;
+			var targetTick = (int)Math.Floor(serverTime * TickRate);
+			return MathUtils.Max(MinPredictionTick, MathUtils.Min(targetTick, MaxPredictionTick));
 		}
 
 		public override void UpdateRTT(double rttSample)
@@ -83,7 +74,6 @@ namespace Massive.Netcode
 		{
 			base.Reset();
 			SmoothedRtt = 0;
-			SmoothedTargetTick = 0;
 			_lastClientTime = -1;
 		}
 	}

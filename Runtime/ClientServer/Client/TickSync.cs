@@ -25,7 +25,7 @@ namespace Massive.Netcode
 			PredictionLeadTicks = safetyBufferTicks;
 		}
 
-		private int MaxPredictionTick => MinPredictionTick + MaxRollbackTicks - 1;
+		public int MaxPredictionTick => MinPredictionTick + MaxRollbackTicks - 1;
 
 		/// <summary>
 		/// Computes the client simulation target tick.
