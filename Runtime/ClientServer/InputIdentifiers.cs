@@ -7,7 +7,7 @@ namespace Massive.Netcode
 {
 	public class InputIdentifiers
 	{
-		private readonly int _startId;
+		public int StartId { get; }
 		private int _usedIds;
 
 		private readonly Dictionary<Type, int> _idsByInputs = new Dictionary<Type, int>();
@@ -15,17 +15,18 @@ namespace Massive.Netcode
 
 		private readonly List<bool> _isEvent = new List<bool>();
 		private readonly List<bool> _isAuthoritive = new List<bool>();
-		private readonly List<Type> _registeredTypes = new List<Type>();
+
+		public List<Type> RegisteredTypes { get; } = new List<Type>();
 
 		public InputIdentifiers(int startId = (int)MessageType.Count)
 		{
-			_startId = startId;
+			StartId = startId;
 			_usedIds = startId;
 			for (var i = 0; i < startId; i++)
 			{
 				_isEvent.Add(false);
 				_isAuthoritive.Add(false);
-				_registeredTypes.Add(default);
+				RegisteredTypes.Add(default);
 			}
 		}
 
@@ -39,6 +40,31 @@ namespace Massive.Netcode
 				.ToArray();
 
 			var eventTypes = assemblyTypes
+				.Where(IsEventType)
+				.OrderBy(type => type.GetFullGenericName())
+				.ToArray();
+
+			foreach (var inputType in inputTypes)
+			{
+				RegisterInput(inputType);
+			}
+
+			foreach (var eventType in eventTypes)
+			{
+				RegisterEvent(eventType);
+			}
+		}
+
+		public void RegisterAutomatically(params Assembly[] assemblies)
+		{
+			var inputTypes = assemblies
+				.SelectMany(assembly => assembly.GetTypes())
+				.Where(IsInputType)
+				.OrderBy(type => type.GetFullGenericName())
+				.ToArray();
+
+			var eventTypes = assemblies
+				.SelectMany(assembly => assembly.GetTypes())
 				.Where(IsEventType)
 				.OrderBy(type => type.GetFullGenericName())
 				.ToArray();
@@ -105,7 +131,7 @@ namespace Massive.Netcode
 
 		public bool IsRegistered(int inputId)
 		{
-			return inputId >= _startId && inputId < _usedIds;
+			return inputId >= StartId && inputId < _usedIds;
 		}
 
 		public bool IsEvent(int inputId)
@@ -135,7 +161,7 @@ namespace Massive.Netcode
 				throw new InvalidOperationException($"Input with id: {inputId} is not registered.");
 			}
 
-			return _registeredTypes[inputId];
+			return RegisteredTypes[inputId];
 		}
 
 		public int GetEventId(Type type)
@@ -164,7 +190,7 @@ namespace Massive.Netcode
 			{
 				throw new Exception($"Duplicate event type registration. Type: {type.GetFullGenericName()}");
 			}
-			_registeredTypes.Add(type);
+			RegisteredTypes.Add(type);
 			_isEvent.Add(true);
 			_isAuthoritive.Add(type.IsDefined(typeof(AuthoritiveAttribute)));
 			_usedIds++;
@@ -176,7 +202,7 @@ namespace Massive.Netcode
 			{
 				throw new Exception($"Duplicate input type registration. Type: {type.GetFullGenericName()}");
 			}
-			_registeredTypes.Add(type);
+			RegisteredTypes.Add(type);
 			_isEvent.Add(false);
 			_isAuthoritive.Add(type.IsDefined(typeof(AuthoritiveAttribute)));
 			_usedIds++;
