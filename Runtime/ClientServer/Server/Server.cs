@@ -10,10 +10,9 @@ namespace Massive.Netcode
 		private const int MaxMessagesPerClient = 50;
 
 		private MemoryStream Buffer { get; } = new MemoryStream();
-
 		private int TicksAcceptWindow { get; }
-
 		private ServerSerializer MessageSerializer { get; }
+		private ILogger Logger { get; }
 
 		public InputIdentifiers InputIdentifiers { get; }
 
@@ -25,9 +24,10 @@ namespace Massive.Netcode
 
 		public List<Connection> Connections { get; } = new List<Connection>();
 		public List<Connection> NewConnections { get; } = new List<Connection>();
+		public Stack<int> ChannelsPool { get; } = new Stack<int>();
 		public int UsedChannels { get; private set; }
 
-		public Server(SessionConfig sessionConfig, IConnectionListener connectionListener, double ticksAcceptWindowSeconds = 2f)
+		public Server(SessionConfig sessionConfig, IConnectionListener connectionListener, double ticksAcceptWindowSeconds = 2f, ILogger logger = null)
 		{
 			ConnectionListener = connectionListener;
 
@@ -38,6 +38,10 @@ namespace Massive.Netcode
 			InputIdentifiers = new InputIdentifiers();
 			MessageSerializer = new ServerSerializer(Session.Inputs, InputIdentifiers);
 			WorldSerializer = new WorldSerializer();
+
+			Logger = logger ?? NullLogger.Instance;
+
+			Logger.Log($"Server initialized. TickRate={sessionConfig.TickRate}, AcceptWindow={TicksAcceptWindow} ticks");
 		}
 
 		public void Update(double serverTime)
@@ -49,6 +53,8 @@ namespace Massive.Netcode
 				var connection = Connections[i];
 				if (!connection.IsConnected)
 				{
+					Logger.Warn($"Client on channel {connection.Channel} disconnected. Active connections: {Connections.Count - 1}");
+					ChannelsPool.Push(connection.Channel);
 					Connections.RemoveAt(i);
 					ConnectionListener.ReturnToPool(connection);
 					Session.Inputs.AppendApprovedEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerDisconnectedEvent());
@@ -57,10 +63,13 @@ namespace Massive.Netcode
 
 			while (ConnectionListener.TryAccept(out var connection))
 			{
-				connection.Channel = UsedChannels++;
+				var isRecycled = ChannelsPool.Count > 0;
+				connection.Channel = isRecycled ? ChannelsPool.Pop() : UsedChannels++;
 				Connections.Add(connection);
 				Session.Inputs.AppendApprovedEventAt(Session.Loop.CurrentTick, connection.Channel, new PlayerConnectedEvent());
 				NewConnections.Add(connection);
+
+				Logger.Log($"Client accepted on channel {connection.Channel} ({(isRecycled ? "recycled" : "new")}). Active connections: {Connections.Count}");
 			}
 
 			ReadMessages(serverTime);
@@ -75,6 +84,7 @@ namespace Massive.Netcode
 				{
 					if (newConnection.IsConnected)
 					{
+						Logger.Log($"Sending full sync to channel {newConnection.Channel} at tick {Session.Loop.CurrentTick}");
 						SendFullSync(newConnection);
 					}
 				}
@@ -122,6 +132,7 @@ namespace Massive.Netcode
 
 					if (!IsAppropriateClientMessage(messageId))
 					{
+						Logger.Error($"Channel {connection.Channel} sent invalid message id={messageId}. Disconnecting.");
 						connection.Disconnect();
 						break;
 					}
@@ -158,6 +169,7 @@ namespace Massive.Netcode
 							}
 							else
 							{
+								Logger.Warn($"Channel {connection.Channel} sent out-of-window tick {tick} (current={Session.Loop.CurrentTick}, window=[{Session.Loop.CurrentTick}, {Session.Loop.CurrentTick + TicksAcceptWindow}]). Input dropped.");
 								MessageSerializer.SkipOneInput(messageId, connection.Incoming);
 							}
 							break;
@@ -171,6 +183,7 @@ namespace Massive.Netcode
 
 				if (messagesRead >= MaxMessagesPerClient)
 				{
+					Logger.Error($"Channel {connection.Channel} hit message flood limit ({MaxMessagesPerClient}/update). Disconnecting.");
 					connection.Disconnect();
 				}
 			}

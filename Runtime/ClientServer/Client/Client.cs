@@ -5,6 +5,7 @@ namespace Massive.Netcode
 	public class Client : IPredictionReceiver
 	{
 		private ClientSerializer MessageSerializer { get; }
+		private ILogger Logger { get; }
 
 		public InputIdentifiers InputIdentifiers { get; }
 
@@ -22,7 +23,7 @@ namespace Massive.Netcode
 
 		public bool Synced { get; private set; }
 
-		public Client(SessionConfig sessionConfig, Connection connection, double pingIntervalSeconds = 0.5f, TickSync tickSync = default)
+		public Client(SessionConfig sessionConfig, Connection connection, double pingIntervalSeconds = 0.5f, TickSync tickSync = null, ILogger logger = null)
 		{
 			Connection = connection;
 			PingIntervalSeconds = pingIntervalSeconds;
@@ -35,6 +36,10 @@ namespace Massive.Netcode
 			InputIdentifiers = new InputIdentifiers();
 			MessageSerializer = new ClientSerializer(Session.Inputs, InputIdentifiers);
 			WorldSerializer = new WorldSerializer();
+
+			Logger = logger ?? NullLogger.Instance;
+
+			Logger.Log($"Client initialized. TickRate={sessionConfig.TickRate}, PingInterval={pingIntervalSeconds}s");
 		}
 
 		public int InputPredictionTick(double clientTime)
@@ -46,6 +51,10 @@ namespace Massive.Netcode
 		{
 			if (!Connection.IsConnected)
 			{
+				if (Synced)
+				{
+					Logger.Warn("Connection lost. Marking client as de-synced.");
+				}
 				Synced = false;
 				return;
 			}
@@ -80,6 +89,7 @@ namespace Massive.Netcode
 				if (messageId == (int)MessageType.Ping
 					|| messageId >= (int)MessageType.Count && !InputIdentifiers.IsRegistered(messageId))
 				{
+					Logger.Error($"Received invalid message id={messageId} from server. Disconnecting.");
 					Connection.Disconnect();
 					break;
 				}
@@ -100,6 +110,7 @@ namespace Massive.Netcode
 						var serverTime = pongMessage.ServerReceiveTime + rtt * 0.5;
 						TickSync.UpdateTimeSync(serverTime, clientTime);
 						TickSync.UpdateRTT(rtt);
+						Logger.Log($"Pong received. RTT={rtt * 1000:F1}ms, estimated server time={serverTime:F3}");
 						break;
 					}
 
@@ -119,6 +130,8 @@ namespace Massive.Netcode
 						TickSync.ApproveSimulationTick(serverTick);
 						LastPingTime = -1;
 						Synced = true;
+						
+						Logger.Log($"Full sync received. Assigned channel={Connection.Channel}, serverTick={serverTick}");
 						break;
 					}
 
@@ -149,6 +162,7 @@ namespace Massive.Netcode
 						}
 						else
 						{
+							Logger.Warn($"Dropped stale input from channel {channel} for tick {tick} (minPrediction={TickSync.MinPredictionTick})");
 							MessageSerializer.SkipOneInput(messageId, Connection.Incoming);
 						}
 						break;
