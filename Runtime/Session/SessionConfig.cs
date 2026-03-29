@@ -6,11 +6,11 @@
 
 		public readonly int SaveEachNthTick = 5;
 
-		public readonly MassiveWorldConfig WorldConfig = new MassiveWorldConfig(framesCapacity: 25);
+		public readonly MassiveWorldConfig WorldConfig = new MassiveWorldConfig(framesCapacity: 26);
 
 		public int FramesCapacity => WorldConfig.FramesCapacity;
 
-		public int RollbackTicksCapacity => FramesCapacity * SaveEachNthTick;
+		public int RollbackTicksCapacity => (FramesCapacity - 1) * SaveEachNthTick;
 
 		public SessionConfig(int? tickRate = default, int? saveEachNthTick = default, MassiveWorldConfig worldConfig = default)
 		{
