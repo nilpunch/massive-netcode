@@ -127,10 +127,10 @@ namespace Massive.Netcode
 
 						Session.World.SaveFrame();
 						TickSync.Reset();
-						TickSync.ApproveSimulationTick(serverTick);
+						TickSync.UpdateMinPredictionTick(serverTick + 1);
 						LastPingTime = -1;
 						Synced = true;
-						
+
 						Logger.Log($"Full sync received. Assigned channel={Connection.Channel}, serverTick={serverTick}");
 						break;
 					}
@@ -148,7 +148,7 @@ namespace Massive.Netcode
 							eventSet.ClearPrediction(TickSync.MinPredictionTick, approveMessage.ServerTick);
 						}
 
-						TickSync.ApproveSimulationTick(approveMessage.ServerTick);
+						TickSync.UpdateMinPredictionTick(approveMessage.ServerTick + 1);
 						break;
 					}
 

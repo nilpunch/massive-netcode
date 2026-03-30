@@ -71,17 +71,17 @@ namespace Massive.Netcode
 		}
 
 		/// <summary>
-		/// Marks this simulation tick as approved for extending rollback window.<br/>
-		/// Call when all input packets received up to this simulation tick.
+		/// Advances the minimum prediction tick, moving forward the prediction window.<br/>
+		/// Call when all inputs up to this tick have been approved.
 		/// </summary>
-		public void ApproveSimulationTick(int tick)
+		public void UpdateMinPredictionTick(int tick)
 		{
-			if (tick + 1 <= MinPredictionTick)
+			if (tick <= MinPredictionTick)
 			{
 				return;
 			}
 
-			MinPredictionTick = tick + 1;
+			MinPredictionTick = tick;
 		}
 
 		/// <summary>
