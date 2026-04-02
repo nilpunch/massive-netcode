@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "Massive",
-        "Massive.Serialization"
+        "Massive.Serialization",
+        "Massive.Preserve"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -26,6 +26,7 @@ namespace Massive.Netcode
 		}
 
 		public int MaxPredictionTick => MinPredictionTick + MaxRollbackTicks - 1;
+		public bool IsSynced => TimeSyncServerTime > 0f;
 
 		/// <summary>
 		/// Computes the client simulation target tick.

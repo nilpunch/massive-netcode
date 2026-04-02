@@ -34,6 +34,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\massive-ecs\Runtime\Massive.csproj" />
+        <ProjectReference Include="..\..\massive-ecs\Runtime\Preserve\Massive.Preserve.csproj" />
         <ProjectReference Include="..\..\massive-serialization\Runtime\Massive.Serialization.csproj" />
     </ItemGroup>
 

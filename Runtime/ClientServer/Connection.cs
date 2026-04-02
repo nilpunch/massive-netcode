@@ -5,7 +5,7 @@ namespace Massive.Netcode
 {
 	public abstract class Connection
 	{
-		protected static readonly byte[] CopyBuffer = new byte[4096];
+		protected readonly byte[] CopyBuffer = new byte[4096];
 		private static readonly int ShiftBytesThreshold = 1024 * 8;
 
 		public MemoryStream Incoming { get; } = new MemoryStream();
