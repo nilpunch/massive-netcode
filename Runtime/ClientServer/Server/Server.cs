@@ -13,6 +13,7 @@ namespace Massive.Netcode
 		private int TicksAcceptWindow { get; }
 		private ServerSerializer MessageSerializer { get; }
 		private ILogger Logger { get; }
+		private double LastInputLogTime { get; set; } = -1;
 
 		public InputIdentifiers InputIdentifiers { get; }
 
@@ -165,6 +166,11 @@ namespace Massive.Netcode
 							var tick = connection.Incoming.ReadInt();
 							if (CanAcceptTick(tick))
 							{
+								if (serverTime > LastInputLogTime + 5f)
+								{
+									LastInputLogTime = serverTime;
+									Logger.Log($"Channel {connection.Channel} sent successful input. It is ahead of server tick: {tick - Session.Loop.CurrentTick}");
+								}
 								MessageSerializer.ReadOneInput(messageId, tick, connection.Channel, connection.Incoming);
 							}
 							else

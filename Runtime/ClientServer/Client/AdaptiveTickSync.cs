@@ -17,7 +17,7 @@ namespace Massive.Netcode
 		private double _lastClientTime = -1;
 
 		public AdaptiveTickSync(
-			int safetyBufferTicks = 2,
+			int safetyBufferTicks = 1,
 			double smoothingTime = 0.5)
 			: base(safetyBufferTicks)
 		{
